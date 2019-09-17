@@ -2,6 +2,7 @@
 import sewpy
 import argparse
 import re
+import os
 
 from matplotlib.patches import Ellipse
 
@@ -590,7 +591,8 @@ if __name__ == '__main__':
     parser.add_argument('--diffplot_name2', default="diff_cat2.pdf",
                         help="File name of the image catalog for sources only in the second image, "
                              "default is diff_cat2.pdf.")
-
+    parser.add_argument('--datadir', default="data",
+                        help="Folder to save all output files. Default is ./data (ignored by git)")
 
     parser.add_argument('--cropx1',
                         #default=1650,
@@ -626,16 +628,16 @@ if __name__ == '__main__':
         cropys = (args.cropy1, args.cropy2)
 
     if args.save_filename_prefix1 is not None:
-        savefits_name1 = args.save_filename_prefix1+'_im1.fits'
-        savecatalog_name1 = args.save_filename_prefix1+'_cat1.txt'
-        saveplot_name1 = args.save_filename_prefix1+'_cat1.pdf'
-        diffcatalog_name1 = args.save_filename_prefix1 + "_diff_cat1.txt"
-        diffplot_name1 = args.save_filename_prefix1 + "_diff_cat1.pdf"
-        motion_outfile_prefix =  args.save_filename_prefix1
+        savefits_name1 = os.path.join(args.datadir, args.save_filename_prefix1+'_im1.fits')
+        savecatalog_name1 = os.path.join(args.datadir,args.save_filename_prefix1+'_cat1.txt')
+        saveplot_name1 = os.path.join(args.datadir,args.save_filename_prefix1+'_cat1.pdf')
+        diffcatalog_name1 = os.path.join(args.datadir,args.save_filename_prefix1 + "_diff_cat1.txt")
+        diffplot_name1 = os.path.join(args.datadir,args.save_filename_prefix1 + "_diff_cat1.pdf")
+        motion_outfile_prefix =  os.path.join(args.datadir,args.save_filename_prefix1)
     elif args.savefits_name1 is None or args.savecatalog_name1 is None or args.diffcatalog_name1 is None or args.diffplot_name1 is None:
         dt_match = get_datetime_rawname(args.rawfile1)
         print("Using default output file names with date {}".format(dt_match))
-        save_filename_prefix1 = "res_focal_plane_"+dt_match
+        save_filename_prefix1 = os.path.join(args.datadir,"res_focal_plane_"+dt_match)
         savefits_name1 = save_filename_prefix1+'_im1.fits'
         savecatalog_name1 = save_filename_prefix1+'_cat1.txt'
         saveplot_name1 = save_filename_prefix1+'_cat1.pdf'
@@ -643,23 +645,23 @@ if __name__ == '__main__':
         diffplot_name1 = save_filename_prefix1 + "_diff_cat1.pdf"
         motion_outfile_prefix = save_filename_prefix1
     else:
-        savefits_name1 = args.savefits_name1
-        savecatalog_name1 = args.savecatalog_name1
-        saveplot_name1 = args.saveplot_name1
-        diffcatalog_name1 = args.diffcatalog_name1
-        diffplot_name1 = args.diffplot_name1
-        motion_outfile_prefix = args.motion_outfile_prefix
+        savefits_name1 = os.path.join(args.datadir,args.savefits_name1)
+        savecatalog_name1 = os.path.join(args.datadir,args.savecatalog_name1)
+        saveplot_name1 = os.path.join(args.datadir,args.saveplot_name1)
+        diffcatalog_name1 = os.path.join(args.datadir,args.diffcatalog_name1)
+        diffplot_name1 = os.path.join(args.datadir,args.diffplot_name1)
+        motion_outfile_prefix = os.path.join(args.datadir,args.motion_outfile_prefix)
     if args.save_filename_prefix2 is not None:
-        savefits_name2 = args.save_filename_prefix2 + '_im2.fits'
-        savecatalog_name2 = args.save_filename_prefix2 + '_cat2.txt'
-        saveplot_name2 = args.save_filename_prefix2 + '_cat2.pdf'
-        diffcatalog_name2 = args.save_filename_prefix2 + "_diff_cat2.txt"
-        diffplot_name2 = args.save_filename_prefix2 + "_diff_cat2.pdf"
+        savefits_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_im2.fits')
+        savecatalog_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_cat2.txt')
+        saveplot_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_cat2.pdf')
+        diffcatalog_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + "_diff_cat2.txt")
+        diffplot_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + "_diff_cat2.pdf")
         motion_outfile_prefix =  motion_outfile_prefix + "_" + args.save_filename_prefix2 + "_motion.txt"
     elif args.savefits_name2 is None or args.savecatalog_name2 is None or args.diffcatalog_name2 is None or args.diffplot_name2 is None:
         dt_match = get_datetime_rawname(args.rawfile2)
         print("Using default output file names with date {}".format(dt_match))
-        save_filename_prefix2 = "res_focal_plane_" + dt_match
+        save_filename_prefix2 = os.path.join(args.datadir,"res_focal_plane_" + dt_match)
         savefits_name2 = save_filename_prefix2 + '_im2.fits'
         savecatalog_name2 = save_filename_prefix2 + '_cat2.txt'
         saveplot_name2 = save_filename_prefix2 + '_cat2.pdf'
@@ -667,11 +669,11 @@ if __name__ == '__main__':
         diffplot_name2 = save_filename_prefix2 + "_diff_cat2.pdf"
         motion_outfile_prefix = motion_outfile_prefix + "_" + dt_match + "motion"
     else:
-        savefits_name2 = args.savefits_name2
-        savecatalog_name2 = args.savecatalog_name2
-        saveplot_name2 = args.saveplot_name2
-        diffcatalog_name2 = args.diffcatalog_name2
-        diffplot_name2 = args.diffplot_name2
+        savefits_name2 = os.path.join(args.datadir,args.savefits_name2)
+        savecatalog_name2 = os.path.join(args.datadir,args.savecatalog_name2)
+        saveplot_name2 = os.path.join(args.datadir,args.saveplot_name2)
+        diffcatalog_name2 = os.path.join(args.datadir,args.diffcatalog_name2)
+        diffplot_name2 = os.path.join(args.datadir,args.diffplot_name2)
         motion_outfile_prefix = args.motion_outfile_prefix
 
     sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,

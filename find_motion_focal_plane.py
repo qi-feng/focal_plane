@@ -1,6 +1,7 @@
 import argparse
 
 from matplotlib.patches import Ellipse
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -241,6 +242,9 @@ if __name__ == '__main__':
     parser.add_argument('--saveplot_name2', default=None,
                         help="File name of the image (jpeg or pdf etc) for the second image if you want to choose.")
 
+    parser.add_argument('--datadir', default="data",
+                        help="Folder to save all output files. Default is ./data (ignored by git)")
+
     parser.add_argument('--cropx1',
                         # default=1650,
                         default=1170,
@@ -265,34 +269,34 @@ if __name__ == '__main__':
     cropys = (args.cropy1, args.cropy2)
 
     dt_match1 = get_datetime_rawname(args.rawfile1)
-    save_filename_prefix1 = "res_focal_plane_" + dt_match1
+    save_filename_prefix1 = os.path.join(args.datadir,"res_focal_plane_" + dt_match1)
     dt_match2 = get_datetime_rawname(args.rawfile2)
-    save_filename_prefix2 = "res_focal_plane_" + dt_match2
+    save_filename_prefix2 = os.path.join(args.datadir,"res_focal_plane_" + dt_match2)
 
     if args.diffcatalog_name1 is None:
         diffcatalog_name1 = save_filename_prefix1 + "_diff_cat1.txt"
         print("Using default catalog 1 file name {}! Make sure this is what you want".format(diffcatalog_name1))
     else:
-        diffcatalog_name1 = args.diffcatalog_name1
+        diffcatalog_name1 = os.path.join(args.datadir,args.diffcatalog_name1)
     if args.saveplot_name1 is None:
         diffplot_name1 = save_filename_prefix1 + "_find_diff_cat1.pdf"
         print("Using default file name {} to save diff cat1 plot! Make sure this is what you want".format(diffplot_name1))
     else:
-        diffplot_name1 = args.diffplot_name1
+        diffplot_name1 = os.path.join(args.datadir,args.diffplot_name1)
     if args.diffcatalog_name2 is None:
         diffcatalog_name2 = save_filename_prefix2 + "_diff_cat2.txt"
         print("Using default catalog 2 file name {}! Make sure this is what you want".format(diffcatalog_name2))
     else:
-        diffcatalog_name2 = args.diffcatalog_name2
+        diffcatalog_name2 = os.path.join(args.datadir,args.diffcatalog_name2)
     if args.saveplot_name1 is None:
         diffplot_name2 = save_filename_prefix2 + "_find_diff_cat2.pdf"
         print("Using default file name {} to save diff cat2 plot! Make sure this is what you want".format(diffplot_name2))
     else:
-        diffplot_name2 = args.diffplot_name2
+        diffplot_name2 = os.path.join(args.datadir,args.diffplot_name2)
     if args.motion_outfile_prefix is None:
         motion_outfile_prefix = save_filename_prefix1 + "_" + dt_match2 + "motion"
     else:
-        motion_outfile_prefix = args.motion_outfile_prefix
+        motion_outfile_prefix = os.path.join(args.datadir,args.motion_outfile_prefix)
 
     plot_diff_labelled(args.rawfile1, args.rawfile2, diffcatalog_name1, diffcatalog_name2,
                        ind1=args.ind1, ind2=args.ind2,
