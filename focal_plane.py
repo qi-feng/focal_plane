@@ -532,6 +532,18 @@ def get_datetime_rawname(raw_name):
     return dt_match
 
 
+def yes_or_no(question):
+    reply = str(raw_input(question+' (y/n): ')).lower().strip()
+    if reply[0] == 'y':
+        return True
+    if reply[0] == 'n':
+        return False
+    else:
+        return yes_or_no("Please enter y or n")
+
+
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Compare two raw images of stars at the focal plane')
@@ -626,6 +638,14 @@ if __name__ == '__main__':
     else:
         cropxs = (args.cropx1, args.cropx2)
         cropys = (args.cropy1, args.cropy2)
+
+    if not os.path.exists(args.datadir):
+        sure = yes_or_no("Are you sure to make a new directory {} to save data? ".format(args.datadir))
+        if sure:
+            os.mkdir(args.datadir)
+        else:
+            print("Okay, mission abort.")
+            exit(0)
 
     if args.save_filename_prefix1 is not None:
         savefits_name1 = os.path.join(args.datadir, args.save_filename_prefix1+'_im1.fits')
