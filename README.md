@@ -7,6 +7,7 @@ To identify a panel motion in the focal plane image, first run focal_plane.py to
 # Prerequisite 
 
 sextractor, sewpy, numpy, pandas, matplotlib 
+
 Ideally, opencv2.4 (cv2)
 
 # Usage
