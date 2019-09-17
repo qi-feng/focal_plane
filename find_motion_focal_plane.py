@@ -19,12 +19,12 @@ except:
     has_cv2 = False
 
 
-
+# Original GR cam lens used
 pix2mm = 0.48244
-x_corners = np.array([1200,1210,1947,1935])
+x_corners = np.array([1210,1220,1957,1945])
 y_corners = np.array([1374, 635, 648, 1385])
 center=np.array([np.mean(x_corners), np.mean(y_corners)])
-
+# center at ~60 deg is 1583. , 1010.5
 
 def read_raw(f='./GAS_image.raw', cols=2592, rows=1944, outfile=None, show=False):
     fd = open(f, 'rb')
