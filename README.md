@@ -1,35 +1,50 @@
-# focal_plane
 pSCT optical alignment using optical images of a star at the focal plane
 
+# Intro
 Two python scripts are in this repo, they are quickly put together and not smart, user be aware. 
 To identify a panel motion in the focal plane image, first run focal_plane.py to create catalog of centroids, and then identify by eye the number (as shown in the pdf for centroids that are not common in both imamges) of the first (green) centroid and the second (yellow) centroid, finally run find_motion_focal_plane.pyto produce a clean output of the information of these two centroid. 
 
+# Usage
+## focal_plane.py
+
+** This code processes the raw images using Sextractor, create catalog of centroids, and isolate unique centroids in image1 and image2 if the distance between them is larger than min_dist, make "diff_cat" plot with unique sources in the 1st image labelled in green, and those in the 2nd image labelled in yellow. Common images are shown as red (or not shown in the "diff_cat" plots). ** 
+
 The easiest example to run focal_plane.py is 
-
+```
 python focal_plane.py rawfile1 rawfile2 --DETECT_MINAREA DETECT_MINAREA --THRESH THRESH --min_dist MIN_DIST
-
+```
 e.g., 
-
+```
 python focal_plane.py The\ Imaging\ Source\ Europe\ GmbH-37514083-2592-1944-Mono8-2019-09-16-01\:25\:51.raw The\ Imaging\ Source\ Europe\ GmbH-37514083-2592-1944-Mono8-2019-09-16-01\:26\:42.raw --min_dist 20 --THRESH 2 --DETECT_MINAREA 80
+```
 
 The most important parameters are listed: 
 
-min_dist: the minimum distance between two centroid to identify motion, this will depend on how large a motion the panel was moved. If panel motion is large, can use something like 10 to 20 (pixels) to reduce false alarms (which will happen anyways); if a panel motion is small, use small values as low as 2 pixels. 
+- min_dist: the minimum distance between two centroid to identify motion, this will depend on how large a motion the panel was moved. If panel motion is large, can use something like 10 to 20 (pixels) to reduce false alarms (which will happen anyways); if a panel motion is small, use small values as low as 2 pixels. 
 
-THRESH: Sextractor image centroid analysis threshold, if you see your suspect centroid but it's not identified, lower this number. Depending on the light condition and exposure of the image, something between 2 to 8 have been useful, in extreme cases may need values out of this range. 
+- THRESH: Sextractor image centroid analysis threshold, if you see your suspect centroid but it's not identified, lower this number. Depending on the light condition and exposure of the image, something between 2 to 8 have been useful, in extreme cases may need values out of this range. 
 
-DETECT_MINAREA: Sextractor minimum number of pixels above threshold triggering detection. 
+- DETECT_MINAREA: Sextractor minimum number of pixels above threshold triggering detection. 
 
+## find_motion_focal_plane.py
+
+** This code is run after focal_plane.py, if you believe you found two centroids that correspond to the same panel, use the green number in diff_cat1 image for this centroid and the yellow number in diff_cat2 image, and run this with -1 and -2 options. 
 
 The easiest way to run find_motion_focal_plane.py is 
 
+```
 python find_motion_focal_plane.py rawfile1 rawfile2 -1 centroid_number1 -2 centroid_number2
+```
 
+e.g., 
+```
 python find_motion_focal_plane.py The\ Imaging\ Source\ Europe\ GmbH-37514083-2592-1944-Mono8-2019-09-16-01\:25\:51.raw The\ Imaging\ Source\ Europe\ GmbH-37514083-2592-1944-Mono8-2019-09-16-01\:26\:42.raw -1 11 -2 20
-
+```
 
 
 Full use of focal_plane.py can be found using: 
+
+`
 python focal_plane.py -h
 usage: focal_plane.py [-h] [--DETECT_MINAREA DETECT_MINAREA] [--THRESH THRESH]
                       [--kernel_w KERNEL_W] [--min_dist MIN_DIST]
@@ -122,9 +137,11 @@ optional arguments:
                         motion.
   --nozoom              Do not zoom/crop the image.
   -v, --verbose
+`
 
 Full use of find_motion_focal_plane.py and be found using: 
 
+`
 python find_motion_focal_plane.py -h
 usage: find_motion_focal_plane.py [-h] [--diffcatalog_name1 DIFFCATALOG_NAME1]
                                   [--diffcatalog_name2 DIFFCATALOG_NAME2]
@@ -173,5 +190,32 @@ optional arguments:
                         no zoom, default is (1250, 800).
   --cropy2 CROPY2       zooming into ylim that you want to plot, use None for
                         no zoom, default is (1250, 800).
+
+`
+
+## calc_motion.py
+
+** Utilities to calculate rx ry resp matrix given (dx1, dy1, rx, dx2, dy2, ry),
+where dx1 and dy1 is the motion of centroid when panel rx is introduced, and
+dx2 and dy2 is the motion of centroid when panel ry is introduced. Or
+calculate motion needed to go to center and pattern position for a given
+panel, need to provide current coordinates in camera x and y. **
+
+- To calculate rx ry response matrix, run it like: 
+```
+python calc_motion.py 1424 --dx1 -12.4 --dy1 16.5 --rx 0.32 --dx2 19.4 --dy2 15.1 --ry 0.32
+```
+You'll be given a chance to save it to the default yaml file rx_ry_matrix.yaml. 
+
+- For those panels that already have matrices in the file "rx_ry_matrix.yaml", to calculate the motion needed to move the image to the center of the FoV, run it like: 
+```
+python calc_motion.py 1328 -c -x 1444 -y 877
+```
+where x and y are the current centroid coordinates. 
+
+- Similarly, if a panel has resp matrix in the file, to calculate the rx ry motion needed to move the image to the "pattern position" where all panels are spread out (default file is pattern_position.txt), run like: 
+```
+python calc_motion.py 1328 -p -x 1444 -y 877
+```
 
 
