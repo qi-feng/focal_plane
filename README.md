@@ -44,7 +44,7 @@ python find_motion_focal_plane.py The\ Imaging\ Source\ Europe\ GmbH-37514083-25
 
 Full use of focal_plane.py can be found using: 
 
-`
+```
 python focal_plane.py -h
 usage: focal_plane.py [-h] [--DETECT_MINAREA DETECT_MINAREA] [--THRESH THRESH]
                       [--kernel_w KERNEL_W] [--min_dist MIN_DIST]
@@ -137,11 +137,11 @@ optional arguments:
                         motion.
   --nozoom              Do not zoom/crop the image.
   -v, --verbose
-`
+```
 
 Full use of find_motion_focal_plane.py and be found using: 
 
-`
+```
 python find_motion_focal_plane.py -h
 usage: find_motion_focal_plane.py [-h] [--diffcatalog_name1 DIFFCATALOG_NAME1]
                                   [--diffcatalog_name2 DIFFCATALOG_NAME2]
@@ -191,7 +191,7 @@ optional arguments:
   --cropy2 CROPY2       zooming into ylim that you want to plot, use None for
                         no zoom, default is (1250, 800).
 
-`
+```
 
 ## calc_motion.py
 
