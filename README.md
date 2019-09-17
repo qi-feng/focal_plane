@@ -4,6 +4,11 @@ pSCT optical alignment using optical images of a star at the focal plane
 Two python scripts are in this repo, they are quickly put together and not smart, user be aware. 
 To identify a panel motion in the focal plane image, first run focal_plane.py to create catalog of centroids, and then identify by eye the number (as shown in the pdf for centroids that are not common in both imamges) of the first (green) centroid and the second (yellow) centroid, finally run find_motion_focal_plane.pyto produce a clean output of the information of these two centroid. 
 
+# Prerequisite 
+
+sextractor, sewpy, numpy, pandas, matplotlib 
+Ideally, opencv2.4 (cv2)
+
 # Usage
 ## focal_plane.py
 
