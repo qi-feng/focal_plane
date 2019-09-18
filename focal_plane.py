@@ -3,6 +3,8 @@ import sewpy
 import argparse
 import re
 import os
+import pandas as pd
+
 
 from matplotlib.patches import Ellipse
 
@@ -23,11 +25,32 @@ except:
 
 
 # Original GR cam lens used
-pix2mm = 0.48244
-x_corners = np.array([1210,1220,1957,1945])
-y_corners = np.array([1374, 635, 648, 1385])
-center=np.array([np.mean(x_corners), np.mean(y_corners)])
+#pix2mm = 0.48244
+#x_corners = np.array([1210,1220,1957,1945])
+#y_corners = np.array([1374, 635, 648, 1385])
+#center=np.array([np.mean(x_corners), np.mean(y_corners)])
 # center at ~60 deg is 1583. , 1010.5
+
+
+# New GR cam lens used (2x zoom in)
+#pix2mm = 0.2449
+pix2mm = 0.241
+
+
+#these new corners mark the central module
+x_corners = np.array([1762,1761,1980,1982])
+y_corners = np.array([1175,954,952,1174])
+center=np.array([np.mean(x_corners), np.mean(y_corners)])
+center=np.array([1871.25, 1063.75])
+# center at ~-5 deg is 1871.25, 1063.75
+
+x_corners = np.array([1782,1781,2000,2002])
+y_corners = np.array([1175,954,952,1174])
+#center=np.array([np.mean(x_corners), np.mean(y_corners)])
+center=np.array([1891.25, 1063.75])
+# center at ~60 deg is 1891.25, 1063.75
+# center at ~75 deg is 1896.25, 1063.75
+
 
 
 def read_raw(f='./GAS_image.raw', cols=2592, rows=1944, outfile=None, show=False):
@@ -70,11 +93,14 @@ def im2fits(im, outfile, overwrite=True):
 
 def plot_sew_cat(dst_trans, sew_out_trans,
                  brightestN=0,
-                 xlim=None, ylim=None, outfile=None, show=False):
+                 xlim=None, ylim=None, outfile=None, show=False, vmax=None):
     # plt.figure()
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
-    ax_img = ax.imshow(dst_trans, cmap='gray')
+    if vmax is not None:
+        ax_img = ax.imshow(dst_trans, vmax=vmax, cmap='gray')
+    else:
+        ax_img = ax.imshow(dst_trans, cmap='gray')
     fig.colorbar(ax_img)
 
     # plt.plot(cat_test['X_IMAGE'], cat_test['Y_IMAGE'], color='r',  marker='o', ms=5, ls='')
@@ -133,6 +159,11 @@ def process_raw(rawfile, kernel_w = 3,
     im_std = np.std(median)
     print("Standard deviation of the image is {:.2f}".format(im_std))
 
+    # plt.xlim(1050, 2592)
+    # plt.ylim(1850,250)
+    # plt.imshow(median_screen[250:1850, 1050:2592], cmap='gray')
+    max_pixel_crop = np.max(median[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    print("Brightest pixel in the zoomed area reaches {}".format(max_pixel_crop))
     if savefits_name is None:
         savefits_name = rawfile[:-4]+".fits"
     elif savefits_name[-4:] != ("fits" or "fit"):
@@ -159,7 +190,7 @@ def process_raw(rawfile, kernel_w = 3,
     plot_sew_cat(median, sew_out,
                  outfile=saveplot_name,
                  xlim=cropxs,
-                 ylim=cropys)
+                 ylim=cropys, vmax=max_pixel_crop)
     if savecatalog_name is not None:
         from astropy.io import ascii
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
@@ -187,8 +218,13 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
         diffcat2_io.write(" ".join(sew_out_table2.colnames))
         diffcat2_io.write("\n")
 
+    max_pixel_crop2 = np.max(im2[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    #print("Brightest pixel in the zoomed area in image 2 reaches {}".format(max_pixel_crop2))
+    #if max_pixel_crop2 == 255:
+    #    print("Image 2 is saturated. ")
+
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
-    ax_img = ax.imshow(im2, cmap='gray')
+    ax_img = ax.imshow(im2, cmap='gray', vmax=max_pixel_crop2)
     fig.colorbar(ax_img)
 
     i2 = -1
@@ -291,8 +327,12 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
 
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
+    max_pixel_crop1 = np.max(im1[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    #print("Brightest pixel in the zoomed area in image 1 reaches {}".format(max_pixel_crop1))
+    #if max_pixel_crop1 == 255:
+    #    print("Image 1 is saturated. ")
 
-    ax_img = ax.imshow(im1, cmap='gray')
+    ax_img = ax.imshow(im1, cmap='gray', vmax=max_pixel_crop1)
     fig.colorbar(ax_img)
 
     i1 = -1
@@ -375,7 +415,6 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
                        motion_outfile_prefix="motion_output",
                        outfile1="new_label1.pdf", outfile2="new_label2.pdf",
                        cropxs=(1350, 1800), cropys=(1250, 800),):
-    import pandas as pd
 
     #cat1 and cat2 are the * diff * cats
     im1 = read_raw(rawf1)
@@ -393,7 +432,13 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
 
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
-    ax_img = ax.imshow(im1, cmap='gray')
+    max_pixel_crop1 = np.max(im1[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    print("Brightest pixel in the zoomed area in image 1 reaches {}".format(max_pixel_crop1))
+    if max_pixel_crop1 == 255:
+        print("Image 1 is saturated. ")
+
+    ax_img = ax.imshow(im1, cmap='gray', vmax=max_pixel_crop1)
+    #ax_img = ax.imshow(im1, cmap='gray')
     fig.colorbar(ax_img)
 
     if ind1 is not None:
@@ -418,9 +463,10 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
         e.set_alpha(0.8)
         e.set_color('g')
         ax.annotate(str(ind1), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),
-                    color='g',
-                    arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1),
+                    #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
+                    xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
+                    color='g', alpha=0.8,
+                    arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
                     )
     else:
         for i, row1 in cat1.iterrows():
@@ -434,9 +480,10 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
             e.set_alpha(0.8)
             e.set_color('g')
             ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),
-                        color='g',
-                        arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1),
+                        #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
+                        xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
+                        color='g', alpha=0.8,
+                        arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
                         )
 
     if cropxs is not None:
@@ -456,9 +503,14 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
 
     #plt.show()
 
-    fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
+    max_pixel_crop2 = np.max(im2[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    print("Brightest pixel in the zoomed area in image 2 reaches {}".format(max_pixel_crop2))
+    if max_pixel_crop2 == 255:
+        print("Image 2 is saturated. ")
 
-    ax_img = ax.imshow(im2, cmap='gray')
+    fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
+    ax_img = ax.imshow(im2, cmap='gray', vmax=max_pixel_crop2)
+
     fig.colorbar(ax_img)
 
     if ind2 is not None:
@@ -480,9 +532,10 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
         e.set_alpha(0.8)
         e.set_color('y')
         ax.annotate(str(ind2), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),
-                    color='y',
-                    arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=2, headlength=4, width=1),
+                    #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), # for orig lens
+                    xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
+                    color='y',alpha=0.8,
+                    arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
                     )
     else:
         for i, row1 in cat2.iterrows():
@@ -496,9 +549,10 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
             e.set_alpha(0.8)
             e.set_color('y')
             ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),
-                        color='y',
-                        arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=2, headlength=4, width=1),
+                        #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), # for orig lens
+                        xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
+                        color='y', alpha=0.8,
+                        arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=2, headlength=4, width=1,alpha=0.7 ),
                         )
 
     if cropxs is not None:
@@ -607,21 +661,23 @@ if __name__ == '__main__':
                         help="Folder to save all output files. Default is ./data (ignored by git)")
 
     parser.add_argument('--cropx1',
-                        #default=1650,
-                        default=1170,
-                        #default=(1350, 1800),
+                        default=1050,
+                        #default=1170,
+                        # default=(1350, 1800),
                         help="zooming into xlim that you want to plot, use None for no zoom, default is (1650, 2100).")
     parser.add_argument('--cropx2',
-                        #default=2100,
-                        default=1970,
+                        default=2592,
+                        #default=1970,
                         # default=(1350, 1800),
                         help="zooming into xlim that you want to plot, use None for no zoom, default is (1650, 2100).")
 
     parser.add_argument('--cropy1',
-                        default=1410,
+                        #default=1410,
+                        default=1850,
                         help="zooming into ylim that you want to plot, use None for no zoom, default is (1250, 800).")
     parser.add_argument('--cropy2',
-                        default=610,
+                        #default=610,
+                        default=250,
                         help="zooming into ylim that you want to plot, use None for no zoom, default is (1250, 800).")
 
     parser.add_argument('-o', '--motion_outfile_prefix', dest="motion_outfile_prefix", default="motion_output",
