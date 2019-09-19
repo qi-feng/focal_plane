@@ -2,6 +2,7 @@ import argparse
 
 from matplotlib.patches import Ellipse
 import os
+import subprocess
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -256,6 +257,11 @@ def get_datetime_rawname(raw_name):
     return dt_match
 
 
+def grid2gif(im1, im2, output_gif):
+    str1 = 'convert -delay 100 -loop 1 ' + im1 +' ' + im2  + ' ' + output_gif
+    subprocess.call(str1, shell=True)
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Compare two raw images of stars at the focal plane')
@@ -277,6 +283,8 @@ if __name__ == '__main__':
                         help="Index of the centroid in the second catalog")
     parser.add_argument('-o', '--motion_outfile_prefix', dest="motion_outfile_prefix", default=None,
                         help="File name prefix of the output catalog to calculate motion.")
+    parser.add_argument('--gifname', default=None,
+                        help="File name to save gif animation. ")
 
     parser.add_argument('--saveplot_name1',default=None,
                         help="File name of the image (jpeg or pdf etc) for the first image.")
@@ -345,9 +353,17 @@ if __name__ == '__main__':
         motion_outfile_prefix = save_filename_prefix1 + "_" + dt_match2 + "motion"
     else:
         motion_outfile_prefix = os.path.join(args.datadir,args.motion_outfile_prefix)
+    if args.gifname is None:
+        gifname = save_filename_prefix1 + "_" + dt_match2 + "_anime.gif"
+    else:
+        gifname = os.path.join(args.datadir, args.gifname)
+
+
 
     plot_diff_labelled(args.rawfile1, args.rawfile2, diffcatalog_name1, diffcatalog_name2,
                        ind1=args.ind1, ind2=args.ind2,
                        motion_outfile_prefix=motion_outfile_prefix,
                        outfile1=diffplot_name1, outfile2=diffplot_name2,
                        cropxs=cropxs, cropys=cropys)
+
+    grid2gif(diffplot_name1, diffplot_name2, gifname)

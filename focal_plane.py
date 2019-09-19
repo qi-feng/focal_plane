@@ -4,6 +4,7 @@ import argparse
 import re
 import os
 import pandas as pd
+import subprocess
 
 
 from matplotlib.patches import Ellipse
@@ -596,6 +597,9 @@ def yes_or_no(question):
         return yes_or_no("Please enter y or n")
 
 
+def grid2gif(im1, im2, output_gif):
+    str1 = 'convert -delay 100 -loop 1 ' + im1 +' ' + im2  + ' ' + output_gif
+    subprocess.call(str1, shell=True)
 
 
 if __name__ == '__main__':
@@ -659,6 +663,8 @@ if __name__ == '__main__':
                              "default is diff_cat2.pdf.")
     parser.add_argument('--datadir', default="data",
                         help="Folder to save all output files. Default is ./data (ignored by git)")
+    parser.add_argument('--gifname', default=None, #default="compare.gif",
+                        help="File name to save gif animation. ")
 
     parser.add_argument('--cropx1',
                         default=1050,
@@ -703,6 +709,7 @@ if __name__ == '__main__':
             print("Okay, mission abort.")
             exit(0)
 
+
     if args.save_filename_prefix1 is not None:
         savefits_name1 = os.path.join(args.datadir, args.save_filename_prefix1+'_im1.fits')
         savecatalog_name1 = os.path.join(args.datadir,args.save_filename_prefix1+'_cat1.txt')
@@ -734,6 +741,7 @@ if __name__ == '__main__':
         diffcatalog_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + "_diff_cat2.txt")
         diffplot_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + "_diff_cat2.pdf")
         motion_outfile_prefix =  motion_outfile_prefix + "_" + args.save_filename_prefix2 + "_motion.txt"
+        gifname = motion_outfile_prefix + "_" + args.save_filename_prefix2 + "_anime.gif"
     elif args.savefits_name2 is None or args.savecatalog_name2 is None or args.diffcatalog_name2 is None or args.diffplot_name2 is None:
         dt_match = get_datetime_rawname(args.rawfile2)
         print("Using default output file names with date {}".format(dt_match))
@@ -744,6 +752,7 @@ if __name__ == '__main__':
         diffcatalog_name2 = save_filename_prefix2 + "_diff_cat2.txt"
         diffplot_name2 = save_filename_prefix2 + "_diff_cat2.pdf"
         motion_outfile_prefix = motion_outfile_prefix + "_" + dt_match + "motion"
+        gifname = motion_outfile_prefix + "_" + dt_match + "_anime.gif"
     else:
         savefits_name2 = os.path.join(args.datadir,args.savefits_name2)
         savecatalog_name2 = os.path.join(args.datadir,args.savecatalog_name2)
@@ -751,6 +760,9 @@ if __name__ == '__main__':
         diffcatalog_name2 = os.path.join(args.datadir,args.diffcatalog_name2)
         diffplot_name2 = os.path.join(args.datadir,args.diffplot_name2)
         motion_outfile_prefix = args.motion_outfile_prefix
+        gifname = os.path.join(args.datadir, args.gifname)
+    if args.gifname is not None:
+        gifname = os.path.join(args.datadir, args.gifname)
 
     sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                 DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
@@ -784,4 +796,4 @@ if __name__ == '__main__':
                        outfile1=diffplot_name1, outfile2=diffplot_name2,
                        cropxs=cropxs, cropys=cropys)
 
-
+    grid2gif(diffplot_name1, diffplot_name2, gifname)
