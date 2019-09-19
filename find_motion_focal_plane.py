@@ -20,7 +20,7 @@ except:
     has_cv2 = False
 
 
-# Original GR cam lens used
+# Original GR cam lens with 8mm focal length used
 #pix2mm = 0.48244
 #x_corners = np.array([1210,1220,1957,1945])
 #y_corners = np.array([1374, 635, 648, 1385])
@@ -28,7 +28,7 @@ except:
 # center at ~60 deg is 1583. , 1010.5
 
 
-# New GR cam lens used (2x zoom in)
+# New GR cam lens with 16mm focal length used (2x zoom in)
 #pix2mm = 0.2449
 pix2mm = 0.241
 
@@ -46,6 +46,7 @@ y_corners = np.array([1175,954,952,1174])
 center=np.array([1891.25, 1063.75])
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
+
 
 
 
