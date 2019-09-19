@@ -266,7 +266,7 @@ def get_datetime_rawname(raw_name):
 
 
 def grid2gif(im1, im2, output_gif):
-    str1 = 'convert -delay 50 -loop 0 -quality 100 -density 300 ' + im1 +' ' + im2  + ' ' + output_gif
+    str1 = 'convert -delay 50 -loop 0 -quality 100 -density 144 ' + im1 +' ' + im2  + ' ' + output_gif
     subprocess.call(str1, shell=True)
 
 
