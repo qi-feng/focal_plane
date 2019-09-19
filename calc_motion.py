@@ -154,9 +154,10 @@ def yes_or_no(question):
 def save_rx_ry_matrix(panel, mat, respfile=respM_file):
     with open(respfile) as f:
         respM_yaml = yaml.load(f)
-    if panel in respM_yaml:
-        print("=== Matrix already exists in yaml file {} for panel {} ====".format(respfile, panel))
-        print("=== If you continue we will write a duplicate entry. ===")
+    if respM_yaml is not None:
+        if panel in respM_yaml:
+            print("=== Matrix already exists in yaml file {} for panel {} ====".format(respfile, panel))
+            print("=== If you continue we will write a duplicate entry. ===")
     sure = yes_or_no("Are you sure to save matrix \n{} \nto panel {}? ".format(mat, panel))
     if sure:
         with open(respfile, 'a') as f:
