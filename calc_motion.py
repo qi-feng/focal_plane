@@ -152,6 +152,11 @@ def yes_or_no(question):
 
 
 def save_rx_ry_matrix(panel, mat, respfile=respM_file):
+    with open(respfile) as f:
+        respM_yaml = yaml.load(f)
+    if panel in respM_yaml:
+        print("=== Matrix already exists in yaml file {} for panel {} ====".format(respfile, panel))
+        print("=== If you continue we will write a duplicate entry. ===")
     sure = yes_or_no("Are you sure to save matrix \n{} \nto panel {}? ".format(mat, panel))
     if sure:
         with open(respfile, 'a') as f:
@@ -165,8 +170,8 @@ def load_pattern(panel, pattern_file = pattern_file):
     pattern_positions = pd.read_csv(pattern_file, sep=r"\s+")
     slice = pattern_positions[(pattern_positions.Panel == panel)]
     x = slice.Xpix.values[0]
-    y = slice.Xpix.values[0]
-    print("Pattern position for panel {} is x = {}, y={}".format(panel, x, y))
+    y = slice.Ypix.values[0]
+    print("Pattern position for panel {} is \n x = {:.3f}, y={:.3f}".format(panel, x, y))
     return x, y
 
 
@@ -197,7 +202,7 @@ def calc_center_rx_ry(panel, x, y, center=center):
     dx = center[0] - x
     dy = center[1] - y
     rx, ry = calc_rx_ry(dx, dy, respM)
-    print("The motion to move panel {} from x={}, y={} to the center {}, {} is rx = {}, ry = {}".format(panel,
+    print("The motion to move panel {} \nfrom x={:.3f}, y={:.3f} \nto the center {:.3f}, {:.3f} is \nrx = {:.4f}, ry = {:.4f}".format(panel,
                                                                                                         x,
                                                                                                         y,
                                                                                                         center[0],
@@ -213,7 +218,7 @@ def calc_pattern_rx_ry(panel, x, y, pattern_file=pattern_file):
     dx = xtarg - x
     dy = ytarg - y
     rx, ry = calc_rx_ry(dx, dy, respM)
-    print("The motion to move panel {} from x={}, y={} to the pattern position {}, {} is rx = {}, ry = {}".format(panel,
+    print("The motion to move panel {} \nfrom x={:.3f}, y={:.3f} \nto the pattern position {:.3f}, {:.3f} is \nrx = {:.4f}, ry = {:.4f}".format(panel,
                                                                                                         x,
                                                                                                         y,
                                                                                                         xtarg,
