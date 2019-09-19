@@ -757,8 +757,8 @@ if __name__ == '__main__':
         saveplot_name2 = save_filename_prefix2 + '_cat2.pdf'
         diffcatalog_name2 = save_filename_prefix2 + "_diff_cat2.txt"
         diffplot_name2 = save_filename_prefix2 + "_diff_cat2.pdf"
-        motion_outfile_prefix = motion_outfile_prefix + "_" + dt_match + "motion"
         gifname = motion_outfile_prefix + "_" + dt_match + "_anime.gif"
+        motion_outfile_prefix = motion_outfile_prefix + "_" + dt_match + "motion"
     else:
         savefits_name2 = os.path.join(args.datadir,args.savefits_name2)
         savecatalog_name2 = os.path.join(args.datadir,args.savecatalog_name2)
