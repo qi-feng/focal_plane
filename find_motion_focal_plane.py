@@ -248,7 +248,7 @@ def calc_dist(cat1, cat2, n1, n2, pix2mm = 0.48244):
     dist_pix = np.sqrt(dx**2 + dy**2)
     dist_mm = dist_pix * pix2mm
     print("centroid coordinate before motion: x = {:.4f} pix y = {:.4f} pix".format(cat1.loc[n1]['X_IMAGE'], cat1.loc[n1]['Y_IMAGE']))
-    print("centroid coordinate after motion: x = {:.4f} pix y = {:.4f} pix".format(cat2.loc[n2]['Y_IMAGE'], cat2.loc[n2]['Y_IMAGE']))
+    print("centroid coordinate after motion: x = {:.4f} pix y = {:.4f} pix".format(cat2.loc[n2]['X_IMAGE'], cat2.loc[n2]['Y_IMAGE']))
     print("centroid moved in x {:.4f} pix and in y {:.4f} pix".format(dx, dy))
     print("centroid moved by distance {:.4f} pix = {:.4f} mm".format(dist_pix, dist_mm))
 
