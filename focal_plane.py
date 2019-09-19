@@ -436,7 +436,9 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
     max_pixel_crop1 = np.max(im1[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
     print("Brightest pixel in the zoomed area in image 1 reaches {}".format(max_pixel_crop1))
     if max_pixel_crop1 == 255:
-        print("Image 1 is saturated. ")
+        sat_pix = np.sum(im1 == 255)
+        percent_satur = 100.0 * sat_pix / (cropys[0] - cropys[1]) / (cropxs[1] - cropxs[0])
+        print("{:.3f}% of the pixels (= {} pixels) in zoomed area of image 1 is saturated. ".format(percent_satur, sat_pix))
 
     ax_img = ax.imshow(im1, cmap='gray', vmax=max_pixel_crop1)
     #ax_img = ax.imshow(im1, cmap='gray')
@@ -507,7 +509,11 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
     max_pixel_crop2 = np.max(im2[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
     print("Brightest pixel in the zoomed area in image 2 reaches {}".format(max_pixel_crop2))
     if max_pixel_crop2 == 255:
-        print("Image 2 is saturated. ")
+        sat_pix = np.sum(im2 == 255)
+        percent_satur = 100.0 * sat_pix / (cropys[0] - cropys[1]) / (cropxs[1] - cropxs[0])
+        print(
+        "{:.3f}% of the pixels (= {} pixels) in zoomed area of image 2 is saturated. ".format(percent_satur, sat_pix))
+
 
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
     ax_img = ax.imshow(im2, cmap='gray', vmax=max_pixel_crop2)
