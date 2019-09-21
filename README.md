@@ -1,7 +1,9 @@
 pSCT optical alignment using optical images of a star at the focal plane
 
 # Intro
-Two python scripts are in this repo, they are quickly put together and not smart, user be aware. 
+
+Python scripts are in this repo, they are quickly put together and not smart, user be aware. 
+
 To identify a panel motion in the focal plane image, first run focal_plane.py to create catalog of centroids, and then identify by eye the number (as shown in the pdf for centroids that are not common in both imamges) of the first (green) centroid and the second (yellow) centroid, finally run find_motion_focal_plane.pyto produce a clean output of the information of these two centroid. 
 
 # Prerequisite 
@@ -31,6 +33,25 @@ The most important parameters are listed:
 - THRESH: Sextractor image centroid analysis threshold, if you see your suspect centroid but it's not identified, lower this number. Depending on the light condition and exposure of the image, something between 2 to 8 have been useful, in extreme cases may need values out of this range. 
 
 - DETECT_MINAREA: Sextractor minimum number of pixels above threshold triggering detection. 
+
+Output: 
+
+4 text files, 2 fits files, 4 pdf files, and 1 gif file will be generated. 
+With the default names, all files start with the prefix "res_focal_plane", followed by some time stamps and keywords to differentiate them. 
+
+"res_focal_plane_YYYY_MM_DD_HH_MM_SS_cat1.txt" contains all centroids identified in image 1, the first row is the header: X_IMAGE Y_IMAGE FLUX_ISO FLUX_RADIUS FLAGS A_IMAGE B_IMAGE THETA_IMAGE
+
+"res_focal_plane_YYYY_MM_DD_HH_MM_SS_cat1.pdf" is an image that shows all these centroids, red color indicates common centroid (within --min_dist) in image 1 and 2, and green ones indicate those only exist in image 1, and potentially one of those correspond to the image from the panel of interest. 
+
+"res_focal_plane_YYYY_MM_DD_HH_MM_SS_cat2.txt" and "res_focal_plane_YYYY_MM_DD_HH_MM_SS_cat2.pdf" are the same for image 2, note that the color for those centroids that only exist in image 2 will be marked in yellow (instead of green for image 1). 
+
+"res_focal_plane_YYYY_MM_DD_HH_MM_SS_diff_cat1.txt" (note the extra "diff" in the file name) contains all the centroids that only exist in image 1 (hence the "diff"), columns are the same ones: X_IMAGE Y_IMAGE FLUX_ISO FLUX_RADIUS FLAGS A_IMAGE B_IMAGE THETA_IMAGE
+
+"res_focal_plane_YYYY_MM_DD_HH_MM_SS_diff_cat1.pdf" suppreses the common red centroids in the pdf without the "diff", and only shows the unique centroids, candidates of interest, in green and with numbers (these numbers corresponds to the row number, skipping header and start from 0, in the "res_focal_plane_YYYY_MM_DD_HH_MM_SS_diff_cat1.txt" text file). 
+
+Same goes for the files with strings "diff_cat2" for image 2. 
+
+"res_focal_plane_YYYY_MM_DD_HH_MM_SS_YYYY_MM_DD_HH_MM_SS_anime.gif" (now the two timestamps correspond to the timestamps in raw file name 1 and raw file name 2) shows an animated gif to assist with identification of centroid motion corresponding to a panel motion. 
 
 ## find_motion_focal_plane.py
 
