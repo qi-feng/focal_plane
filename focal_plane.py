@@ -93,7 +93,7 @@ def im2fits(im, outfile, overwrite=True):
 
 
 def plot_sew_cat(dst_trans, sew_out_trans,
-                 brightestN=0,
+                 brightestN=0, clean=True,
                  xlim=None, ylim=None, outfile=None, show=False, vmax=None):
     # plt.figure()
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
@@ -110,15 +110,19 @@ def plot_sew_cat(dst_trans, sew_out_trans,
 
     i = 0
     for row in sew_out_trans['table']:
+        if clean and row['FLAGS']>=16:
+            #cut any image with sextractor flag > 16, i.e. aperture data incomplete or corrupted
+            continue
         i += 1
         if brightestN > 0 and i > brightestN:
             break
         # print(row)
+        kr = row['KRON_RADIUS']
         e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]),
-                    width=row['A_IMAGE'],
-                    height=row['B_IMAGE'],
+                    width=row['A_IMAGE']*kr,
+                    height=row['B_IMAGE']*kr,
                     angle=row['THETA_IMAGE'],
-                    linewidth=2, fill=False, )
+                    linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
@@ -143,11 +147,15 @@ def plot_sew_cat(dst_trans, sew_out_trans,
 
 def process_raw(rawfile, kernel_w = 3,
                 DETECT_MINAREA = 30, THRESH = 5,
-                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE", "THETA_IMAGE"],
+                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE", "THETA_IMAGE","KRON_RADIUS",
+                              "SPREAD_MODEL", "ERRA_IMAGE", "ERRB_IMAGE", "ERRTHETA_IMAGE", "AWIN_IMAGE", "BWIN_IMAGE", "THETAWIN_IMAGE",
+                              "ERRCXX_IMAGE", "ERRCYY_IMAGE", "ERRX2_IMAGE", "ERRY2_IMAGE"],
+                clean=True, #this will delete sources with flag >= 16
                 cropxs=(1350, 1800), cropys=(1250, 800),
                 savecatalog_name=None,
                 savefits_name=None, overwrite_fits=True,
                 saveplot_name=None):
+    from astropy.table import Column
 
     im_raw = read_raw(rawfile)
 
@@ -172,19 +180,39 @@ def process_raw(rawfile, kernel_w = 3,
         exit(0)
 
     im2fits(median, savefits_name, overwrite=overwrite_fits)
+    config = {"DETECT_MINAREA": DETECT_MINAREA,
+              "PHOT_APERTURES": "AUTO",
+              "BACK_SIZE": 128,
+              "PHOT_AUTOPARAMS": "2.5, 3.5",
+              #"CHECKIMAGE_TYPE": "MODELS, OBJECTS, APERTURES",
+              #"CHECKIMAGE_NAME": "model.fits,obj.fits,aper.fits",
+              # "CHECKIMAGE_TYPE": "MODELS, FILTERED, -MODELS, -BACKGROUND, OBJECTS, APERTURES",
+              # "CHECKIMAGE_NAME": "prof.fits,filt.fits,subprof.fits,orig.fits,obj.fits,aper.fits",
+              "BACK_FILTERSIZE": 3,
+              "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH,
+              "DEBLEND_MINCONT":0.005,
+              }
 
+    print("Config for sextractor: {}".format(config))
     sew = sewpy.SEW(params=sewpy_params,
-                    config={"DETECT_MINAREA": DETECT_MINAREA,
-                            "BACK_SIZE":128 ,
-                            "BACK_FILTERSIZE":3,
-                            "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH,
-                            }
+                    config=config
                     )
 
     sew_out = sew(savefits_name)
     sew_out['table'].sort('FLUX_ISO')
     sew_out['table'].reverse()
+
+    sew_out['table']['FLUX_AREA'] = np.pi * sew_out['table']['KRON_RADIUS'] * sew_out['table']['KRON_RADIUS'] * sew_out['table']['A_IMAGE'] * sew_out['table']['A_IMAGE']
+    if clean:
+        sew_out['table'] = sew_out['table'][sew_out['table']['FLAGS'] <= 16]
+        sew_out['table'] = sew_out['table'][ (sew_out['table']['FLUX_ISO'] / sew_out['table']['FLUX_AREA'] ) > 0.3]
     n_sources = len(sew_out['table'])
+
+    #sew_out['table']['ID'] = range(n_sources)
+    ID_ = Column(range(n_sources), name='ID')
+    sew_out['table'].add_column(ID_, index=0)
+    sew_out['table'].add_index('ID')
+    #cat1.to_csv("test.csv", index=True, index_label="ID", sep=" ", float_format="%3g")
 
     print("Found {} sources in file {}".format(n_sources, rawfile))
 
@@ -197,6 +225,121 @@ def process_raw(rawfile, kernel_w = 3,
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
     return sew_out['table'], median
 
+
+def process_raws_diff(rawfile1, rawfile2, kernel_w = 3,
+                DETECT_MINAREA = 30, THRESH = 5,
+                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE", "THETA_IMAGE","KRON_RADIUS"],
+                cropxs=(1350, 1800), cropys=(1250, 800),
+                savecatalog_name1=None,
+                savefits_name1=None, overwrite_fits=True,
+                saveplot_name1=None,
+                savecatalog_name2=None,
+                savefits_name2=None,
+                saveplot_name2=None
+                      ):
+
+    im_raw1 = read_raw(rawfile1)
+    im_raw2 = read_raw(rawfile2)
+
+    if has_cv2:
+        median1 = cv2.medianBlur(im_raw1, kernel_w)
+        median2 = cv2.medianBlur(im_raw2, kernel_w)
+    else:
+        print("+++ System doesn't have opencv installed, using noisy raw image without median blurring +++")
+        median1 = im_raw1
+        median2 = im_raw2
+
+    im_std1 = np.std(median1)
+    print("Standard deviation of the image 1 is {:.2f}".format(im_std1))
+    im_std2 = np.std(median2)
+    print("Standard deviation of the image 2 is {:.2f}".format(im_std2))
+
+    # plt.xlim(1050, 2592)
+    # plt.ylim(1850,250)
+    # plt.imshow(median_screen[250:1850, 1050:2592], cmap='gray')
+    max_pixel_crop1 = np.max(median1[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    print("Brightest pixel in the zoomed area in im 1 reaches {}".format(max_pixel_crop1))
+    max_pixel_crop2 = np.max(median2[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    print("Brightest pixel in the zoomed area in im 2 reaches {}".format(max_pixel_crop2))
+
+    if savefits_name1 is None:
+        dt_match1 = get_datetime_rawname(rawfile1)
+        dt_match2 = get_datetime_rawname(rawfile2)
+        #for diff 12
+        savefits_name1 = "im_"+dt_match2+"-"+dt_match1+"_diff12.fits"
+    elif savefits_name1[-4:] != ("fits" or "fit"):
+        print("Please provide a filename with fits or fit extension")
+        exit(0)
+    if savefits_name2 is None:
+        dt_match1 = get_datetime_rawname(rawfile1)
+        dt_match2 = get_datetime_rawname(rawfile2)
+        savefits_name2 = "im_"+dt_match1+"-"+dt_match2+"_diff21.fits"
+        #savefits_name2 = rawfile1[:-4]+"-"+rawfile2[:-4]+"_diff21.fits"
+    elif savefits_name2[-4:] != ("fits" or "fit"):
+        print("Please provide a filename with fits or fit extension")
+        exit(0)
+
+    diff12 = median2 - median1
+    diff21 = median1 - median2
+
+    #diff12 = im_raw2 - im_raw1
+    #diff21 = im_raw1 - im_raw2
+
+    max_pixel_crop12 = np.max(diff12[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    print("Brightest pixel in the zoomed area in diff12 (2-1) reaches {}".format(max_pixel_crop12))
+    max_pixel_crop21 = np.max(diff21[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+    print("Brightest pixel in the zoomed area in diff21 (1-2) reaches {}".format(max_pixel_crop21))
+
+    #im2fits(median1, savefits_name1, overwrite=overwrite_fits)
+    #im2fits(median2, savefits_name2, overwrite=overwrite_fits)
+    im2fits(diff12, savefits_name1, overwrite=overwrite_fits)
+    im2fits(diff21, savefits_name2, overwrite=overwrite_fits)
+
+    sew12 = sewpy.SEW(params=sewpy_params,
+                    config={"DETECT_MINAREA": DETECT_MINAREA,
+                            "BACK_SIZE":128 ,
+                            "BACK_FILTERSIZE":3,
+                            "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH,
+                            }
+                    )
+    sew21 = sewpy.SEW(params=sewpy_params,
+                      config={"DETECT_MINAREA": DETECT_MINAREA,
+                              "BACK_SIZE": 128,
+                              "BACK_FILTERSIZE": 3,
+                              "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH,
+                              }
+                      )
+    sew_out12 = sew12(savefits_name1)
+    sew_out12['table'].sort('FLUX_ISO')
+    sew_out12['table'].reverse()
+    n_sources12 = len(sew_out12['table'])
+
+    print("Found {} sources in diff image 2 - 1 {} - {}".format(n_sources12, rawfile2, rawfile1))
+
+    sew_out21 = sew21(savefits_name2)
+    sew_out21['table'].sort('FLUX_ISO')
+    sew_out21['table'].reverse()
+    n_sources21 = len(sew_out12['table'])
+
+    print("Found {} sources in diff image 1 - 2 {} - {}".format(n_sources21, rawfile1, rawfile2))
+
+    plot_sew_cat(diff12, sew_out12,
+                 outfile=saveplot_name1,
+                 xlim=cropxs,
+                 ylim=cropys, vmax=max_pixel_crop12)
+    if savecatalog_name1 is not None:
+        from astropy.io import ascii
+        ascii.write(sew_out12['table'], savecatalog_name1, overwrite=True)
+
+    plot_sew_cat(diff21, sew_out21,
+                 outfile=saveplot_name2,
+                 xlim=cropxs,
+                 ylim=cropys, vmax=max_pixel_crop21)
+    if savecatalog_name2 is not None:
+        from astropy.io import ascii
+        ascii.write(sew_out21['table'], savecatalog_name2, overwrite=True)
+
+    return sew_out12['table'], diff12, sew_out21['table'], diff21
 
 
 def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
@@ -233,6 +376,8 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
         x2_ = row['X_IMAGE']
         y2_ = row['Y_IMAGE']
         f2_ = row['FLUX_ISO']
+        th2_ = row['THETA_IMAGE']
+        dth2_ = row['ERRTHETA_IMAGE']
         xy2_ = np.array([x2_, y2_])
         i2+=1
         i1 = -1
@@ -240,18 +385,22 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
             i1+=1
             x1_ = row1['X_IMAGE']
             y1_ = row1['Y_IMAGE']
+            th1_ = row1['THETA_IMAGE']
+            dth1_ = row1['ERRTHETA_IMAGE']
             f1_ = row1['FLUX_ISO']
             xy1_ = np.array([x1_, y1_])
             dist_ = np.linalg.norm(xy1_-xy2_)
-            if dist_ <= min_dist:
+            if dist_ <= min_dist and (np.abs(th2_ - th1_) < 5*np.max(np.abs([dth1_, dth2_])) or
+                                          ((row['A_IMAGE']/row['B_IMAGE'])<2 and np.abs(row['A_IMAGE']-row1['A_IMAGE'])/row1['A_IMAGE'] <= 0.2 )  ):
                 #xy_common.append((xy1_+xy2_)/2.)
                 commond_ind1.append(i1)
                 commond_ind2.append(i2)
+                kr = row['KRON_RADIUS']
                 e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]),
-                            width=row['A_IMAGE'],
-                            height=row['B_IMAGE'],
+                            width=row['A_IMAGE']*kr,
+                            height=row['B_IMAGE']*kr,
                             angle=row['THETA_IMAGE'],
-                            linewidth=2, fill=False,)
+                            linewidth=1, fill=False, alpha=0.9)
                 ax.add_artist(e)
                 e.set_clip_box(ax.bbox)
                 e.set_alpha(0.8)
@@ -295,12 +444,12 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                 diffcat2_io.write("\n")
 
             #xy_diff.append((xy1_+xy2_)/2.)
-
+            kr = row1['KRON_RADIUS']
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                            width=row1['A_IMAGE'],
-                            height=row1['B_IMAGE'],
+                            width=row1['A_IMAGE']*kr,
+                            height=row1['B_IMAGE']*kr,
                             angle=row1['THETA_IMAGE'],
-                            linewidth=2, fill=False,)
+                        linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
@@ -346,11 +495,12 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
 
             dist_ = np.linalg.norm(xy1_-xy2_)
             if i1 in commond_ind1:
+                kr = row1['KRON_RADIUS']
                 e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                            width=row1['A_IMAGE'],
-                            height=row1['B_IMAGE'],
+                            width=row1['A_IMAGE']*kr,
+                            height=row1['B_IMAGE']*kr,
                             angle=row1['THETA_IMAGE'],
-                            linewidth=2, fill=False,)
+                            linewidth=1, fill=False, alpha=0.9)
                 ax.add_artist(e)
                 e.set_clip_box(ax.bbox)
                 e.set_alpha(0.8)
@@ -376,11 +526,12 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                     diffcat1_io.write(str(row1[c_]))
                     diffcat1_io.write(" ")
                 diffcat1_io.write("\n")
+            kr = row1['KRON_RADIUS']
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                            width=row1['A_IMAGE'],
-                            height=row1['B_IMAGE'],
+                            width=row1['A_IMAGE']*kr,
+                            height=row1['B_IMAGE']*kr,
                             angle=row1['THETA_IMAGE'],
-                            linewidth=2, fill=False,)
+                        linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
@@ -456,34 +607,38 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
                 io_.write(str(row1[c_]))
                 io_.write(" ")
             io_.write("\n")
+        kr = row1['KRON_RADIUS']
         e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    width=row1['A_IMAGE'],
-                    height=row1['B_IMAGE'],
+                    width=row1['A_IMAGE']*kr,
+                    height=row1['B_IMAGE']*kr,
                     angle=row1['THETA_IMAGE'],
-                    linewidth=2, fill=False, )
+                    linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('g')
-        ax.annotate(str(ind1), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
+        #ax.annotate(str(ind1), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+        ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+                                #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
                     xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                     color='g', alpha=0.8,
                     arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
                     )
     else:
         for i, row1 in cat1.iterrows():
+            kr = row1['KRON_RADIUS']
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        width=row1['A_IMAGE'],
-                        height=row1['B_IMAGE'],
+                        width=row1['A_IMAGE']*kr,
+                        height=row1['B_IMAGE']*kr,
                         angle=row1['THETA_IMAGE'],
-                        linewidth=2, fill=False, )
+                        linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('g')
-            ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
+            #ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+            ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+                                    #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
                         xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                         color='g', alpha=0.8,
                         arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
@@ -528,17 +683,18 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
                 io_.write(str(row1[c_]))
                 io_.write(" ")
             io_.write("\n")
-
+        kr = row1['KRON_RADIUS']
         e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    width=row1['A_IMAGE'],
-                    height=row1['B_IMAGE'],
+                    width=row1['A_IMAGE']*kr,
+                    height=row1['B_IMAGE']*kr,
                     angle=row1['THETA_IMAGE'],
-                    linewidth=2, fill=False, )
+                    linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('y')
-        ax.annotate(str(ind2), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+        #ax.annotate(str(ind2), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+        ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
                     #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), # for orig lens
                     xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                     color='y',alpha=0.8,
@@ -546,16 +702,18 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
                     )
     else:
         for i, row1 in cat2.iterrows():
+            kr = row1['KRON_RADIUS']
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        width=row1['A_IMAGE'],
-                        height=row1['B_IMAGE'],
+                        width=row1['A_IMAGE']*kr,
+                        height=row1['B_IMAGE']*kr,
                         angle=row1['THETA_IMAGE'],
-                        linewidth=2, fill=False, )
+                        linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('y')
-            ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+            #ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+            ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
                         #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), # for orig lens
                         xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                         color='y', alpha=0.8,
@@ -697,6 +855,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--nozoom', action='store_true', help="Do not zoom/crop the image. ")
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-d', '--diff', dest="diff", action='store_true', help="Turn on image differencing mode. ")
 
     args = parser.parse_args()
 
@@ -770,36 +929,95 @@ if __name__ == '__main__':
     if args.gifname is not None:
         gifname = os.path.join(args.datadir, args.gifname)
 
-    sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
-                DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
-                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE",
-                              "THETA_IMAGE"],
-                cropxs=cropxs, cropys=cropys,
-                savefits_name=savefits_name1, overwrite_fits=True,
-                saveplot_name=None, savecatalog_name=savecatalog_name1
-                                          )
+    sewpy_params = ["X_IMAGE", "Y_IMAGE",
+                    "FLUX_ISO", "FLUX_RADIUS",
+                    "FLAGS", "KRON_RADIUS", "A_IMAGE",
+                    "B_IMAGE", "THETA_IMAGE",
+                    "SPREAD_MODEL", "ERRA_IMAGE",
+                    "ERRB_IMAGE",
+                    "ERRTHETA_IMAGE",]
+                    #"AWIN_IMAGE", "BWIN_IMAGE",
+                    #"THETAWIN_IMAGE",
+                    #"ERRCXX_IMAGE",
+                    #"ERRCYY_IMAGE",
+                    #"ERRX2_IMAGE", "ERRY2_IMAGE"]
 
-    sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w,
-                DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
-                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE",
-                              "THETA_IMAGE"],
-                cropxs=cropxs, cropys=cropys,
-                savefits_name=savefits_name2, overwrite_fits=True,
-                saveplot_name=None, savecatalog_name=savecatalog_name2
-                                          )
+    if args.diff:
+        sew_out_table12, diff12, sew_out_table21, diff21 = process_raws_diff(args.rawfile1, args.rawfile2,
+                                                                             kernel_w=args.kernel_w,
+                                                                             DETECT_MINAREA=args.DETECT_MINAREA,
+                                                                             THRESH=args.THRESH,
+                                                                             cropxs=cropxs, cropys=cropys,
+                          #sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE",
+                          #              "THETA_IMAGE"],
+                          sewpy_params=["X_IMAGE", "Y_IMAGE",
+                                        "FLUX_ISO", "FLUX_RADIUS",
+                                        "FLAGS", "A_IMAGE",
+                                        "B_IMAGE", "THETA_IMAGE",
+                                        "KRON_RADIUS",
+                                        "SPREAD_MODEL", "ERRA_IMAGE",
+                                        "ERRB_IMAGE",
+                                        "ERRTHETA_IMAGE",
+                                        "AWIN_IMAGE", "BWIN_IMAGE",
+                                        "THETAWIN_IMAGE",
+                                        "ERRCXX_IMAGE",
+                                        "ERRCYY_IMAGE",
+                                        "ERRX2_IMAGE", "ERRY2_IMAGE"],
+                          savecatalog_name1=None,
+                          savefits_name1=None, overwrite_fits=True,
+                          saveplot_name1=None,
+                          savecatalog_name2=None,
+                          savefits_name2=None,
+                          saveplot_name2=None
+                          )
+        """
+        naive_comparison(sew_out_table12, sew_out_table21, diff12, diff21,
+                         min_dist=args.min_dist,
+                         diffcat1=diffcatalog_name1, diffcat2=diffcatalog_name2,
+                         outfile1=saveplot_name1, outfile2=saveplot_name2,
+                         cropxs=cropxs, cropys=cropys,
+                         verbose=args.verbose
+                         )
 
-    naive_comparison(sew_out_table1, sew_out_table2, im_med1, im_med2,
-                     min_dist=args.min_dist,
-                     diffcat1=diffcatalog_name1, diffcat2=diffcatalog_name2,
-                     outfile1=saveplot_name1, outfile2=saveplot_name2,
-                     cropxs=cropxs, cropys=cropys,
-                     verbose=args.verbose
-                     )
+        plot_diff_labelled(args.rawfile1, args.rawfile2, diffcatalog_name1, diffcatalog_name2,
+                           ind1=None, ind2=None,
+                           motion_outfile_prefix=motion_outfile_prefix,
+                           outfile1=diffplot_name1, outfile2=diffplot_name2,
+                           cropxs=cropxs, cropys=cropys)
+        """
+    else:
+        sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
+                    DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                    #sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE",
+                    #              "THETA_IMAGE"],
+                    sewpy_params=sewpy_params,
+                    cropxs=cropxs, cropys=cropys,
+                    savefits_name=savefits_name1, overwrite_fits=True,
+                    saveplot_name=None, savecatalog_name=savecatalog_name1
+                                              )
 
-    plot_diff_labelled(args.rawfile1, args.rawfile2, diffcatalog_name1, diffcatalog_name2,
-                       ind1=None, ind2=None,
-                       motion_outfile_prefix=motion_outfile_prefix,
-                       outfile1=diffplot_name1, outfile2=diffplot_name2,
-                       cropxs=cropxs, cropys=cropys)
+        sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w,
+                    DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                    #sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE",
+                    #              "THETA_IMAGE"],
+                    sewpy_params=sewpy_params,
+                    cropxs=cropxs, cropys=cropys,
+                    savefits_name=savefits_name2, overwrite_fits=True,
+                    saveplot_name=None, savecatalog_name=savecatalog_name2
+                                              )
+
+        naive_comparison(sew_out_table1, sew_out_table2, im_med1, im_med2,
+                         min_dist=args.min_dist,
+                         diffcat1=diffcatalog_name1, diffcat2=diffcatalog_name2,
+                         outfile1=saveplot_name1, outfile2=saveplot_name2,
+                         cropxs=cropxs, cropys=cropys,
+                         verbose=args.verbose
+                         )
+
+        plot_diff_labelled(args.rawfile1, args.rawfile2, diffcatalog_name1, diffcatalog_name2,
+                           ind1=None, ind2=None,
+                           motion_outfile_prefix=motion_outfile_prefix,
+                           outfile1=diffplot_name1, outfile2=diffplot_name2,
+                           cropxs=cropxs, cropys=cropys)
 
     grid2gif(diffplot_name1, diffplot_name2, gifname)
