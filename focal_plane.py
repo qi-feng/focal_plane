@@ -114,15 +114,36 @@ def plot_sew_cat(dst_trans, sew_out_trans,
         if brightestN > 0 and i > brightestN:
             break
         # print(row)
+
+
+        kr = row['KRON_RADIUS']
         e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]),
-                    width=row['A_IMAGE'],
-                    height=row['B_IMAGE'],
+                    width=row['A_IMAGE']*kr,
+                    height=row['B_IMAGE']*kr,
                     angle=row['THETA_IMAGE'],
-                    linewidth=2, fill=False, )
-        ax.add_artist(e)
+                    linewidth=1, fill=False, alpha=0.9)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('r')
+        ax.add_artist(e)
+
+        if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row['Y_IMAGE'] <= 1250:
+            #print("Yo")
+            #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
+            ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
+                        xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
+                    #xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
+                    color='c', alpha=0.8,
+                    arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
+                                    alpha=0.7),
+                    )
+            e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]),
+                        width=row['A_IMAGE'] * kr,
+                        height=row['B_IMAGE'] * kr,
+                        angle=row['THETA_IMAGE'],
+                        linewidth=1, fill=False, alpha=0.9)
+            ax.add_artist(e)
+            e.set_color('c')
         # e.set_facecolor('r')
 
     # plt.xlim(1350, 1800)
@@ -135,6 +156,8 @@ def plot_sew_cat(dst_trans, sew_out_trans,
         plt.ylim(ylim)
         zoom = True
 
+    plt.tight_layout()
+
     if outfile is not None:
         fig.savefig(outfile)
     if show:
@@ -143,11 +166,13 @@ def plot_sew_cat(dst_trans, sew_out_trans,
 
 def process_raw(rawfile, kernel_w = 3,
                 DETECT_MINAREA = 30, THRESH = 5,
-                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE", "THETA_IMAGE"],
+                clean=True,
+                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "KRON_RADIUS", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE", "THETA_IMAGE"],
                 cropxs=(1350, 1800), cropys=(1250, 800),
                 savecatalog_name=None,
                 savefits_name=None, overwrite_fits=True,
                 saveplot_name=None):
+    from astropy.table import Column
 
     im_raw = read_raw(rawfile)
 
@@ -178,13 +203,22 @@ def process_raw(rawfile, kernel_w = 3,
                             "BACK_SIZE":128 ,
                             "BACK_FILTERSIZE":3,
                             "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH,
+                            "DEBLEND_MINCONT": 0.02,
                             }
                     )
 
     sew_out = sew(savefits_name)
     sew_out['table'].sort('FLUX_ISO')
     sew_out['table'].reverse()
+    sew_out['table']['FLUX_AREA'] = np.pi * sew_out['table']['KRON_RADIUS'] * sew_out['table']['KRON_RADIUS'] * \
+                                    sew_out['table']['A_IMAGE'] * sew_out['table']['A_IMAGE']
+    if clean:
+        sew_out['table'] = sew_out['table'][sew_out['table']['FLAGS'] <= 16]
+        #sew_out['table'] = sew_out['table'][(sew_out['table']['FLUX_ISO'] / sew_out['table']['FLUX_AREA']) > 0.3]
     n_sources = len(sew_out['table'])
+    ID_ = Column(range(n_sources), name='ID')
+    sew_out['table'].add_column(ID_, index=0)
+    sew_out['table'].add_index('ID')
 
     print("Found {} sources in file {}".format(n_sources, rawfile))
 
@@ -233,6 +267,7 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
         x2_ = row['X_IMAGE']
         y2_ = row['Y_IMAGE']
         f2_ = row['FLUX_ISO']
+        kr = row['KRON_RADIUS']
         xy2_ = np.array([x2_, y2_])
         i2+=1
         i1 = -1
@@ -248,14 +283,28 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                 commond_ind1.append(i1)
                 commond_ind2.append(i2)
                 e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]),
-                            width=row['A_IMAGE'],
-                            height=row['B_IMAGE'],
+                            width=row['A_IMAGE']*kr,
+                            height=row['B_IMAGE']*kr,
                             angle=row['THETA_IMAGE'],
-                            linewidth=2, fill=False,)
+                            linewidth=1, fill=False, alpha=0.9)
                 ax.add_artist(e)
                 e.set_clip_box(ax.bbox)
                 e.set_alpha(0.8)
                 e.set_color('r')
+
+                if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row[
+                    'Y_IMAGE'] <= 1250:
+                    #print("Yo")
+                    #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
+                    ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
+                                #xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])),  # for orig lens
+                                xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
+                                color='c', alpha=0.8,
+                                arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
+                                                width=0.5,
+                                                alpha=0.7),
+                                )
+
                 #e.set_facecolor('r')
                 try:
                     diff_ind1.remove(i1)
@@ -283,6 +332,7 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
             x1_ = row1['X_IMAGE']
             y1_ = row1['Y_IMAGE']
             f1_ = row1['FLUX_ISO']
+            kr1 = row1['KRON_RADIUS']
             xy1_ = np.array([x1_, y1_])
             if verbose:
                 print("==== New in catalog 2 ====")
@@ -297,15 +347,27 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
             #xy_diff.append((xy1_+xy2_)/2.)
 
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                            width=row1['A_IMAGE'],
-                            height=row1['B_IMAGE'],
+                            width=row1['A_IMAGE']*kr1,
+                            height=row1['B_IMAGE']*kr1,
                             angle=row1['THETA_IMAGE'],
-                            linewidth=2, fill=False,)
+                            linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('y')
 
+            if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
+                'Y_IMAGE'] <= 1250:
+                # print("Yo")
+                # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
+                ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8, xycoords='data',
+                            #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),  # for orig lens
+                            xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
+                            color='c', alpha=0.8,
+                            arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
+                                            width=0.5,
+                                            alpha=0.7),
+                            )
 
     #xy_common=np.array(xy_common)
     #xy_diff=np.array(xy_diff)
@@ -342,20 +404,34 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
             x1_ = row1['X_IMAGE']
             y1_ = row1['Y_IMAGE']
             f1_ = row1['FLUX_ISO']
+            kr1 = row1['KRON_RADIUS']
             xy1_ = np.array([x1_, y1_])
 
             dist_ = np.linalg.norm(xy1_-xy2_)
             if i1 in commond_ind1:
                 e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                            width=row1['A_IMAGE'],
-                            height=row1['B_IMAGE'],
+                            width=row1['A_IMAGE']*kr1,
+                            height=row1['B_IMAGE']*kr1,
                             angle=row1['THETA_IMAGE'],
-                            linewidth=2, fill=False,)
+                            linewidth=1, fill=False, alpha=0.9)
                 ax.add_artist(e)
                 e.set_clip_box(ax.bbox)
                 e.set_alpha(0.8)
                 e.set_color('r')
 
+                if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
+                    'Y_IMAGE'] <= 1250:
+                    # print("Yo")
+                    # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
+                    ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
+                                xycoords='data',
+                                #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),  # for orig lens
+                                xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
+                                color='c', alpha=0.8,
+                                arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
+                                                width=0.5,
+                                                alpha=0.7),
+                                )
 
     i1 = -1
     for row1 in sew_out_table1:
@@ -366,6 +442,7 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
             x1_ = row1['X_IMAGE']
             y1_ = row1['Y_IMAGE']
             f1_ = row1['FLUX_ISO']
+            kr1 = row1['KRON_RADIUS']
             xy1_ = np.array([x1_, y1_])
             #xy_diff.append((xy1_+xy2_)/2.)
             if verbose:
@@ -377,14 +454,26 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                     diffcat1_io.write(" ")
                 diffcat1_io.write("\n")
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                            width=row1['A_IMAGE'],
-                            height=row1['B_IMAGE'],
+                            width=row1['A_IMAGE']*kr1,
+                            height=row1['B_IMAGE']*kr1,
                             angle=row1['THETA_IMAGE'],
-                            linewidth=2, fill=False,)
+                            linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('g')
+            if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
+                'Y_IMAGE'] <= 1250:
+                # print("Yo")
+                # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
+                ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8, xycoords='data',
+                            #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),  # for orig lens
+                            xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
+                            color='c', alpha=0.8,
+                            arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
+                                            width=0.5,
+                                            alpha=0.7),
+                            )
 
     if cropxs is not None:
         plt.xlim(cropxs)
@@ -456,37 +545,41 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
                 io_.write(str(row1[c_]))
                 io_.write(" ")
             io_.write("\n")
+        kr = row1['KRON_RADIUS']
         e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    width=row1['A_IMAGE'],
-                    height=row1['B_IMAGE'],
+                    width=row1['A_IMAGE']*kr,
+                    height=row1['B_IMAGE']*kr,
                     angle=row1['THETA_IMAGE'],
-                    linewidth=2, fill=False, )
+                    linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('g')
-        ax.annotate(str(ind1), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+        #ax.annotate(str(ind1), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
+        ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
                     #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
                     xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                     color='g', alpha=0.8,
-                    arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
+                    arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=1, headlength=4, width=0.5, alpha=0.7),
                     )
     else:
         for i, row1 in cat1.iterrows():
+            kr = row1['KRON_RADIUS']
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        width=row1['A_IMAGE'],
-                        height=row1['B_IMAGE'],
+                        width=row1['A_IMAGE']*kr,
+                        height=row1['B_IMAGE']*kr,
                         angle=row1['THETA_IMAGE'],
-                        linewidth=2, fill=False, )
+                        linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('g')
-            ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+            #ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),size=8,
+            ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
                         #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
                         xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                         color='g', alpha=0.8,
-                        arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
+                        arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=1, headlength=4, width=0.5, alpha=0.7),
                         )
 
     if cropxs is not None:
@@ -528,38 +621,41 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
                 io_.write(str(row1[c_]))
                 io_.write(" ")
             io_.write("\n")
-
+        kr = row1['KRON_RADIUS']
         e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    width=row1['A_IMAGE'],
-                    height=row1['B_IMAGE'],
+                    width=row1['A_IMAGE']*kr,
+                    height=row1['B_IMAGE']*kr,
                     angle=row1['THETA_IMAGE'],
-                    linewidth=2, fill=False, )
+                    linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('y')
-        ax.annotate(str(ind2), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+        #ax.annotate(str(ind2), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
+        ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
                     #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), # for orig lens
                     xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                     color='y',alpha=0.8,
-                    arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
+                    arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=1, headlength=4, width=0.5, alpha=0.7),
                     )
     else:
         for i, row1 in cat2.iterrows():
+            kr = row1['KRON_RADIUS']
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        width=row1['A_IMAGE'],
-                        height=row1['B_IMAGE'],
+                        width=row1['A_IMAGE']*kr,
+                        height=row1['B_IMAGE']*kr,
                         angle=row1['THETA_IMAGE'],
-                        linewidth=2, fill=False, )
+                        linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('y')
-            ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+            #ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
+            ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
                         #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), # for orig lens
                         xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                         color='y', alpha=0.8,
-                        arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=2, headlength=4, width=1,alpha=0.7 ),
+                        arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=1, headlength=4, width=0.5,alpha=0.7 ),
                         )
 
     if cropxs is not None:
@@ -770,10 +866,11 @@ if __name__ == '__main__':
     if args.gifname is not None:
         gifname = os.path.join(args.datadir, args.gifname)
 
+    sew_params = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "KRON_RADIUS", "A_IMAGE", "B_IMAGE",
+                              "THETA_IMAGE"]
     sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                 DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
-                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE",
-                              "THETA_IMAGE"],
+                sewpy_params=sew_params,
                 cropxs=cropxs, cropys=cropys,
                 savefits_name=savefits_name1, overwrite_fits=True,
                 saveplot_name=None, savecatalog_name=savecatalog_name1
@@ -781,8 +878,7 @@ if __name__ == '__main__':
 
     sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w,
                 DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
-                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE",
-                              "THETA_IMAGE"],
+                sewpy_params=sew_params,
                 cropxs=cropxs, cropys=cropys,
                 savefits_name=savefits_name2, overwrite_fits=True,
                 saveplot_name=None, savecatalog_name=savecatalog_name2
