@@ -104,7 +104,11 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
     if ind1 is not None:
         motion_outfile = motion_outfile_prefix+"ind"+str(ind1)+"_ind"+str(ind2)+".txt"
 
-        row1 = cat1.loc[ind1]
+        #row1 = cat1.loc[ind1]
+        row1 = cat1.loc[cat1["ID"] == ind1]
+        #print(row1)
+        #print(row1['X_IMAGE'].values[0])
+
         with open(motion_outfile, 'w') as io_:
             io_.write("# center (hard coded): ({}, {})\n".format(center[0], center[1]))
             io_.write(" ".join(cat1.columns))
@@ -113,33 +117,35 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
                 io_.write(str(row1[c_]))
                 io_.write(" ")
             io_.write("\n")
-        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    width=row1['A_IMAGE'],
-                    height=row1['B_IMAGE'],
-                    angle=row1['THETA_IMAGE'],
+        kr = row1['KRON_RADIUS'].values[0]
+        e = Ellipse(xy=np.array([row1['X_IMAGE'].values[0], row1['Y_IMAGE'].values[0]]),
+                    width=row1['A_IMAGE'].values[0]*kr,
+                    height=row1['B_IMAGE'].values[0]*kr,
+                    angle=row1['THETA_IMAGE'].values[0],
                     linewidth=2, fill=False, )
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('g')
-        ax.annotate(str(ind1), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+        ax.annotate(int(row1['ID'].values[0]), xy=np.array([row1['X_IMAGE'].values[0], row1['Y_IMAGE'].values[0]]),
                     #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
-                    xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
+                    xytext=(np.array([row1['X_IMAGE'].values[0] - 80, row1['Y_IMAGE'].values[0] - 80])), # for new lens
                     color='g', alpha=0.8,
                     arrowprops=dict(facecolor='g', edgecolor='g', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
                     )
     else:
         for i, row1 in cat1.iterrows():
+            kr = row1['KRON_RADIUS']
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        width=row1['A_IMAGE'],
-                        height=row1['B_IMAGE'],
+                        width=row1['A_IMAGE']*kr,
+                        height=row1['B_IMAGE']*kr,
                         angle=row1['THETA_IMAGE'],
                         linewidth=2, fill=False, )
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('g')
-            ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+            ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
                         #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), #for orig lens
                         xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
                         color='g', alpha=0.8,
@@ -179,40 +185,42 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
 
     if ind2 is not None:
         motion_outfile = motion_outfile_prefix + "ind" + str(ind1) + "_ind" + str(ind2) + ".txt"
-        row1 = cat2.loc[ind2]
+        #row1 = cat2.loc[ind2]
+        row1 = cat2.loc[cat2['ID'] == ind2]
         with open(motion_outfile, 'a') as io_:
             for c_ in cat1.columns:
                 io_.write(str(row1[c_]))
                 io_.write(" ")
             io_.write("\n")
-
-        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                    width=row1['A_IMAGE'],
-                    height=row1['B_IMAGE'],
-                    angle=row1['THETA_IMAGE'],
+        kr = row1['KRON_RADIUS'].values[0]
+        e = Ellipse(xy=np.array([row1['X_IMAGE'].values[0], row1['Y_IMAGE'].values[0]]),
+                    width=row1['A_IMAGE'].values[0]*kr,
+                    height=row1['B_IMAGE'].values[0]*kr,
+                    angle=row1['THETA_IMAGE'].values[0],
                     linewidth=2, fill=False, )
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('y')
-        ax.annotate(str(ind2), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+        ax.annotate(int(row1['ID'].values[0]), xy=np.array([row1['X_IMAGE'].values[0], row1['Y_IMAGE'].values[0]]),
                     #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), # for orig lens
-                    xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])), # for new lens
+                    xytext=(np.array([row1['X_IMAGE'].values[0] - 80, row1['Y_IMAGE'].values[0] - 80])), # for new lens
                     color='y',alpha=0.8,
                     arrowprops=dict(facecolor='y', edgecolor='y', shrink=0.05, headwidth=2, headlength=4, width=1, alpha=0.7),
                     )
     else:
         for i, row1 in cat2.iterrows():
+            kr = row1['KRON_RADIUS']
             e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
-                        width=row1['A_IMAGE'],
-                        height=row1['B_IMAGE'],
+                        width=row1['A_IMAGE']*kr,
+                        height=row1['B_IMAGE']*kr,
                         angle=row1['THETA_IMAGE'],
                         linewidth=2, fill=False, )
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('y')
-            ax.annotate(str(i), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
+            ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]),
                         # xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])), # for orig lens
                         xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                         color='y', alpha=0.8,
@@ -243,12 +251,12 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
 
 
 def calc_dist(cat1, cat2, n1, n2, pix2mm = 0.48244):
-    dx = (cat2.loc[n2]['X_IMAGE'] - cat1.loc[n1]['X_IMAGE'])
-    dy = (cat2.loc[n2]['Y_IMAGE'] - cat1.loc[n1]['Y_IMAGE'])
+    dx = (cat2.loc[cat2["ID"] == n2]['X_IMAGE'].values[0] - cat1.loc[cat1["ID"] == n1]['X_IMAGE'].values[0])
+    dy = (cat2.loc[cat2["ID"] == n2]['Y_IMAGE'].values[0] - cat1.loc[cat1["ID"] == n1]['Y_IMAGE'].values[0])
     dist_pix = np.sqrt(dx**2 + dy**2)
     dist_mm = dist_pix * pix2mm
-    print("centroid coordinate before motion: x = {:.4f} pix y = {:.4f} pix".format(cat1.loc[n1]['X_IMAGE'], cat1.loc[n1]['Y_IMAGE']))
-    print("centroid coordinate after motion: x = {:.4f} pix y = {:.4f} pix".format(cat2.loc[n2]['X_IMAGE'], cat2.loc[n2]['Y_IMAGE']))
+    print("centroid coordinate before motion: x = {:.4f} pix y = {:.4f} pix".format(cat1.loc[cat1["ID"] == n1]['X_IMAGE'].values[0], cat1.loc[cat1["ID"] == n1]['Y_IMAGE'].values[0]))
+    print("centroid coordinate after motion: x = {:.4f} pix y = {:.4f} pix".format(cat2.loc[cat2["ID"] == n2]['X_IMAGE'].values[0], cat2.loc[cat2["ID"] == n2]['Y_IMAGE'].values[0]))
     print("centroid moved in x {:.4f} pix and in y {:.4f} pix".format(dx, dy))
     print("centroid moved by distance {:.4f} pix = {:.4f} mm".format(dist_pix, dist_mm))
 
