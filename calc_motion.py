@@ -57,8 +57,8 @@ pattern_file = "pattern_position_lens16mm.txt"
 
 
 def find_pattern_position(panel_id,
-                          center=np.array([1117.5, 1069.5]),
-                          radius_mm=np.array([8, 16]),
+                          center=np.array([1891.25, 1063.75]),
+                          radius_mm=np.array([20, 40]),
                           pixel_scale=0.241):
     panel_id = str(panel_id)
     radius = 0.
@@ -105,9 +105,9 @@ def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 12
        1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1211,
        1212, 1213, 1214, 1311, 1312, 1313, 1314, 1411, 1412, 1413, 1414,
        1111, 1112, 1113, 1114]),
-                               center=np.array([1583. , 1010.5]),
+                               center=np.array([1891.25, 1063.75]),
                                radius_mm = np.array([20, 40]),
-                               pixel_scale = 0.48244,
+                               pixel_scale = 0.241,
                                outfile="dummy_pattern_position.txt",
                                num_vvv = np.array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
        18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,  1,  2,

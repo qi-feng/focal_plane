@@ -131,8 +131,10 @@ def plot_sew_cat(dst_trans, sew_out_trans,
             #print("Yo")
             #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
             ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
-                        xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
-                    #xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
+                        #xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
+                        xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center[0],
+                                          row['Y_IMAGE'] + row['Y_IMAGE'] - center[1]])),  # for orig lens
+                        #xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                     color='c', alpha=0.8,
                     arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
                                     alpha=0.7),
@@ -297,8 +299,9 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                     #print("Yo")
                     #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                     ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
-                                #xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])),  # for orig lens
-                                xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
+                                xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center[0],
+                                                  row['Y_IMAGE'] + row['Y_IMAGE'] - center[1]])),  # for orig lens
+                                #xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                                 color='c', alpha=0.8,
                                 arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
                                                 width=0.5,
@@ -361,8 +364,8 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                 # print("Yo")
                 # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                 ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8, xycoords='data',
-                            #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),  # for orig lens
-                            xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
+                            xytext=(np.array([ row1['X_IMAGE'] + row1['X_IMAGE'] - center[0] , row1['Y_IMAGE'] + row1['Y_IMAGE'] - center[1] ])),  # for orig lens
+                            #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                             color='c', alpha=0.8,
                             arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
                                             width=0.5,
@@ -425,8 +428,10 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                     # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                     ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
                                 xycoords='data',
-                                #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),  # for orig lens
-                                xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
+                                xytext=(np.array([row1['X_IMAGE'] + row1['X_IMAGE'] - center[0],
+                                                  row1['Y_IMAGE'] + row1['Y_IMAGE'] - center[1]])),  # for orig lens
+
+                                #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                                 color='c', alpha=0.8,
                                 arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
                                                 width=0.5,
@@ -467,8 +472,8 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                 # print("Yo")
                 # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                 ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8, xycoords='data',
-                            #xytext=(np.array([row1['X_IMAGE'] - 40, row1['Y_IMAGE'] - 40])),  # for orig lens
-                            xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
+                            xytext=(np.array([ row1['X_IMAGE'] + row1['X_IMAGE'] - center[0] , row1['Y_IMAGE'] + row1['Y_IMAGE'] - center[1] ])),  # for orig lens
+                            #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                             color='c', alpha=0.8,
                             arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
                                             width=0.5,
