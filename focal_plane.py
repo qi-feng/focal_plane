@@ -52,7 +52,11 @@ center=np.array([1891.25, 1063.75])
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
 
-
+pattern_label_x_min = 1500
+pattern_label_x_max = 1900
+pattern_label_y_min = 1500
+pattern_label_y_max = 1850
+center_pattern = np.array([(pattern_label_x_min+pattern_label_x_max)/2., (pattern_label_y_min+pattern_label_y_max)/2.])
 
 def read_raw(f='./GAS_image.raw', cols=2592, rows=1944, outfile=None, show=False):
     fd = open(f, 'rb')
@@ -127,13 +131,16 @@ def plot_sew_cat(dst_trans, sew_out_trans,
         e.set_color('r')
         ax.add_artist(e)
 
-        if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row['Y_IMAGE'] <= 1250:
+        #if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row['Y_IMAGE'] <= 1250:
+        if row['X_IMAGE'] <= pattern_label_x_max and row['X_IMAGE'] >= pattern_label_x_min and row[
+            'Y_IMAGE'] >= pattern_label_y_min and row[
+            'Y_IMAGE'] <= pattern_label_y_max:
             #print("Yo")
             #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
             ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
                         #xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
-                        xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center[0],
-                                          row['Y_IMAGE'] + row['Y_IMAGE'] - center[1]])),  # for orig lens
+                        xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
+                                          row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
                         #xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                     color='c', alpha=0.8,
                     arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
@@ -265,6 +272,7 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
     fig.colorbar(ax_img)
 
     i2 = -1
+
     for row in sew_out_table2:
         x2_ = row['X_IMAGE']
         y2_ = row['Y_IMAGE']
@@ -294,13 +302,16 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                 e.set_alpha(0.8)
                 e.set_color('r')
 
-                if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row[
-                    'Y_IMAGE'] <= 1250:
+                #if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row[
+                #    'Y_IMAGE'] <= 1250:
+                if row['X_IMAGE'] <= pattern_label_x_max and row['X_IMAGE'] >= pattern_label_x_min and row[
+                    'Y_IMAGE'] >= pattern_label_y_min and row[
+                    'Y_IMAGE'] <= pattern_label_y_max:
                     #print("Yo")
                     #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                     ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
-                                xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center[0],
-                                                  row['Y_IMAGE'] + row['Y_IMAGE'] - center[1]])),  # for orig lens
+                                xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
+                                                  row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
                                 #xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                                 color='c', alpha=0.8,
                                 arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
@@ -359,12 +370,16 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
             e.set_alpha(0.8)
             e.set_color('y')
 
-            if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
-                'Y_IMAGE'] <= 1250:
+            #if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
+            #    'Y_IMAGE'] <= 1250:
+            if row1['X_IMAGE'] <= pattern_label_x_max and row1['X_IMAGE'] >= pattern_label_x_min and row1[
+                    'Y_IMAGE'] >= pattern_label_y_min and row1[
+                    'Y_IMAGE'] <= pattern_label_y_max:
                 # print("Yo")
                 # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                 ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8, xycoords='data',
-                            xytext=(np.array([ row1['X_IMAGE'] + row1['X_IMAGE'] - center[0] , row1['Y_IMAGE'] + row1['Y_IMAGE'] - center[1] ])),  # for orig lens
+                            xytext=(np.array([ row1['X_IMAGE'] + row1['X_IMAGE'] - center_pattern[0] ,
+                                               row1['Y_IMAGE'] + row1['Y_IMAGE'] - center_pattern[1] ])),  # for orig lens
                             #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                             color='c', alpha=0.8,
                             arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
@@ -422,14 +437,17 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                 e.set_alpha(0.8)
                 e.set_color('r')
 
-                if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
-                    'Y_IMAGE'] <= 1250:
+                #if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
+                #    'Y_IMAGE'] <= 1250:
+                if row1['X_IMAGE'] <= pattern_label_x_max and row1['X_IMAGE'] >= pattern_label_x_min and row1[
+                    'Y_IMAGE'] >= pattern_label_y_min and row1[
+                    'Y_IMAGE'] <= pattern_label_y_max:
                     # print("Yo")
                     # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                     ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
                                 xycoords='data',
-                                xytext=(np.array([row1['X_IMAGE'] + row1['X_IMAGE'] - center[0],
-                                                  row1['Y_IMAGE'] + row1['Y_IMAGE'] - center[1]])),  # for orig lens
+                                xytext=(np.array([row1['X_IMAGE'] + row1['X_IMAGE'] - center_pattern[0],
+                                                  row1['Y_IMAGE'] + row1['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
 
                                 #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                                 color='c', alpha=0.8,
@@ -467,12 +485,16 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('g')
-            if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
-                'Y_IMAGE'] <= 1250:
+            #if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
+            #    'Y_IMAGE'] <= 1250:
+            if row1['X_IMAGE'] <= pattern_label_x_max and row1['X_IMAGE'] >= pattern_label_x_min and row1[
+                'Y_IMAGE'] >= pattern_label_y_min and row1[
+                'Y_IMAGE'] <= pattern_label_y_max:
                 # print("Yo")
                 # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                 ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8, xycoords='data',
-                            xytext=(np.array([ row1['X_IMAGE'] + row1['X_IMAGE'] - center[0] , row1['Y_IMAGE'] + row1['Y_IMAGE'] - center[1] ])),  # for orig lens
+                            xytext=(np.array([ row1['X_IMAGE'] + row1['X_IMAGE'] - center_pattern[0] ,
+                                               row1['Y_IMAGE'] + row1['Y_IMAGE'] - center_pattern[1] ])),  # for orig lens
                             #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                             color='c', alpha=0.8,
                             arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
@@ -714,7 +736,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compare two raw images of stars at the focal plane')
 
     parser.add_argument('rawfile1',type=str)
-    parser.add_argument('rawfile2',type=str)
+    parser.add_argument('rawfile2',type=str, default=None, nargs='?')
 
     parser.add_argument('--DETECT_MINAREA', type=int, default=30, help="+++ Important parameter +++: "
                                                                        "Config param for sextractor, our default is 30.")
@@ -798,6 +820,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--nozoom', action='store_true', help="Do not zoom/crop the image. ")
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-c', '--clean', action='store_true', help="Whether or not to delete centroid with flag > 16.")
+    parser.add_argument('-s', '--single', action='store_true', help="Only analyze a single image.")
 
     args = parser.parse_args()
 
@@ -841,66 +865,81 @@ if __name__ == '__main__':
         diffcatalog_name1 = os.path.join(args.datadir,args.diffcatalog_name1)
         diffplot_name1 = os.path.join(args.datadir,args.diffplot_name1)
         motion_outfile_prefix = os.path.join(args.datadir,args.motion_outfile_prefix)
-    if args.save_filename_prefix2 is not None:
-        savefits_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_im2.fits')
-        savecatalog_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_cat2.txt')
-        saveplot_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_cat2.pdf')
-        diffcatalog_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + "_diff_cat2.txt")
-        diffplot_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + "_diff_cat2.pdf")
-        motion_outfile_prefix =  motion_outfile_prefix + "_" + args.save_filename_prefix2 + "_motion.txt"
-        gifname = motion_outfile_prefix + "_" + args.save_filename_prefix2 + "_anime.gif"
-    elif args.savefits_name2 is None or args.savecatalog_name2 is None or args.diffcatalog_name2 is None or args.diffplot_name2 is None:
-        dt_match = get_datetime_rawname(args.rawfile2)
-        print("Using default output file names with date {}".format(dt_match))
-        save_filename_prefix2 = os.path.join(args.datadir,"res_focal_plane_" + dt_match)
-        savefits_name2 = save_filename_prefix2 + '_im2.fits'
-        savecatalog_name2 = save_filename_prefix2 + '_cat2.txt'
-        saveplot_name2 = save_filename_prefix2 + '_cat2.pdf'
-        diffcatalog_name2 = save_filename_prefix2 + "_diff_cat2.txt"
-        diffplot_name2 = save_filename_prefix2 + "_diff_cat2.pdf"
-        gifname = motion_outfile_prefix + "_" + dt_match + "_anime.gif"
-        motion_outfile_prefix = motion_outfile_prefix + "_" + dt_match + "motion"
-    else:
-        savefits_name2 = os.path.join(args.datadir,args.savefits_name2)
-        savecatalog_name2 = os.path.join(args.datadir,args.savecatalog_name2)
-        saveplot_name2 = os.path.join(args.datadir,args.saveplot_name2)
-        diffcatalog_name2 = os.path.join(args.datadir,args.diffcatalog_name2)
-        diffplot_name2 = os.path.join(args.datadir,args.diffplot_name2)
-        motion_outfile_prefix = args.motion_outfile_prefix
-        gifname = os.path.join(args.datadir, args.gifname)
-    if args.gifname is not None:
-        gifname = os.path.join(args.datadir, args.gifname)
+    if args.rawfile2 is not None:
+        if args.save_filename_prefix2 is not None:
+            savefits_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_im2.fits')
+            savecatalog_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_cat2.txt')
+            saveplot_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + '_cat2.pdf')
+            diffcatalog_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + "_diff_cat2.txt")
+            diffplot_name2 = os.path.join(args.datadir,args.save_filename_prefix2 + "_diff_cat2.pdf")
+            motion_outfile_prefix =  motion_outfile_prefix + "_" + args.save_filename_prefix2 + "_motion.txt"
+            gifname = motion_outfile_prefix + "_" + args.save_filename_prefix2 + "_anime.gif"
+        elif args.savefits_name2 is None or args.savecatalog_name2 is None or args.diffcatalog_name2 is None or args.diffplot_name2 is None:
+            dt_match = get_datetime_rawname(args.rawfile2)
+            print("Using default output file names with date {}".format(dt_match))
+            save_filename_prefix2 = os.path.join(args.datadir,"res_focal_plane_" + dt_match)
+            savefits_name2 = save_filename_prefix2 + '_im2.fits'
+            savecatalog_name2 = save_filename_prefix2 + '_cat2.txt'
+            saveplot_name2 = save_filename_prefix2 + '_cat2.pdf'
+            diffcatalog_name2 = save_filename_prefix2 + "_diff_cat2.txt"
+            diffplot_name2 = save_filename_prefix2 + "_diff_cat2.pdf"
+            gifname = motion_outfile_prefix + "_" + dt_match + "_anime.gif"
+            motion_outfile_prefix = motion_outfile_prefix + "_" + dt_match + "motion"
+        else:
+            savefits_name2 = os.path.join(args.datadir,args.savefits_name2)
+            savecatalog_name2 = os.path.join(args.datadir,args.savecatalog_name2)
+            saveplot_name2 = os.path.join(args.datadir,args.saveplot_name2)
+            diffcatalog_name2 = os.path.join(args.datadir,args.diffcatalog_name2)
+            diffplot_name2 = os.path.join(args.datadir,args.diffplot_name2)
+            motion_outfile_prefix = args.motion_outfile_prefix
+            gifname = os.path.join(args.datadir, args.gifname)
+        if args.gifname is not None:
+            gifname = os.path.join(args.datadir, args.gifname)
 
     sew_params = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "KRON_RADIUS", "A_IMAGE", "B_IMAGE",
                               "THETA_IMAGE"]
-    sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
-                DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
-                sewpy_params=sew_params,
-                cropxs=cropxs, cropys=cropys,
-                savefits_name=savefits_name1, overwrite_fits=True,
-                saveplot_name=None, savecatalog_name=savecatalog_name1
-                                          )
 
-    sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w,
-                DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
-                sewpy_params=sew_params,
-                cropxs=cropxs, cropys=cropys,
-                savefits_name=savefits_name2, overwrite_fits=True,
-                saveplot_name=None, savecatalog_name=savecatalog_name2
-                                          )
+    if args.single or args.rawfile2 is None:
+        sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
+                                              DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                                              sewpy_params=sew_params,
+                                              cropxs=cropxs, cropys=cropys,
+                                              clean=args.clean,
+                                              savefits_name=savefits_name1, overwrite_fits=True,
+                                              saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
+                                              )
+        print("Processing single image. Done.")
+        exit(0)
+    else:
+        sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
+                                              DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                                              sewpy_params=sew_params,
+                                              cropxs=cropxs, cropys=cropys,
+                                              clean=args.clean,
+                                              savefits_name=savefits_name1, overwrite_fits=True,
+                                              saveplot_name=None, savecatalog_name=savecatalog_name1
+                                              )
+        sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w,
+                    DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                    sewpy_params=sew_params,
+                    cropxs=cropxs, cropys=cropys,
+                    clean=args.clean,
+                    savefits_name=savefits_name2, overwrite_fits=True,
+                    saveplot_name=None, savecatalog_name=savecatalog_name2
+                                              )
 
-    naive_comparison(sew_out_table1, sew_out_table2, im_med1, im_med2,
-                     min_dist=args.min_dist,
-                     diffcat1=diffcatalog_name1, diffcat2=diffcatalog_name2,
-                     outfile1=saveplot_name1, outfile2=saveplot_name2,
-                     cropxs=cropxs, cropys=cropys,
-                     verbose=args.verbose
-                     )
+        naive_comparison(sew_out_table1, sew_out_table2, im_med1, im_med2,
+                         min_dist=args.min_dist,
+                         diffcat1=diffcatalog_name1, diffcat2=diffcatalog_name2,
+                         outfile1=saveplot_name1, outfile2=saveplot_name2,
+                         cropxs=cropxs, cropys=cropys,
+                         verbose=args.verbose
+                         )
 
-    plot_diff_labelled(args.rawfile1, args.rawfile2, diffcatalog_name1, diffcatalog_name2,
-                       ind1=None, ind2=None,
-                       motion_outfile_prefix=motion_outfile_prefix,
-                       outfile1=diffplot_name1, outfile2=diffplot_name2,
-                       cropxs=cropxs, cropys=cropys)
+        plot_diff_labelled(args.rawfile1, args.rawfile2, diffcatalog_name1, diffcatalog_name2,
+                           ind1=None, ind2=None,
+                           motion_outfile_prefix=motion_outfile_prefix,
+                           outfile1=diffplot_name1, outfile2=diffplot_name2,
+                           cropxs=cropxs, cropys=cropys)
 
-    grid2gif(diffplot_name1, diffplot_name2, gifname)
+        grid2gif(diffplot_name1, diffplot_name2, gifname)

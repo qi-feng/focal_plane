@@ -85,7 +85,6 @@ def find_pattern_position(panel_id,
     elif not is_primary and not is_inner_ring:
         total_segment = 4.
     phase = (quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment
-    phase = (quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment
 
     if is_inner_ring:
         radius = radius_mm[0]
