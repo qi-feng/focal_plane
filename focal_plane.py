@@ -180,7 +180,10 @@ def im2fits(im, outfile, overwrite=True):
 
 def plot_sew_cat(dst_trans, sew_out_trans,
                  brightestN=0,
-                 xlim=None, ylim=None, outfile=None, show=False, vmax=None):
+                 xlim=None, ylim=None, outfile=None, show=False, vmax=None,
+                 pattern_label_x_min=0, pattern_label_x_max = 0,
+                 pattern_label_y_min = 0, pattern_label_y_max = 0
+):
     # plt.figure()
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
@@ -214,11 +217,15 @@ def plot_sew_cat(dst_trans, sew_out_trans,
         ax.add_artist(e)
 
         #if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row['Y_IMAGE'] <= 1250:
-        if row['X_IMAGE'] <= pattern_label_x_max and row['X_IMAGE'] >= pattern_label_x_min and row[
+        if pattern_label_x_max>0 and pattern_label_y_max>0 and \
+                row['X_IMAGE'] <= pattern_label_x_max and row['X_IMAGE'] >= pattern_label_x_min and row[
             'Y_IMAGE'] >= pattern_label_y_min and row[
             'Y_IMAGE'] <= pattern_label_y_max:
             #print("Yo")
             #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
+            center_pattern = np.array(
+                [(pattern_label_x_min + pattern_label_x_max) / 2., (pattern_label_y_min + pattern_label_y_max) / 2.])
+
             ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
                         #xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
                         xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
@@ -364,7 +371,8 @@ def process_raw(rawfile, kernel_w = 3,
                 cropxs=(1350, 1800), cropys=(1250, 800),
                 savecatalog_name=None,
                 savefits_name=None, overwrite_fits=True,
-                saveplot_name=None):
+                saveplot_name=None,
+                search_xs=[0,0], search_ys=[0,0]):
     from astropy.table import Column
 
     im_raw = read_raw(rawfile)
@@ -408,6 +416,20 @@ def process_raw(rawfile, kernel_w = 3,
     if clean:
         sew_out['table'] = sew_out['table'][sew_out['table']['FLAGS'] <= 16]
         #sew_out['table'] = sew_out['table'][(sew_out['table']['FLUX_ISO'] / sew_out['table']['FLUX_AREA']) > 0.3]
+
+    ymin=0
+    ymax=0
+    if search_xs[1]>0 and search_ys[1]>=0 and search_ys[0] != search_ys[1]:
+        if search_ys[1] < search_ys[0]:
+            ymin=search_ys[1]
+            ymax=search_ys[0]
+        else:
+            ymin=search_ys[0]
+            ymax=search_ys[1]
+        print("Only searching in X {} to {} and Y {} to {}".format(search_xs[0], search_xs[1], ymin, ymax))
+        sew_out['table'] = sew_out['table'][(sew_out['table']['X_IMAGE'] <= search_xs[1]) & (sew_out['table']['X_IMAGE'] >= search_xs[0]) & \
+                                            (sew_out['table']['Y_IMAGE'] <= ymax) &(sew_out['table']['X_IMAGE'] >= ymax)]
+
     n_sources = len(sew_out['table'])
     ID_ = Column(range(n_sources), name='ID')
     sew_out['table'].add_column(ID_, index=0)
@@ -418,7 +440,9 @@ def process_raw(rawfile, kernel_w = 3,
     plot_sew_cat(median, sew_out,
                  outfile=saveplot_name,
                  xlim=cropxs,
-                 ylim=cropys, vmax=max_pixel_crop)
+                 ylim=cropys, vmax=max_pixel_crop,
+                 pattern_label_x_min=search_xs[0], pattern_label_x_max=search_xs[1],
+                 pattern_label_y_min=ymin, pattern_label_y_max=ymax)
     if savecatalog_name is not None:
         from astropy.io import ascii
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
@@ -1118,6 +1142,8 @@ if __name__ == '__main__':
                                                                        "as part of a ring pattern. ")
 
     parser.add_argument('--ring_file', default=None, help="File name for ring pattern. ")
+    parser.add_argument('--search_xs', nargs = 2, type = float, default=[0, 0], help="Xmin and Xmax to list all centroid in a box. ")
+    parser.add_argument('--search_ys', nargs = 2, type = float, default=[0, 0], help="Ymin and Ymax to list all centroid in a box. ")
 
     args = parser.parse_args()
 
@@ -1211,6 +1237,7 @@ if __name__ == '__main__':
                                               clean=args.clean,
                                               savefits_name=savefits_name1, overwrite_fits=True,
                                               saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
+                                              search_xs=args.search_xs, search_ys=args.search_ys
                                               )
         print("Processing single image. Done.")
         if args.ring:
@@ -1233,16 +1260,18 @@ if __name__ == '__main__':
                                               cropxs=cropxs, cropys=cropys,
                                               clean=args.clean,
                                               savefits_name=savefits_name1, overwrite_fits=True,
-                                              saveplot_name=None, savecatalog_name=savecatalog_name1
+                                              saveplot_name=None, savecatalog_name=savecatalog_name1,
+                                              search_xs=args.search_xs, search_ys=args.search_ys
                                               )
         sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w,
-                    DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
-                    sewpy_params=sew_params,
-                    cropxs=cropxs, cropys=cropys,
-                    clean=args.clean,
-                    savefits_name=savefits_name2, overwrite_fits=True,
-                    saveplot_name=None, savecatalog_name=savecatalog_name2
-                                              )
+                                            DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                                            sewpy_params=sew_params,
+                                            cropxs=cropxs, cropys=cropys,
+                                            clean=args.clean,
+                                            savefits_name=savefits_name2, overwrite_fits=True,
+                                            saveplot_name=None, savecatalog_name=savecatalog_name2,
+                                            search_xs=args.search_xs, search_ys=args.search_ys
+                                            )
 
         naive_comparison(sew_out_table1, sew_out_table2, im_med1, im_med2,
                          min_dist=args.min_dist,
