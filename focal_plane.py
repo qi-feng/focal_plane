@@ -255,7 +255,8 @@ def plot_sew_cat(dst_trans, sew_out_trans,
         plt.show()
 
 
-def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.5):
+def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.5,
+                      weight=False):
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
         return
@@ -267,17 +268,28 @@ def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
     sew_slice = sewtable[ (sewtable['X_IMAGE'] <=  xhi) & (sewtable['X_IMAGE'] >=  xlo) & \
                           (sewtable['Y_IMAGE'] <=  yhi) & (sewtable['Y_IMAGE'] >=  ylo)  ]
 
-    centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
-    centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    if weight:
+        centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
+        centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    else:
+        centroidx = np.average(sew_slice['X_IMAGE'])
+        centroidy = np.average(sew_slice['Y_IMAGE'])
 
     r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
 
     #iterate
     sew_slice['R_pattern'] = np.sqrt(r2s)
+    #print(sew_slice)
     sew_slice = sew_slice[(sew_slice['R_pattern'] <= (radius*(1+rad_frac))) & (sew_slice['R_pattern'] >= (radius*(1-rad_frac)))]
+    #print("after")
+    #print(sew_slice)
 
-    centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
-    centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    if weight:
+        centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
+        centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    else:
+        centroidx = np.average(sew_slice['X_IMAGE'])
+        centroidy = np.average(sew_slice['Y_IMAGE'])
 
     r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
 
@@ -290,8 +302,8 @@ def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
 
     return r2mean, r2std, newc, newr, sew_slice
 
-def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2,
-                      n_iter=20, chooseinner=False, chooseouter=False):
+def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
+                      n_iter=50, chooseinner=False, chooseouter=False, tryouter=True):
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
         return
@@ -322,14 +334,21 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
             df_pattern = find_all_pattern_positions(center=clast,
                                radius_mm = np.array([rlast*0.241, rlast*2*0.241]),
                                pixel_scale = 0.241,
-                               outfile="dummy_pattern_position.txt",)
-            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast)<(rlast*0.01))]
+                               outfile=None,)
+            print("Found {} candidate centroid forming an inner ring".format(len(sew_slice)))
+            print("Center {}, radius {}".format(clast, rlast))
+            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast)<(rlast*rad_tol_frac))]
+            print("After applying a tolerance fraction cut = {}, {} panels left ".format(rad_tol_frac, df_slice.shape[0]))
+            if tryouter: 
+                df_outer_slice = df_pattern[(abs(df_pattern.Rpix - 2*rlast)<(2*rlast*rad_tol_frac))]
+                df_slice.append(df_outer_slice)
         elif abs(len(sew_slice)-16) > abs(len(sew_slice)-32) or chooseouter:
+            # not tested
             df_pattern = find_all_pattern_positions(center=clast,
                                                     radius_mm=np.array([rlast/2 * 0.241, rlast * 0.241]),
                                                     pixel_scale=0.241,
-                                                    outfile="dummy_pattern_position.txt", )
-            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast) < (rlast * 0.01))]
+                                                    outfile=None, )
+            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast) < (rlast * rad_tol_frac))]
     else:
         df_slice = None
 
@@ -479,6 +498,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                                 alpha=0.7),
                 )
 
+    plt.plot(df['Xpix'], df['Ypix'], 'm.', alpha=0.3)
 
     if cropxs is not None:
         plt.xlim(cropxs)
