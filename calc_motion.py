@@ -21,19 +21,18 @@ pix2mm = 0.241
 
 
 #these new corners mark the central module
-x_corners = np.array([1762,1761,1980,1982])
-y_corners = np.array([1175,954,952,1174])
-center=np.array([np.mean(x_corners), np.mean(y_corners)])
-center=np.array([1871.25, 1063.75])
+#x_corners = np.array([1762,1761,1980,1982])
+#y_corners = np.array([1175,954,952,1174])
+#center=np.array([np.mean(x_corners), np.mean(y_corners)])
+#center=np.array([1871.25, 1063.75])
 # center at ~-5 deg is 1871.25, 1063.75
 
-x_corners = np.array([1782,1781,2000,2002])
-y_corners = np.array([1175,954,952,1174])
+#x_corners = np.array([1782,1781,2000,2002])
+#y_corners = np.array([1175,954,952,1174])
 #center=np.array([np.mean(x_corners), np.mean(y_corners)])
-center=np.array([1891.25, 1063.75])
+#center=np.array([1891.25, 1063.75])
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
-
 
 
 # hard-coded matrices
@@ -55,16 +54,21 @@ pattern_file = "pattern_position_lens16mm.txt"
 #data_dir = './'
 
 
+def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
+                            cmod_xoffset = np.array([-109.25, -110.25, 108.75, 110.75]),
+                            cmod_yoffset = np.array([ 111.25, -109.75, -111.75,  110.25])):
+    x_corners = cmod_xoffset + center[0]
+    y_corners = cmod_yoffset + center[1]
+    return x_corners, y_corners
+
+
 
 def find_pattern_position(panel_id,
                           center=np.array([1891.25, 1063.75]),
                           radius_mm=np.array([20, 40]),
                           pixel_scale=0.241):
     panel_id = str(panel_id)
-    radius = 0.
-    phase = 0.
-    is_primary = False
-    is_inner_ring = False
+
     if list(panel_id)[0] == "1":
         is_primary = True
     else:

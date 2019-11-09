@@ -39,24 +39,106 @@ pix2mm = 0.241
 
 
 #these new corners mark the central module
-x_corners = np.array([1762,1761,1980,1982])
-y_corners = np.array([1175,954,952,1174])
-center=np.array([np.mean(x_corners), np.mean(y_corners)])
-center=np.array([1871.25, 1063.75])
+#x_corners = np.array([1762,1761,1980,1982])
+#y_corners = np.array([1175,954,952,1174])
+#center=np.array([np.mean(x_corners), np.mean(y_corners)])
+#center=np.array([1871.25, 1063.75])
 # center at ~-5 deg is 1871.25, 1063.75
 
-x_corners = np.array([1782,1781,2000,2002])
-y_corners = np.array([1175,954,952,1174])
+#x_corners = np.array([1782,1781,2000,2002])
+#y_corners = np.array([1175,954,952,1174])
 #center=np.array([np.mean(x_corners), np.mean(y_corners)])
-center=np.array([1891.25, 1063.75])
+#center=np.array([1891.25, 1063.75])
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
+
+
+def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
+                            cmod_xoffset = np.array([-109.25, -110.25, 108.75, 110.75]),
+                            cmod_yoffset = np.array([ 111.25, -109.75, -111.75,  110.25])):
+    x_corners = cmod_xoffset + center[0]
+    y_corners = cmod_yoffset + center[1]
+    return x_corners, y_corners
+
 
 pattern_label_x_min = 1500
 pattern_label_x_max = 1900
 pattern_label_y_min = 1500
 pattern_label_y_max = 1850
 center_pattern = np.array([(pattern_label_x_min+pattern_label_x_max)/2., (pattern_label_y_min+pattern_label_y_max)/2.])
+
+
+def find_pattern_position(panel_id,
+                          center=np.array([1891.25, 1063.75]),
+                          radius_mm=np.array([20, 40]),
+                          pixel_scale=0.241):
+    panel_id = str(panel_id)
+
+    if list(panel_id)[0] == "1":
+        is_primary = True
+    else:
+        is_primary = False
+    if list(panel_id)[2] == "1":
+        is_inner_ring = True
+    else:
+        is_inner_ring = False
+    quadrant = float(list(panel_id)[1])
+    segment = float(list(panel_id)[3])
+    total_segment = 0.
+    if is_primary and is_inner_ring:
+        total_segment = 4.
+    elif is_primary and not is_inner_ring:
+        total_segment = 8.
+    elif not is_primary and is_inner_ring:
+        total_segment = 2.
+    elif not is_primary and not is_inner_ring:
+        total_segment = 4.
+    phase = (quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment
+
+    if is_inner_ring:
+        radius = radius_mm[0]
+        radius_pix = radius / pixel_scale
+    else:
+        radius = radius_mm[1]
+        radius_pix = radius / pixel_scale
+    cx = center[0] - radius_pix * np.sin(phase)
+    cy = center[1] + radius_pix * np.cos(phase)
+
+    return cx, cy, radius_pix, phase
+
+
+def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323,
+       1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423, 1424, 1425, 1426,
+       1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1211,
+       1212, 1213, 1214, 1311, 1312, 1313, 1314, 1411, 1412, 1413, 1414,
+       1111, 1112, 1113, 1114]),
+                               center=np.array([1891.25, 1063.75]),
+                               radius_mm = np.array([20, 40]),
+                               pixel_scale = 0.241,
+                               outfile="dummy_pattern_position.txt",
+                               num_vvv = np.array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
+       18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,  1,  2,
+        3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16])
+                              ):
+    df_pattern = pd.DataFrame({'Panel':all_panels, '#': num_vvv})
+    df_pattern['Xpix'] = 0
+    df_pattern['Ypix'] = 0
+    df_pattern['Rpix'] = 0
+    df_pattern['Phase'] = 0
+    for i, row in df_pattern.iterrows():
+        x_, y_, r_pix_, phase_ = find_pattern_position(row['Panel'],
+                                       center=center,
+                              radius_mm = radius_mm,
+                              pixel_scale = pixel_scale)
+        df_pattern.loc[i, 'Xpix'] = x_
+        df_pattern.loc[i, 'Ypix'] = y_
+        df_pattern.loc[i, 'Rpix'] = r_pix_
+        df_pattern.loc[i, 'Phase'] = phase_
+
+    df_pattern = df_pattern[['Panel', '#', 'Xpix', 'Ypix', 'Rpix', 'Phase']]
+    df_pattern.to_csv(outfile, index=False, sep="\t")
+    return df_pattern
+
 
 def read_raw(f='./GAS_image.raw', cols=2592, rows=1944, outfile=None, show=False):
     fd = open(f, 'rb')
@@ -173,6 +255,89 @@ def plot_sew_cat(dst_trans, sew_out_trans,
         plt.show()
 
 
+def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.5):
+    if rad_frac>1 or rad_frac<0 or radius<0:
+        print("Params to find ring pattern is not sensible")
+        return
+    xlo = (pattern_center[0] - (1+rad_frac)*radius )
+    xhi = (pattern_center[0] + (1+rad_frac)*radius )
+    ylo = (pattern_center[1] - (1+rad_frac)*radius )
+    yhi = (pattern_center[1] + (1+rad_frac)*radius )
+
+    sew_slice = sewtable[ (sewtable['X_IMAGE'] <=  xhi) & (sewtable['X_IMAGE'] >=  xlo) & \
+                          (sewtable['Y_IMAGE'] <=  yhi) & (sewtable['Y_IMAGE'] >=  ylo)  ]
+
+    centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+
+    r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
+
+    #iterate
+    sew_slice['R_pattern'] = np.sqrt(r2s)
+    sew_slice = sew_slice[(sew_slice['R_pattern'] <= (radius*(1+rad_frac))) & (sew_slice['R_pattern'] >= (radius*(1-rad_frac)))]
+
+    centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+
+    r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
+
+
+    r2mean = np.mean(r2s)
+    r2std = np.std(r2s)
+
+    newc = np.array([centroidx, centroidy])
+    newr = np.sqrt(r2mean)
+
+    return r2mean, r2std, newc, newr, sew_slice
+
+def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2,
+                      n_iter=20, chooseinner=False, chooseouter=False):
+    if rad_frac>1 or rad_frac<0 or radius<0:
+        print("Params to find ring pattern is not sensible")
+        return
+    r2std_last = 1e9
+    clast = pattern_center
+    rlast = radius
+    good_ring = False
+    for i in range(n_iter):
+        r2mean, r2std, newc, newr, sew_slice = calc_ring_pattern(sewtable, pattern_center=clast,
+                                                      radius=rlast, rad_frac=rad_frac)
+        if r2std < r2std_last:
+            clast = newc
+            rlast = newr
+            r2std_last = r2std
+        else:
+            print("R Variance not decreasing anymore on the {}th iteration.".format(i))
+            print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
+            if r2std_last/len(sew_slice) < 400 and len(sew_slice)>4:
+                print("This seems to be a pretty good ring")
+                good_ring = True
+            else:
+                print("Crappy ring")
+            break
+
+    if good_ring:
+        if abs(len(sew_slice)-16) <= abs(len(sew_slice)-32) or chooseinner:
+            #guess this is inner ring
+            df_pattern = find_all_pattern_positions(center=clast,
+                               radius_mm = np.array([rlast*0.241, rlast*2*0.241]),
+                               pixel_scale = 0.241,
+                               outfile="dummy_pattern_position.txt",)
+            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast)<(rlast*0.01))]
+        elif abs(len(sew_slice)-16) > abs(len(sew_slice)-32) or chooseouter:
+            df_pattern = find_all_pattern_positions(center=clast,
+                                                    radius_mm=np.array([rlast/2 * 0.241, rlast * 0.241]),
+                                                    pixel_scale=0.241,
+                                                    outfile="dummy_pattern_position.txt", )
+            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast) < (rlast * 0.01))]
+    else:
+        df_slice = None
+
+    return clast, rlast, r2std_last, sew_slice, df_slice
+
+
+
+
 def process_raw(rawfile, kernel_w = 3,
                 DETECT_MINAREA = 30, THRESH = 5,
                 clean=True,
@@ -238,7 +403,103 @@ def process_raw(rawfile, kernel_w = 3,
     if savecatalog_name is not None:
         from astropy.io import ascii
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
+
     return sew_out['table'], median
+
+
+
+def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1063.75]),
+                 cropxs=(1050, 2592), cropys=(1850, 250),
+                 kernel_w = 3,
+                 save_catlog_name="temp_ring_search_cat.txt",
+                 save_for_vvv="temp_ring_vvv_XY_pix.txt",
+                 saveplot_name=None, show=False):
+    from astropy.table import Column
+    im_raw = read_raw(rawfile)
+    if has_cv2:
+        median = cv2.medianBlur(im_raw, kernel_w)
+    else:
+        print("+++ System doesn't have opencv installed, using noisy raw image without median blurring +++")
+        median = im_raw
+
+    max_pixel_crop = np.max(median[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+
+    n_sources = len(sewtable)
+    ID_ = Column(range(n_sources), name='Panel_ID_guess')
+    sewtable.add_column(ID_, index=0)
+    sewtable.add_index('Panel_ID_guess')
+    vvvID_ = Column(range(n_sources), name='#')
+    sewtable.add_column(vvvID_, index=0)
+    sewtable.add_index('#')
+
+    fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
+
+    ax_img = ax.imshow(median, vmax=max_pixel_crop, cmap='gray')
+    #else:
+    #ax_img = ax.imshow(dst_trans, cmap='gray')
+    fig.colorbar(ax_img)
+
+    # plt.plot(cat_test['X_IMAGE'], cat_test['Y_IMAGE'], color='r',  marker='o', ms=5, ls='')
+    # plt.scatter(sew_out_trans['table']['X_IMAGE'],
+    #            sew_out_trans['table']['Y_IMAGE'], s=40, facecolors='none', edgecolors='r')
+
+    i = 0
+
+    for row in sewtable:
+        i += 1
+        kr = row['KRON_RADIUS']
+        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]),
+                    width=row['A_IMAGE']*kr,
+                    height=row['B_IMAGE']*kr,
+                    angle=row['THETA_IMAGE'],
+                    linewidth=1, fill=False, alpha=0.9)
+        e.set_clip_box(ax.bbox)
+        e.set_alpha(0.8)
+        e.set_color('c')
+        ax.add_artist(e)
+
+        if df is not None:
+            df.loc[:, 'tmpdist2'] = (df['Xpix'] - row['X_IMAGE']) ** 2 + (df['Ypix'] - row['Y_IMAGE']) ** 2
+            pID = df.loc[df['tmpdist2'].idxmin(), 'Panel']
+            vvvID = df.loc[df['tmpdist2'].idxmin(), '#']
+            print("Guess this is panel {}".format(pID))
+            sewtable['Panel_ID_guess'][i-1] = pID
+            sewtable['#'][i-1] = vvvID
+        else:
+            pID = int(row['ID'])
+
+
+        ax.annotate(pID, xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
+                # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
+                xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
+                                  row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
+                # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
+                color='c', alpha=0.8,
+                arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
+                                alpha=0.7),
+                )
+
+
+    if cropxs is not None:
+        plt.xlim(cropxs)
+    if cropys is not None:
+        plt.ylim(cropys)
+
+    plt.tight_layout()
+
+    if saveplot_name is not None:
+        fig.savefig(saveplot_name)
+    if show:
+        plt.show()
+
+    from astropy.io import ascii
+    ascii.write(sew_slice.group_by('#'), save_catlog_name, overwrite=True)
+
+    df_vvv = sew_slice.to_pandas()
+    df_vvv = df_vvv[['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE']]
+    df_vvv.sort_values('#').to_csv(save_for_vvv, index=False)
+
+    return
 
 
 
@@ -246,8 +507,11 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                      min_dist=20,
                      outfile1=None, outfile2=None, verbose=False,
                      diffcat1="diff_cat1.txt", diffcat2="diff_cat2.txt",
-                     cropxs=(1350, 1800), cropys=(1250, 800),
+                     cropxs=(1050, 2592), cropys=(1410, 610),
+                     center=np.array([1891.25, 1063.75])
                      ):
+
+    x_corners, y_corners = get_central_mod_corners(center=center)
 
     #xy_common=[]
     diff_ind1 = range(len(sew_out_table1))
@@ -531,7 +795,11 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2,
                        ind1=None, ind2=None,
                        motion_outfile_prefix="motion_output",
                        outfile1="new_label1.pdf", outfile2="new_label2.pdf",
-                       cropxs=(1350, 1800), cropys=(1250, 800),):
+                       cropxs=(1350, 1800), cropys=(1250, 800),
+                       center = np.array([1891.25, 1063.75])
+    ):
+
+    x_corners, y_corners = get_central_mod_corners(center=center)
 
     #cat1 and cat2 are the * diff * cats
     im1 = read_raw(rawf1)
@@ -822,6 +1090,14 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-c', '--clean', action='store_true', help="Whether or not to delete centroid with flag > 16.")
     parser.add_argument('-s', '--single', action='store_true', help="Only analyze a single image.")
+    parser.add_argument('-r', '--ring', action='store_true', help="Try to find a ring.")
+    parser.add_argument('-C', '--center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate X_pix Y_pix. ")
+    parser.add_argument('-p', '--pattern_center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate for ring pattern X_pix Y_pix. ")
+    parser.add_argument('--ring_rad', type = float, default=32/pix2mm, help="Radius in pixels for ring pattern. ")
+    parser.add_argument('--ring_frac', type = float, default=0.3, help="Fraction (1-frac, 1+frac)*radius that you accept a centroid "
+                                                                       "as part of a ring pattern. ")
+
+    parser.add_argument('--ring_file', default=None, help="File name for ring pattern. ")
 
     args = parser.parse_args()
 
@@ -840,6 +1116,7 @@ if __name__ == '__main__':
             print("Okay, mission abort.")
             exit(0)
 
+    ring_file = None
 
     if args.save_filename_prefix1 is not None:
         savefits_name1 = os.path.join(args.datadir, args.save_filename_prefix1+'_im1.fits')
@@ -858,6 +1135,13 @@ if __name__ == '__main__':
         diffcatalog_name1 = save_filename_prefix1 + "_diff_cat1.txt"
         diffplot_name1 = save_filename_prefix1 + "_diff_cat1.pdf"
         motion_outfile_prefix = save_filename_prefix1
+        if args.ring_file is None:
+            ring_file = save_filename_prefix1 + "_ring_search_1.pdf"
+            ring_cat_file = save_filename_prefix1 + "_ring_search_1.txt"
+        else:
+            ring_file =  os.path.join(args.datadir, args.ring_file)
+            ring_cat_file = os.path.join(args.datadir, args.ring_file[:-4]+".txt")
+        vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.txt"
     else:
         savefits_name1 = os.path.join(args.datadir,args.savefits_name1)
         savecatalog_name1 = os.path.join(args.datadir,args.savecatalog_name1)
@@ -909,7 +1193,19 @@ if __name__ == '__main__':
                                               saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
                                               )
         print("Processing single image. Done.")
+        if args.ring:
+            clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1, pattern_center=args.pattern_center,
+                                                                    radius=args.ring_rad, rad_frac=args.ring_frac,
+                                                                    n_iter=20)
+            plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast,
+                         cropxs=cropxs, cropys=cropys,
+                         kernel_w=3,
+                         save_catlog_name=ring_cat_file,
+                         save_for_vvv=vvv_ring_file,
+                         saveplot_name=ring_file, show=False)
+
         exit(0)
+
     else:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                               DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
@@ -933,13 +1229,15 @@ if __name__ == '__main__':
                          diffcat1=diffcatalog_name1, diffcat2=diffcatalog_name2,
                          outfile1=saveplot_name1, outfile2=saveplot_name2,
                          cropxs=cropxs, cropys=cropys,
-                         verbose=args.verbose
+                         verbose=args.verbose,
+                         center=np.array(args.center)
                          )
 
         plot_diff_labelled(args.rawfile1, args.rawfile2, diffcatalog_name1, diffcatalog_name2,
                            ind1=None, ind2=None,
                            motion_outfile_prefix=motion_outfile_prefix,
                            outfile1=diffplot_name1, outfile2=diffplot_name2,
-                           cropxs=cropxs, cropys=cropys)
+                           cropxs=cropxs, cropys=cropys,
+                           center=np.array(args.center))
 
         grid2gif(diffplot_name1, diffplot_name2, gifname)
