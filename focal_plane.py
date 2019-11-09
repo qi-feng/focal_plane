@@ -455,7 +455,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                  cropxs=(1050, 2592), cropys=(1850, 250),
                  kernel_w = 3,
                  save_catlog_name="temp_ring_search_cat.txt",
-                 save_for_vvv="temp_ring_vvv_XY_pix.txt",
+                 save_for_vvv="temp_ring_vvv_XY_pix.csv",
                  saveplot_name=None, show=False):
     from astropy.table import Column
     im_raw = read_raw(rawfile)
@@ -1187,7 +1187,7 @@ if __name__ == '__main__':
         else:
             ring_file =  os.path.join(args.datadir, args.ring_file)
             ring_cat_file = os.path.join(args.datadir, args.ring_file[:-4]+".txt")
-        vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.txt"
+        vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
     else:
         savefits_name1 = os.path.join(args.datadir,args.savefits_name1)
         savecatalog_name1 = os.path.join(args.datadir,args.savecatalog_name1)
