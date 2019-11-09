@@ -30,7 +30,7 @@ pix2mm = 0.241
 #x_corners = np.array([1782,1781,2000,2002])
 #y_corners = np.array([1175,954,952,1174])
 #center=np.array([np.mean(x_corners), np.mean(y_corners)])
-#center=np.array([1891.25, 1063.75])
+center=np.array([1891.25, 1063.75])
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
 
