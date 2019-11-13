@@ -1184,6 +1184,7 @@ if __name__ == '__main__':
     parser.add_argument('-C', '--center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate X_pix Y_pix. ")
     parser.add_argument('-p', '--pattern_center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate for ring pattern X_pix Y_pix. ")
     parser.add_argument('--ring_rad', type = float, default=32/pix2mm, help="Radius in pixels for ring pattern. ")
+    parser.add_argument('--ring_tol', type = float, default=0.1, help=" ")
     parser.add_argument('--ring_frac', type = float, default=0.3, help="Fraction (1-frac, 1+frac)*radius that you accept a centroid "
                                                                        "as part of a ring pattern. ")
 
@@ -1289,7 +1290,7 @@ if __name__ == '__main__':
         if args.ring:
             clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1, pattern_center=args.pattern_center,
                                                                     radius=args.ring_rad, rad_frac=args.ring_frac,
-                                                                    n_iter=20)
+                                                                    n_iter=20, ring_tol=args.ring_tol)
             plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast,
                          cropxs=cropxs, cropys=cropys,
                          kernel_w=3,
