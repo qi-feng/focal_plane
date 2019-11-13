@@ -1290,7 +1290,7 @@ if __name__ == '__main__':
         if args.ring:
             clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1, pattern_center=args.pattern_center,
                                                                     radius=args.ring_rad, rad_frac=args.ring_frac,
-                                                                    n_iter=20, ring_tol=args.ring_tol)
+                                                                    n_iter=20, rad_tol_frac=args.ring_tol)
             plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast,
                          cropxs=cropxs, cropys=cropys,
                          kernel_w=3,
