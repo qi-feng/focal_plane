@@ -362,6 +362,50 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
     return clast, rlast, r2std_last, sew_slice, df_slice
 
 
+def find_single_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
+                      n_iter=50, ):
+    if rad_frac>1 or rad_frac<0 or radius<0:
+        print("Params to find ring pattern is not sensible")
+        return
+    r2std_last = 1e9
+    clast = pattern_center
+    rlast = radius
+    good_ring = False
+    for i in range(n_iter):
+        r2mean, r2std, newc, newr, sew_slice = calc_ring_pattern(sewtable, pattern_center=clast,
+                                                      radius=rlast, rad_frac=rad_frac)
+        if r2std < r2std_last:
+            clast = newc
+            rlast = newr
+            r2std_last = r2std
+        else:
+            print("R Variance not decreasing anymore on the {}th iteration.".format(i))
+            print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
+            if r2std_last/len(sew_slice) < 400 and len(sew_slice)>4:
+                print("This seems to be a pretty good ring")
+                good_ring = True
+            else:
+                print("Crappy ring")
+            break
+
+    if good_ring:
+            df_pattern = find_all_pattern_positions(center=clast,
+                               radius_mm = np.array([rlast*0.241, rlast*2*0.241]),
+                               pixel_scale = 0.241,
+                               outfile=None,)
+            print("Found {} candidate centroid forming an inner ring".format(len(sew_slice)))
+            print("Center {}, radius {}".format(clast, rlast))
+            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast)<(rlast*rad_tol_frac))]
+            print("After applying a tolerance fraction cut = {}, {} panels left ".format(rad_tol_frac, df_slice.shape[0]))
+            if tryouter:
+                df_outer_slice = df_pattern[(abs(df_pattern.Rpix - 2*rlast)<(2*rlast*rad_tol_frac))]
+                df_slice.append(df_outer_slice)
+    else:
+        df_slice = None
+
+    return clast, rlast, r2std_last, sew_slice, df_slice
+
+
 
 
 def process_raw(rawfile, kernel_w = 3,
@@ -508,6 +552,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
             print("Guess this is panel {}".format(pID))
             sewtable['Panel_ID_guess'][i-1] = pID
             sewtable['#'][i-1] = vvvID
+            plt.plot(df['Xpix'], df['Ypix'], 'm.', alpha=0.3)
         else:
             pID = int(row['ID'])
 
@@ -522,7 +567,6 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                                 alpha=0.7),
                 )
 
-    plt.plot(df['Xpix'], df['Ypix'], 'm.', alpha=0.3)
 
     if cropxs is not None:
         plt.xlim(cropxs)
@@ -539,9 +583,11 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
     from astropy.io import ascii
     ascii.write(sew_slice.group_by('#'), save_catlog_name, overwrite=True)
 
-    df_vvv = sew_slice.to_pandas()
-    df_vvv = df_vvv[['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE']]
-    df_vvv.sort_values('#').to_csv(save_for_vvv, index=False)
+    if df is not None:
+        # no crappy files for vvv
+        df_vvv = sew_slice.to_pandas()
+        df_vvv = df_vvv[['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE']]
+        df_vvv.sort_values('#').to_csv(save_for_vvv, index=False)
 
     return
 
