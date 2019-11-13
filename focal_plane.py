@@ -14,6 +14,8 @@ import numpy as np
 
 font = {'size': 14}
 import matplotlib
+#from sklearn import cluster
+from sklearn.cluster import KMeans
 
 matplotlib.rc('font', **font)
 
@@ -71,7 +73,10 @@ center_pattern = np.array([(pattern_label_x_min+pattern_label_x_max)/2., (patter
 def find_pattern_position(panel_id,
                           center=np.array([1891.25, 1063.75]),
                           radius_mm=np.array([20, 40]),
-                          pixel_scale=0.241):
+                          pixel_scale=0.241,
+                          phase_offset=0,
+                          ):
+    # in case of rx motion, we add a reference phase offset
     panel_id = str(panel_id)
 
     if list(panel_id)[0] == "1":
@@ -94,6 +99,8 @@ def find_pattern_position(panel_id,
     elif not is_primary and not is_inner_ring:
         total_segment = 4.
     phase = (quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment
+    #Here we rotate by phase offset
+    phase = phase + phase_offset
 
     if is_inner_ring:
         radius = radius_mm[0]
@@ -114,6 +121,7 @@ def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 12
        1111, 1112, 1113, 1114]),
                                center=np.array([1891.25, 1063.75]),
                                radius_mm = np.array([20, 40]),
+                               phase_offset = 0,
                                pixel_scale = 0.241,
                                outfile="dummy_pattern_position.txt",
                                num_vvv = np.array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
@@ -127,9 +135,10 @@ def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 12
     df_pattern['Phase'] = 0
     for i, row in df_pattern.iterrows():
         x_, y_, r_pix_, phase_ = find_pattern_position(row['Panel'],
-                                       center=center,
-                              radius_mm = radius_mm,
-                              pixel_scale = pixel_scale)
+                                                       center=center,
+                                                       radius_mm = radius_mm,
+                                                       phase_offset=phase_offset,
+                                                       pixel_scale = pixel_scale)
         df_pattern.loc[i, 'Xpix'] = x_
         df_pattern.loc[i, 'Ypix'] = y_
         df_pattern.loc[i, 'Rpix'] = r_pix_
@@ -263,24 +272,32 @@ def plot_sew_cat(dst_trans, sew_out_trans,
 
 
 def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.5,
-                      weight=False):
+                      weight=False, fix_center=True):
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
         return
-    xlo = (pattern_center[0] - (1+rad_frac)*radius )
-    xhi = (pattern_center[0] + (1+rad_frac)*radius )
-    ylo = (pattern_center[1] - (1+rad_frac)*radius )
-    yhi = (pattern_center[1] + (1+rad_frac)*radius )
 
-    sew_slice = sewtable[ (sewtable['X_IMAGE'] <=  xhi) & (sewtable['X_IMAGE'] >=  xlo) & \
-                          (sewtable['Y_IMAGE'] <=  yhi) & (sewtable['Y_IMAGE'] >=  ylo)  ]
+    if not fix_center:
+        #figure out center here
+        xlo = (pattern_center[0] - (1+rad_frac)*radius )
+        xhi = (pattern_center[0] + (1+rad_frac)*radius )
+        ylo = (pattern_center[1] - (1+rad_frac)*radius )
+        yhi = (pattern_center[1] + (1+rad_frac)*radius )
 
-    if weight:
-        centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
-        centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+        sew_slice = sewtable[ (sewtable['X_IMAGE'] <=  xhi) & (sewtable['X_IMAGE'] >=  xlo) & \
+                              (sewtable['Y_IMAGE'] <=  yhi) & (sewtable['Y_IMAGE'] >=  ylo)  ]
+
+        if weight:
+            centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
+            centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+        else:
+            centroidx = np.average(sew_slice['X_IMAGE'])
+            centroidy = np.average(sew_slice['Y_IMAGE'])
     else:
-        centroidx = np.average(sew_slice['X_IMAGE'])
-        centroidy = np.average(sew_slice['Y_IMAGE'])
+        # don't figure out center, take the input
+        centroidx = pattern_center[0]
+        centroidy = pattern_center[1]
+        sew_slice = sewtable
 
     r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
 
@@ -302,15 +319,124 @@ def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
 
 
     r2mean = np.mean(r2s)
-    r2std = np.std(r2s)
+    #r2std = np.std(r2s)
+    r2std = np.std(r2s) / (len(r2s) * 1.0)
+    print(len(r2s), r2s.shape)
+    print("r2std={}, r2std/(N)={}".format(r2std, r2std * (len(r2s) * 1.0)))
 
     newc = np.array([centroidx, centroidy])
     newr = np.sqrt(r2mean)
 
     return r2mean, r2std, newc, newr, sew_slice
 
-def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
-                      n_iter=50, chooseinner=False, chooseouter=False, tryouter=True):
+
+def calc_ring_pattern_band(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_inner=0.5, rad_outer=1.2,
+                      weight=False):
+    # this is just a stupid calc func, no optimization / minimization
+    if radius<0 or rad_inner > 1 or rad_outer<1:
+        print("Params to find ring pattern is not sensible")
+        return
+    xlo = (pattern_center[0] - (rad_outer)*radius )
+    xhi = (pattern_center[0] + (rad_outer)*radius )
+    ylo = (pattern_center[1] - (rad_outer)*radius )
+    yhi = (pattern_center[1] + (rad_outer)*radius )
+
+    # pass 1 just cut a square
+    sew_slice = sewtable[ (sewtable['X_IMAGE'] <=  xhi) & (sewtable['X_IMAGE'] >=  xlo) & \
+                          (sewtable['Y_IMAGE'] <=  yhi) & (sewtable['Y_IMAGE'] >=  ylo)  ]
+
+    if weight:
+        centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
+        centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    else:
+        centroidx = np.average(sew_slice['X_IMAGE'])
+        centroidy = np.average(sew_slice['Y_IMAGE'])
+
+    r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
+
+    #iterate; pass 2 cut annulus
+    sew_slice['R_pattern'] = np.sqrt(r2s)
+    #print(sew_slice)
+    # slice changed
+    sew_slice = sew_slice[(sew_slice['R_pattern'] <= (radius*(rad_inner))) & (sew_slice['R_pattern'] >= (radius*(rad_outer)))]
+    #print("after")
+    #print(sew_slice)
+
+    # centroid changed
+    if weight:
+        centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
+        centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    else:
+        centroidx = np.average(sew_slice['X_IMAGE'])
+        centroidy = np.average(sew_slice['Y_IMAGE'])
+
+    # Rs changed; pass 3
+    r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
+    sew_slice['R_pattern'] = np.sqrt(r2s)
+    # slice changed again
+    sew_slice = sew_slice[(sew_slice['R_pattern'] <= (radius*(rad_inner))) & (sew_slice['R_pattern'] >= (radius*(rad_outer)))]
+
+    # centroid changed again
+    if weight:
+        centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
+        centroidy = np.average(sew_slice['Y_IMAGE'], weights=sew_slice['FLUX_ISO'])
+    else:
+        centroidx = np.average(sew_slice['X_IMAGE'])
+        centroidy = np.average(sew_slice['Y_IMAGE'])
+
+    r2mean = np.mean(r2s)
+    r2std = np.std(r2s)/(len(r2s)*1.0)
+    print("r2std={}, r2std/sqrt(N)={}".format(r2std, r2std*(len(r2s)*1.0)))
+    newc = np.array([centroidx, centroidy])
+    newr = np.sqrt(r2mean)
+
+    return r2mean, r2std, newc, newr, sew_slice # note that returned sew_slice may be of limited use
+
+
+
+def radii_clustering(sewtable, n_rings=2,
+                     pattern_center=center_pattern, radius=20/pix2mm, rad_inner=0.5, rad_outer=1.2,
+                     weight=False):
+    # implementing
+    # filtering
+    if radius<0 or rad_inner > 1 or rad_outer<1:
+        print("Params to find ring pattern is not sensible")
+        return
+
+    # lets first treat the pattern center is legit
+    # don't figure out center, take the input
+    centroidx = pattern_center[0]
+    centroidy = pattern_center[1]
+    sew_slice = sewtable
+
+    r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
+    sew_slice['R_pattern'] = np.sqrt(r2s)
+    sew_slice = sew_slice[(sew_slice['R_pattern'] <= (radius*(rad_inner))) & (sew_slice['R_pattern'] >= (radius*(rad_outer)))]
+
+    kmeans_ = KMeans(n_clusters=n_rings)
+    clusters_ = kmeans_.fit_predict(r2s) # clustering of radii^2
+    print(clusters_)
+
+
+def find_ring_pattern_band(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
+                           rad_frac=0.2, rad_tol_frac=0.1,
+                           clustering=True, n_rings=2, 
+                           rad_edges_pix=[50, 110, 150, 200], phase_offset = 0,
+                           n_iter=50, chooseinner=False, chooseouter=False, tryouter=True,
+                           ring_tol_rms=400):
+    # implementing
+    """
+    thoughts: we need to find imperfect rings, up to 3 rings, 1) 16 centroids from P1-S1 (bright); 2) 32 from P2-S1 (should be dimmer); 32 from P2-S2
+        when pointing off-axis there will be more ghosts...
+    The reason for imperfection could be 1) alignment has been done using MPESs 2) panel motion executed in order to find matrices for rings altogether
+    These rings are supposed to have different radii, but may be close together to keep things in center near nominal position for better focus;
+        givent this, we could try to search for rings in annulus, and relax the ring rms cut, better include more than not enough...
+        note that the calc_ring_part do not optimize, have to handle it here...
+    We also attempt to guess panel id based on phase; this is quite easy for the nominal pattern position; but, when Rx motion introduced this will all mess up;
+        the good thing is that the relative phase of all panels will be approx. preserved, so we should introduce a phase_offset param
+        (1221 / 1211 has reference phase of 0.53pi in picture)
+
+    """
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
         return
@@ -319,7 +445,7 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
     rlast = radius
     good_ring = False
     for i in range(n_iter):
-        r2mean, r2std, newc, newr, sew_slice = calc_ring_pattern(sewtable, pattern_center=clast,
+        r2mean, r2std, newc, newr, sew_slice = calc_ring_pattern_band(sewtable, pattern_center=clast,
                                                       radius=rlast, rad_frac=rad_frac)
         if r2std < r2std_last:
             clast = newc
@@ -329,6 +455,60 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
             print("R Variance not decreasing anymore on the {}th iteration.".format(i))
             print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
             if r2std_last/len(sew_slice) < 400 and len(sew_slice)>4:
+                print("This seems to be a pretty good ring")
+                good_ring = True
+            else:
+                print("Crappy ring")
+            break
+
+    if good_ring:
+        if abs(len(sew_slice)-16) <= abs(len(sew_slice)-32) or chooseinner:
+            #guess this is inner ring
+            df_pattern = find_all_pattern_positions(center=clast,
+                               radius_mm = np.array([rlast*0.241, rlast*2*0.241]),
+                               pixel_scale = 0.241,
+                               outfile=None,)
+            print("Found {} candidate centroid forming an inner ring".format(len(sew_slice)))
+            print("Center {}, radius {}".format(clast, rlast))
+            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast)<(rlast*rad_tol_frac))]
+            print("After applying a tolerance fraction cut = {}, {} panels left ".format(rad_tol_frac, df_slice.shape[0]))
+            if tryouter:
+                df_outer_slice = df_pattern[(abs(df_pattern.Rpix - 2*rlast)<(2*rlast*rad_tol_frac))]
+                df_slice.append(df_outer_slice)
+        elif abs(len(sew_slice)-16) > abs(len(sew_slice)-32) or chooseouter:
+            # not tested
+            df_pattern = find_all_pattern_positions(center=clast,
+                                                    radius_mm=np.array([rlast/2 * 0.241, rlast * 0.241]),
+                                                    pixel_scale=0.241,
+                                                    outfile=None, )
+            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast) < (rlast * rad_tol_frac))]
+    else:
+        df_slice = None
+
+    return clast, rlast, r2std_last, sew_slice, df_slice
+
+
+def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
+                      n_iter=50, chooseinner=False, chooseouter=False, tryouter=True, fix_center=True,
+                      var_tol=400):
+    if rad_frac>1 or rad_frac<0 or radius<0:
+        print("Params to find ring pattern is not sensible")
+        return
+    r2std_last = 1e9
+    clast = pattern_center
+    rlast = radius
+    good_ring = False
+    for i in range(n_iter):
+        r2mean, r2std, newc, newr, sew_slice = calc_ring_pattern(sewtable, pattern_center=clast,
+                                                      radius=rlast, rad_frac=rad_frac, fix_center=fix_center)
+        if r2std < r2std_last:
+            clast = newc
+            rlast = newr
+            r2std_last = r2std
+        else:
+            print("R Variance not decreasing anymore on the {}th iteration.".format(i))
+            print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
+            if r2std_last/len(sew_slice) < var_tol and len(sew_slice)>4:
                 print("This seems to be a pretty good ring")
                 good_ring = True
             else:
@@ -364,6 +544,7 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
 
 def find_single_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
                       n_iter=50, ):
+    #implementing, may dropt it
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
         return
@@ -1075,7 +1256,8 @@ def get_datetime_rawname(raw_name):
 
 
 def yes_or_no(question):
-    reply = str(raw_input(question+' (y/n): ')).lower().strip()
+    from builtins import input
+    reply = str(input(question+' (y/n): ')).lower().strip()
     if reply[0] == 'y':
         return True
     if reply[0] == 'n':
@@ -1184,7 +1366,7 @@ if __name__ == '__main__':
     parser.add_argument('-C', '--center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate X_pix Y_pix. ")
     parser.add_argument('-p', '--pattern_center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate for ring pattern X_pix Y_pix. ")
     parser.add_argument('--ring_rad', type = float, default=32/pix2mm, help="Radius in pixels for ring pattern. ")
-    parser.add_argument('--ring_tol', type = float, default=0.1, help=" ")
+    parser.add_argument('--ring_tol', type = float, default=0.1)
     parser.add_argument('--ring_frac', type = float, default=0.3, help="Fraction (1-frac, 1+frac)*radius that you accept a centroid "
                                                                        "as part of a ring pattern. ")
 
@@ -1290,7 +1472,8 @@ if __name__ == '__main__':
         if args.ring:
             clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1, pattern_center=args.pattern_center,
                                                                     radius=args.ring_rad, rad_frac=args.ring_frac,
-                                                                    n_iter=20, rad_tol_frac=args.ring_tol)
+                                                                    n_iter=20, rad_tol_frac=args.ring_tol,
+                                                                    fix_center=True, var_tol=4000)
             plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast,
                          cropxs=cropxs, cropys=cropys,
                          kernel_w=3,

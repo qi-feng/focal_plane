@@ -8,7 +8,7 @@ To identify a panel motion in the focal plane image, first run focal_plane.py to
 
 # Prerequisite 
 
-sextractor, sewpy, numpy, pandas, matplotlib 
+sextractor, sewpy, numpy, pandas, matplotlib, scikit-learn (for ring radii clustering)
 
 Ideally, opencv2.4 (cv2)
 
