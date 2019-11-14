@@ -135,15 +135,20 @@ def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 12
 
 
 def load_rx_ry_matrix(panel, respfile=respM_file):
+
     with open(respfile) as f:
         respM_yaml = yaml.load(f)
+    print(respM_yaml)
+    print(type(panel))
+    print(respM_yaml[1211])
+
     if panel in respM_yaml:
-        print("Loading rx ry response matrix for panel {}".format(panel))
+        print("Loading rx ry response matrix for panel {} in file {}".format(panel, respfile))
         respM_panel = np.array(respM_yaml[panel])
         print("Matrix is {}".format(respM_panel))
         return respM_panel
     else:
-        print("Response matrix for panel {} does not exist in file {}. Exiting!".format(panel, respM_file))
+        print("Response matrix for panel {} does not exist in file {}. Exiting!".format(panel, respfile))
         exit(0)
 
 
@@ -210,8 +215,8 @@ def calc_mat_rxy(dpx, dpy, rx, dpx1, dpy1, ry):
     return M_RxRy_inv
 
 
-def calc_center_rx_ry(panel, x, y, center=center):
-    respM = load_rx_ry_matrix(panel)
+def calc_center_rx_ry(panel, x, y, center=center, resp=respM_file):
+    respM = load_rx_ry_matrix(panel, resp)
     dx = center[0] - x
     dy = center[1] - y
     rx, ry = calc_rx_ry(dx, dy, respM)
@@ -225,8 +230,8 @@ def calc_center_rx_ry(panel, x, y, center=center):
     return rx, ry
 
 
-def calc_pattern_rx_ry(panel, x, y, pattern_file=pattern_file):
-    respM = load_rx_ry_matrix(panel)
+def calc_pattern_rx_ry(panel, x, y, pattern_file=pattern_file, resp=respM_file):
+    respM = load_rx_ry_matrix(panel, resp)
     xtarg, ytarg = load_pattern(panel, pattern_file=pattern_file)
     dx = xtarg - x
     dy = ytarg - y
@@ -241,9 +246,27 @@ def calc_pattern_rx_ry(panel, x, y, pattern_file=pattern_file):
     return rx, ry
 
 
+def calc_center_to_pattern_rx_ry(panel, center=center, pattern_file=pattern_file, resp=respM_file):
+    respM = load_rx_ry_matrix(panel, respfile=resp)
+    xtarg, ytarg = load_pattern(panel, pattern_file=pattern_file)
+    dx = - center[0] + xtarg
+    dy = - center[1] + ytarg
+    rx, ry = calc_rx_ry(dx, dy, respM)
+    print("The motion to move panel {} \nfrom center x={:.3f}, y={:.3f} \nto pattern {:.3f}, {:.3f} is \nrx = {:.4f}, ry = {:.4f}".format(panel,
+                                                                                                        center[0],
+                                                                                                        center[1],
+                                                                                                        xtarg,
+                                                                                                        ytarg,
+                                                                                                        rx,
+                                                                                                        ry))
+    return rx, ry
+
+
 def ring_operation_find_matrix(f1, f2, f3,
                                ry=-0.25, rx=-0.5,
-                               out_matrix_file="fast_matrix.yaml"):
+                               out_matrix_file="fast_matrix.yaml",
+                               force=False, center=None,
+                               sanity_check=True):
     print("\033[0m")
     print("\033[0;31m##############################################################")
     print("\033[0;31m==== !!! Have to be a Ry motion first and a Rx motion after !!! ====")
@@ -269,15 +292,29 @@ def ring_operation_find_matrix(f1, f2, f3,
     # df_m['Matrix']=0
 
     for i, row in df_m.iterrows():
+        print("================")
         M_RxRy_inv = calc_mat_rxy(row['dX_pix_motion2'], row['dY_pix_motion2'], rx,
                                   row['dX_pix_motion1'], row['dY_pix_motion1'], ry)
         # df_m['Matrix'] = M_RxRy_inv
         print("Panel {} Response matrix for Rx and Ry is: \n{}".format(row['Panel_ID_guess'], M_RxRy_inv))
         if out_matrix_file is not None:
-            save_rx_ry_matrix(int(row['Panel_ID_guess']), M_RxRy_inv, respfile=out_matrix_file)
+            save_rx_ry_matrix(int(row['Panel_ID_guess']), M_RxRy_inv, respfile=out_matrix_file, force=force)
         # sanity check
-        print(calc_rx_ry(row['dX_pix_motion2'], row['dY_pix_motion2'], M_RxRy_inv))
-        print(calc_rx_ry(row['dX_pix_motion1'], row['dY_pix_motion1'], M_RxRy_inv))
+        if sanity_check:
+            rx_sanity, ry0 = calc_rx_ry(row['dX_pix_motion2'], row['dY_pix_motion2'], M_RxRy_inv)
+            rx0, ry_sanity = calc_rx_ry(row['dX_pix_motion1'], row['dY_pix_motion1'], M_RxRy_inv)
+            print("Recovered motions are: ry = {}, rx = {}".format(ry_sanity, rx_sanity))
+            print("Input motions are: ry = {}, rx = {}".format(ry, rx))
+            if abs(rx_sanity-rx)/rx <= 0.1 and abs(ry_sanity-ry)/ry <= 0.1:
+                print("Sanity check passed! Looking good. ")
+            else:
+                print("Sanity check failed! Not looking good. ")
+
+        if center is not None:
+            dx = row['X_IMAGE_1'] - center[0]
+            dy = row['Y_IMAGE_1'] - center[1]
+            rxc, ryc = calc_rx_ry(dx, dy, M_RxRy_inv)
+            print("Motion from center {},{} to position in file 1 is rx = {}, ry = {}".format(center[0], center[1], rxc, ryc))
 
     return df_m
 
@@ -310,7 +347,10 @@ if __name__ == '__main__':
                         help="Text file name with the pattern positions.")
     parser.add_argument('--resp_file', default=respM_file,
                         help="Yaml file name with the response matrices for rx ry.")
-    parser.add_argument('--center_coord', type=float, default=center)
+    parser.add_argument('--force', action='store_true', help="This will force write to resp_file without asking.")
+    parser.add_argument('--center_coord', nargs = 2, type = float, default=list(center))
+    parser.add_argument('--dry_run', action='store_true', help="This will not attempt to write resp mat to file. ")
+    parser.add_argument('--c2p', action='store_true')
 
     args = parser.parse_args()
 
@@ -323,27 +363,40 @@ if __name__ == '__main__':
         if args.rx == 0 or args.ry==0:
             print("Ry and Rx cannot be 0.")
             exit(0)
+        if args.dry_run:
+            resp_file = None
+        else:
+            resp_file = args.resp_file
         df_mfast = ring_operation_find_matrix(
             args.files[0], args.files[1], args.files[2],
-            ry=args.ry, rx=args.rx,
-            out_matrix_file=args.resp_file)
+            ry=args.ry, rx=args.rx, center=args.center_coord,
+            out_matrix_file=resp_file,
+            force=args.force)
         print("Done")
         exit(0)
 
 
     if args.center:
         did_something = True
+        print("Using resp file {}".format(args.resp_file))
         if args.x * args.y == 0:
             print("Please provide current x and y (using -x and -y options).")
             exit(0)
-        rx, ry = calc_center_rx_ry(args.panel, args.x, args.y, center=args.center_coord)
+        rx, ry = calc_center_rx_ry(args.panel, args.x, args.y, center=args.center_coord, resp=args.resp_file)
 
     if args.pattern:
         did_something = True
+        print("Using resp file {}".format(args.resp_file))
         if args.x * args.y == 0:
             print("Please provide current x and y (using -x and -y options).")
             exit(0)
-        rx, ry = calc_pattern_rx_ry(args.panel, args.x, args.y, pattern_file= args.pattern_file)
+        rx, ry = calc_pattern_rx_ry(args.panel, args.x, args.y, pattern_file= args.pattern_file, resp=args.resp_file)
+
+    if args.c2p:
+        did_something = True
+        print("Using resp file {}".format(args.resp_file))
+        calc_center_to_pattern_rx_ry(args.panel, center=args.center_coord, pattern_file=args.pattern_file, resp=args.resp_file)
+
 
     if args.dx1 * args.dy1 * args.dx2 * args.dy2 * args.rx * args.ry != 0:
         did_something = True

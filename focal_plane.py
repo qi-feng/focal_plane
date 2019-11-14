@@ -525,6 +525,7 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
             print("R Variance not decreasing anymore on the {}th iteration.".format(i))
             print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
             if r2std_last/len(sew_slice) < var_tol and len(sew_slice)>4:
+                print("Found {} panels on this ring".format(len(sew_slice)))
                 print("This seems to be a pretty good ring")
                 good_ring = True
             else:
@@ -532,7 +533,7 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
             break
 
     if good_ring:
-        if abs(len(sew_slice)-16) <= abs(len(sew_slice)-32) or chooseinner:
+        if abs(len(sew_slice)-16) + 4 <= abs(len(sew_slice)-32) or chooseinner:
             #guess this is inner ring
             df_pattern = find_all_pattern_positions(center=clast,
                                radius_mm = np.array([rlast*0.241, rlast*2*0.241]),
