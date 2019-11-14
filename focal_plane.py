@@ -26,6 +26,11 @@ except:
     print("Can't import cv2!!")
     has_cv2 = False
 
+import sys
+if not sys.version_info.major == 3:
+    print("You are running python 2...")
+    input = raw_input
+
 
 # Original GR cam lens with 8mm focal length used
 #pix2mm = 0.48244
@@ -420,7 +425,7 @@ def radii_clustering(sewtable, n_rings=2,
 
 def find_ring_pattern_band(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
                            rad_frac=0.2, rad_tol_frac=0.1,
-                           clustering=True, n_rings=2, 
+                           clustering=True, n_rings=2,
                            rad_edges_pix=[50, 110, 150, 200], phase_offset = 0,
                            n_iter=50, chooseinner=False, chooseouter=False, tryouter=True,
                            ring_tol_rms=400):
