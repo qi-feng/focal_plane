@@ -79,7 +79,7 @@ def find_pattern_position(panel_id,
                           center=np.array([1891.25, 1063.75]),
                           radius_mm=np.array([20, 40]),
                           pixel_scale=0.241,
-                          phase_offset=0,
+                          phase_offset_rad=0,
                           ):
     # in case of rx motion, we add a reference phase offset
     panel_id = str(panel_id)
@@ -105,7 +105,7 @@ def find_pattern_position(panel_id,
         total_segment = 4.
     phase = (quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment
     #Here we rotate by phase offset
-    phase = phase + phase_offset
+    phase = phase + phase_offset_rad
 
     if is_inner_ring:
         radius = radius_mm[0]
@@ -126,7 +126,7 @@ def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 12
        1111, 1112, 1113, 1114]),
                                center=np.array([1891.25, 1063.75]),
                                radius_mm = np.array([20, 40]),
-                               phase_offset = 0,
+                               phase_offset_rad = 0, #clockwise is positive, about 0.2 per outer panel
                                pixel_scale = 0.241,
                                outfile="dummy_pattern_position.txt",
                                num_vvv = np.array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
@@ -142,7 +142,7 @@ def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 12
         x_, y_, r_pix_, phase_ = find_pattern_position(row['Panel'],
                                                        center=center,
                                                        radius_mm = radius_mm,
-                                                       phase_offset=phase_offset,
+                                                       phase_offset_rad=phase_offset_rad,
                                                        pixel_scale = pixel_scale)
         df_pattern.loc[i, 'Xpix'] = x_
         df_pattern.loc[i, 'Ypix'] = y_
@@ -419,13 +419,26 @@ def radii_clustering(sewtable, n_rings=2,
     sew_slice = sew_slice[(sew_slice['R_pattern'] <= (radius*(rad_inner))) & (sew_slice['R_pattern'] >= (radius*(rad_outer)))]
 
     kmeans_ = KMeans(n_clusters=n_rings)
-    clusters_ = kmeans_.fit_predict(r2s) # clustering of radii^2
-    print(clusters_)
+    clusters_ = kmeans_.fit_predict(sew_slice['R_pattern']) # clustering of radii^2
+
+    sew_slice['Ring_ID'] = clusters_
+
+    rad_means = []
+    rad_stds = []
+
+    for i in range(n_rings):
+        this_group = sew_slice[(sew_slice['Ring_ID'] == i)]
+        this_rs = this_group['R_pattern']
+        rad_means.append(np.mean(this_rs))
+        rad_stds.append(np.std(this_rs))
+
+    return sew_slice, rad_means, rad_stds
 
 
-def find_ring_pattern_band(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
+
+def find_ring_pattern_clustering(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
                            rad_frac=0.2, rad_tol_frac=0.1,
-                           clustering=True, n_rings=2,
+                           n_rings=2,  rad_inner=0.5, rad_outer=1.2,
                            rad_edges_pix=[50, 110, 150, 200], phase_offset = 0,
                            n_iter=50, chooseinner=False, chooseouter=False, tryouter=True,
                            ring_tol_rms=400):
@@ -442,30 +455,27 @@ def find_ring_pattern_band(sewtable, pattern_center=center_pattern, radius=20/pi
         (1221 / 1211 has reference phase of 0.53pi in picture)
 
     """
-    if rad_frac>1 or rad_frac<0 or radius<0:
+    if rad_frac>1 or rad_frac<0 or radius<0 or n_rings>3 or n_rings<0:
         print("Params to find ring pattern is not sensible")
         return
-    r2std_last = 1e9
-    clast = pattern_center
-    rlast = radius
-    good_ring = False
-    for i in range(n_iter):
-        r2mean, r2std, newc, newr, sew_slice = calc_ring_pattern_band(sewtable, pattern_center=clast,
-                                                      radius=rlast, rad_frac=rad_frac)
-        if r2std < r2std_last:
-            clast = newc
-            rlast = newr
-            r2std_last = r2std
-        else:
-            print("R Variance not decreasing anymore on the {}th iteration.".format(i))
-            print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
-            if r2std_last/len(sew_slice) < 400 and len(sew_slice)>4:
-                print("This seems to be a pretty good ring")
-                good_ring = True
-            else:
-                print("Crappy ring")
-            break
 
+    print("Doing clustering")
+    good_ring = False
+
+    sew_slice, rad_means, rad_stds = radii_clustering(sewtable, n_rings=n_rings,
+                     pattern_center=pattern_center, radius=radius, rad_inner=rad_inner, rad_outer=rad_outer,
+                     )
+    print("R Variance not decreasing anymore on the {}th iteration.".format(i))
+    print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
+    if rad_stds/len(sew_slice) < 400 and len(sew_slice)>4:
+        print("This seems to be a pretty good ring")
+        good_ring = True
+    else:
+        print("Crappy ring")
+
+    print(rad_means, rad_stds)
+
+    return
     if good_ring:
         if abs(len(sew_slice)-16) <= abs(len(sew_slice)-32) or chooseinner:
             #guess this is inner ring
@@ -495,6 +505,7 @@ def find_ring_pattern_band(sewtable, pattern_center=center_pattern, radius=20/pi
 
 def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
                       n_iter=50, chooseinner=False, chooseouter=False, tryouter=True, fix_center=True,
+                      phase_offset_rad = 0,
                       var_tol=400):
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
@@ -525,7 +536,7 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
             #guess this is inner ring
             df_pattern = find_all_pattern_positions(center=clast,
                                radius_mm = np.array([rlast*0.241, rlast*2*0.241]),
-                               pixel_scale = 0.241,
+                               pixel_scale = 0.241, phase_offset_rad=phase_offset_rad,
                                outfile=None,)
             print("Found {} candidate centroid forming an inner ring".format(len(sew_slice)))
             print("Center {}, radius {}".format(clast, rlast))
@@ -538,7 +549,7 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
             # not tested
             df_pattern = find_all_pattern_positions(center=clast,
                                                     radius_mm=np.array([rlast/2 * 0.241, rlast * 0.241]),
-                                                    pixel_scale=0.241,
+                                                    pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
                                                     outfile=None, )
             df_slice = df_pattern[(abs(df_pattern.Rpix - rlast) < (rlast * rad_tol_frac))]
     else:
@@ -1368,10 +1379,13 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--clean', action='store_true', help="Whether or not to delete centroid with flag > 16.")
     parser.add_argument('-s', '--single', action='store_true', help="Only analyze a single image.")
     parser.add_argument('-r', '--ring', action='store_true', help="Try to find a ring.")
+    parser.add_argument('--clustering', action='store_true')
+
     parser.add_argument('-C', '--center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate X_pix Y_pix. ")
     parser.add_argument('-p', '--pattern_center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate for ring pattern X_pix Y_pix. ")
     parser.add_argument('--ring_rad', type = float, default=32/pix2mm, help="Radius in pixels for ring pattern. ")
     parser.add_argument('--ring_tol', type = float, default=0.1)
+    parser.add_argument('--phase_offset_rad', type = float, default=0.)
     parser.add_argument('--ring_frac', type = float, default=0.3, help="Fraction (1-frac, 1+frac)*radius that you accept a centroid "
                                                                        "as part of a ring pattern. ")
 
@@ -1475,16 +1489,23 @@ if __name__ == '__main__':
                                               )
         print("Processing single image. Done.")
         if args.ring:
-            clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1, pattern_center=args.pattern_center,
-                                                                    radius=args.ring_rad, rad_frac=args.ring_frac,
-                                                                    n_iter=20, rad_tol_frac=args.ring_tol,
-                                                                    fix_center=True, var_tol=4000)
-            plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast,
-                         cropxs=cropxs, cropys=cropys,
-                         kernel_w=3,
-                         save_catlog_name=ring_cat_file,
-                         save_for_vvv=vvv_ring_file,
-                         saveplot_name=ring_file, show=False)
+            if args.clustering:
+                find_ring_pattern_clustering(sew_out_table1, pattern_center=args.pattern_center,
+                                             radius=args.ring_rad, rad_frac=args.ring_frac,
+                                             rad_tol_frac=args.ring_tol,
+                                             n_rings=2, rad_inner=0.5, rad_outer=1.2,)
+            else:
+                clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1, pattern_center=args.pattern_center,
+                                                                        radius=args.ring_rad, rad_frac=args.ring_frac,
+                                                                        n_iter=20, rad_tol_frac=args.ring_tol,
+                                                                        phase_offset_rad = args.phase_offset_rad,
+                                                                        fix_center=True, var_tol=4000)
+                plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast,
+                             cropxs=cropxs, cropys=cropys,
+                             kernel_w=3,
+                             save_catlog_name=ring_cat_file,
+                             save_for_vvv=vvv_ring_file,
+                             saveplot_name=ring_file, show=False)
 
         exit(0)
 

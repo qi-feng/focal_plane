@@ -3,7 +3,10 @@ import numpy as np
 import pandas as pd
 import os
 import yaml
-
+import sys
+if not sys.version_info.major == 3:
+    print("You are running python 2...")
+    input = raw_input
 
 
 
@@ -145,7 +148,7 @@ def load_rx_ry_matrix(panel, respfile=respM_file):
 
 
 def yes_or_no(question):
-    reply = str(raw_input(question+' (y/n): ')).lower().strip()
+    reply = str(input(question+' (y/n): ')).lower().strip()
     if reply[0] == 'y':
         return True
     if reply[0] == 'n':
@@ -154,14 +157,20 @@ def yes_or_no(question):
         return yes_or_no("Please enter y or n")
 
 
-def save_rx_ry_matrix(panel, mat, respfile=respM_file):
-    with open(respfile) as f:
-        respM_yaml = yaml.load(f)
+def save_rx_ry_matrix(panel, mat, respfile=respM_file, force=False):
+    if os.path.exists(respfile):
+        with open(respfile) as f:
+            respM_yaml = yaml.load(f)
+    else:
+        respM_yaml = None
     if respM_yaml is not None:
         if panel in respM_yaml:
             print("=== Matrix already exists in yaml file {} for panel {} ====".format(respfile, panel))
             print("=== If you continue we will write a duplicate entry. ===")
-    sure = yes_or_no("Are you sure to save matrix \n{} \nto panel {}? ".format(mat, panel))
+    if not force:
+        sure = yes_or_no("Are you sure to save matrix \n{} \nto panel {}? ".format(mat, panel))
+    else:
+        sure=True
     if sure:
         with open(respfile, 'a') as f:
             yaml.dump({panel: mat.tolist()}, f)
@@ -232,6 +241,49 @@ def calc_pattern_rx_ry(panel, x, y, pattern_file=pattern_file):
     return rx, ry
 
 
+def ring_operation_find_matrix(f1, f2, f3,
+                               ry=-0.25, rx=-0.5,
+                               out_matrix_file="fast_matrix.yaml"):
+    print("\033[0m")
+    print("\033[0;31m##############################################################")
+    print("\033[0;31m==== !!! Have to be a Ry motion first and a Rx motion after !!! ====")
+    print("\033[0;31m==== !!! Make sure that only Ry motions are executed between file 1 and 2  !!! ====")
+    print("\033[0;31m==== !!!            and only Rx motions are executed between file 2 and 3  !!! ====")
+    print("\033[0;31m##############################################################")
+    print("\033[0m")
+
+    df1 = pd.read_csv(f1)
+    df2 = pd.read_csv(f2)
+    df3 = pd.read_csv(f3)
+    df3 = df3.rename(columns={"X_IMAGE": "X_IMAGE_3", "Y_IMAGE": "Y_IMAGE_3"})
+
+    df_m = pd.merge(df1, df2, on=['Panel_ID_guess', '#'], suffixes=('_1', '_2'))
+    df_m = pd.merge(df_m, df3, on=['Panel_ID_guess', '#'])
+
+    df_m['dX_pix_motion1'] = df_m['X_IMAGE_2'] - df_m['X_IMAGE_1']
+    df_m['dY_pix_motion1'] = df_m['Y_IMAGE_2'] - df_m['Y_IMAGE_1']
+
+    df_m['dX_pix_motion2'] = df_m['X_IMAGE_3'] - df_m['X_IMAGE_2']
+    df_m['dY_pix_motion2'] = df_m['Y_IMAGE_3'] - df_m['Y_IMAGE_2']
+
+    # df_m['Matrix']=0
+
+    for i, row in df_m.iterrows():
+        M_RxRy_inv = calc_mat_rxy(row['dX_pix_motion2'], row['dY_pix_motion2'], rx,
+                                  row['dX_pix_motion1'], row['dY_pix_motion1'], ry)
+        # df_m['Matrix'] = M_RxRy_inv
+        print("Panel {} Response matrix for Rx and Ry is: \n{}".format(row['Panel_ID_guess'], M_RxRy_inv))
+        if out_matrix_file is not None:
+            save_rx_ry_matrix(int(row['Panel_ID_guess']), M_RxRy_inv, respfile=out_matrix_file)
+        # sanity check
+        print(calc_rx_ry(row['dX_pix_motion2'], row['dY_pix_motion2'], M_RxRy_inv))
+        print(calc_rx_ry(row['dX_pix_motion1'], row['dY_pix_motion1'], M_RxRy_inv))
+
+    return df_m
+
+
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Utilities to calculate rx ry resp matrix given (dx1, dy1, rx, dx2, dy2, ry), '
@@ -239,7 +291,11 @@ if __name__ == '__main__':
                                                  'and dx2 and dy2 is the motion of centroid when panel ry is introduced. '
                                                  'Or calculate motion needed to go to center and pattern position for a given panel, '
                                                  'need to provide current coordinates in camera x and y. ')
-    parser.add_argument('panel',type=int)
+    parser.add_argument('--panel',type=int)
+    parser.add_argument('-f', '--files', nargs = 3, default=[None, None, None],
+                        help="Csv file names, it has to b 3 files, with the pattern positions."
+                             "The sequence has to be: file1 -> Ry motion -> file2 -> Rx motion -> file3.")
+
     parser.add_argument('--dx1',type=float, default=0)
     parser.add_argument('--dy1',type=float, default=0)
     parser.add_argument('--rx', type=float, default=0)
@@ -259,6 +315,21 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     did_something = False
+
+    if args.files[0] is not None:
+        if len(args.files)!=3:
+            print("Have to provide 3 files.")
+            exit(0)
+        if args.rx == 0 or args.ry==0:
+            print("Ry and Rx cannot be 0.")
+            exit(0)
+        df_mfast = ring_operation_find_matrix(
+            args.files[0], args.files[1], args.files[2],
+            ry=args.ry, rx=args.rx,
+            out_matrix_file=args.resp_file)
+        print("Done")
+        exit(0)
+
 
     if args.center:
         did_something = True
