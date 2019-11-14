@@ -1261,7 +1261,7 @@ def get_datetime_rawname(raw_name):
 
 
 def yes_or_no(question):
-    from builtins import input
+    #from builtins import input
     reply = str(input(question+' (y/n): ')).lower().strip()
     if reply[0] == 'y':
         return True
