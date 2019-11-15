@@ -515,6 +515,7 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
     clast = pattern_center
     rlast = radius
     good_ring = False
+    df_slice = None
     for i in range(n_iter):
         r2mean, r2std, newc, newr, sew_slice = calc_ring_pattern(sewtable, pattern_center=clast,
                                                       radius=rlast, rad_frac=rad_frac, fix_center=fix_center)
