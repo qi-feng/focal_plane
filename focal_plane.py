@@ -1375,7 +1375,7 @@ if __name__ == '__main__':
                                                                        "Config param for sextractor, our default is 30.")
     parser.add_argument('--THRESH', type=int, default=6, help="+++ Important parameter +++: "
                                                               "Config param for sextractor, our default is 6.")
-    parser.add_argument('--DEBLEND_MINCONT', type=int, default=0.01, help="+++ Important parameter +++: "
+    parser.add_argument('--DEBLEND_MINCONT', type=float, default=0.01, help="+++ Important parameter +++: "
                                                               "Config param for sextractor, our default is 0.01 "
                                                                          "The smaller this number is, the harder we try to "
                                                                          "deblend, i.e. to separate overlaying objects. ")
