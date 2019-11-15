@@ -833,14 +833,14 @@ def quick_check_raw_ring(rawfile,
     # plt.scatter(sew_out_trans['table']['X_IMAGE'],
     #            sew_out_trans['table']['Y_IMAGE'], s=40, facecolors='none', edgecolors='r')
 
-    plt.plot(df['Xpix'], df['Ypix'], 'c.', markersize=4, alpha=0.3)
-    center_pattern = [np.mean(df['Xpix']), np.mean(df['Ypix'])]
+    plt.plot(df['X_IMAGE'], df['Y_IMAGE'], 'c.', markersize=4, alpha=0.3)
+    center_pattern = [np.mean(df['X_IMAGE']), np.mean(df['Ypix'])]
 
     for i, row in df.iterrows():
-        ax.annotate(row['Panel_ID_guess'], xy=np.array([row['Xpix'], row['Ypix']]), size=8, xycoords='data',
+        ax.annotate(row['Panel_ID_guess'], xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
                 # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
-                xytext=(np.array([row['Xpix'] + row['Xpix'] - center_pattern[0],
-                                  row['Ypix'] + row['Ypix'] - center_pattern[1]])),  # for orig lens
+                xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
+                                  row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
                 # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                 color='c', alpha=0.8,
                 arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
