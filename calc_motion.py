@@ -309,10 +309,10 @@ def ring_operation_find_matrix(f1, f2, f3,
                 print("Sanity check passed! Looking good. ")
             else:
                 print("\033[0m")
-                print("\033[0;31m##############################################################")
-                print("\033[0;31m==== !!!Sanity check failed! Not looking good.  !!! ====")
-                print("\033[0;31m==== !!!Your tolerence for insanity is {}%  !!! ====".format(sanity_tol*100))
-                print("\033[0;31m##############################################################")
+                print("\033[0;33m##############################################################")
+                print("\033[0;33m==== !!!Sanity check failed! Not looking good.  !!! ====")
+                print("\033[0;33m==== !!!Your tolerence for insanity is {}%  !!! ====".format(sanity_tol*100))
+                print("\033[0;33m##############################################################")
                 print("\033[0m")
 
         if center is not None:
