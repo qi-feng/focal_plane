@@ -305,7 +305,7 @@ def ring_operation_find_matrix(f1, f2, f3,
             rx0, ry_sanity = calc_rx_ry(row['dX_pix_motion1'], row['dY_pix_motion1'], M_RxRy_inv)
             print("Recovered motions are: ry = {}, rx = {}".format(ry_sanity, rx_sanity))
             print("Input motions are: ry = {}, rx = {}".format(ry, rx))
-            if abs(rx_sanity-rx)/rx <= 0.1 and abs(ry_sanity-ry)/ry <= 0.1:
+            if abs((rx_sanity-rx)/rx) <= 0.1 and abs((ry_sanity-ry)/ry) <= 0.1:
                 print("Sanity check passed! Looking good. ")
             else:
                 print("\033[0m")
