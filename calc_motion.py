@@ -311,7 +311,7 @@ def ring_operation_find_matrix(f1, f2, f3,
                 print("\033[0m")
                 print("\033[0;31m##############################################################")
                 print("\033[0;31m==== !!!Sanity check failed! Not looking good.  !!! ====")
-                print("\033[0;31m==== !!!Your tolerence for insanity is {:.d}%  !!! ====".format(sanity_tol*100))
+                print("\033[0;31m==== !!!Your tolerence for insanity is {}%  !!! ====".format(sanity_tol*100))
                 print("\033[0;31m##############################################################")
                 print("\033[0m")
 
@@ -376,7 +376,7 @@ if __name__ == '__main__':
         df_mfast = ring_operation_find_matrix(
             args.files[0], args.files[1], args.files[2],
             ry=args.ry, rx=args.rx, center=args.center_coord,
-            out_matrix_file=resp_file, sanity_tol=args.sanity_tol, 
+            out_matrix_file=resp_file, sanity_tol=args.sanity_tol,
             force=args.force)
         print("Done")
         exit(0)
