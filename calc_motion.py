@@ -308,7 +308,11 @@ def ring_operation_find_matrix(f1, f2, f3,
             if abs(rx_sanity-rx)/rx <= 0.1 and abs(ry_sanity-ry)/ry <= 0.1:
                 print("Sanity check passed! Looking good. ")
             else:
-                print("Sanity check failed! Not looking good. ")
+                print("\033[0m")
+                print("\033[0;31m##############################################################")
+                print("\033[0;31m==== !!!Sanity check failed! Not looking good.  !!! ====")
+                print("\033[0;31m##############################################################")
+                print("\033[0m")
 
         if center is not None:
             dx = row['X_IMAGE_1'] - center[0]
