@@ -266,7 +266,7 @@ def ring_operation_find_matrix(f1, f2, f3,
                                ry=-0.25, rx=-0.5,
                                out_matrix_file="fast_matrix.yaml",
                                force=False, center=None,
-                               sanity_check=True):
+                               sanity_check=True, sanity_tol=0.2):
     print("\033[0m")
     print("\033[0;31m##############################################################")
     print("\033[0;31m==== !!! Have to be a Ry motion first and a Rx motion after !!! ====")
@@ -305,12 +305,13 @@ def ring_operation_find_matrix(f1, f2, f3,
             rx0, ry_sanity = calc_rx_ry(row['dX_pix_motion1'], row['dY_pix_motion1'], M_RxRy_inv)
             print("Recovered motions are: ry = {}, rx = {}".format(ry_sanity, rx_sanity))
             print("Input motions are: ry = {}, rx = {}".format(ry, rx))
-            if abs((rx_sanity-rx)/rx) <= 0.1 and abs((ry_sanity-ry)/ry) <= 0.1:
+            if abs((rx_sanity-rx)/rx) <= sanity_tol and abs((ry_sanity-ry)/ry) <= sanity_tol:
                 print("Sanity check passed! Looking good. ")
             else:
                 print("\033[0m")
                 print("\033[0;31m##############################################################")
                 print("\033[0;31m==== !!!Sanity check failed! Not looking good.  !!! ====")
+                print("\033[0;31m==== !!!Your tolerence for insanity is {:.d}%  !!! ====".format(sanity_tol*100))
                 print("\033[0;31m##############################################################")
                 print("\033[0m")
 
@@ -355,6 +356,7 @@ if __name__ == '__main__':
     parser.add_argument('--center_coord', nargs = 2, type = float, default=list(center))
     parser.add_argument('--dry_run', action='store_true', help="This will not attempt to write resp mat to file. ")
     parser.add_argument('--c2p', action='store_true')
+    parser.add_argument('--sanity_tol',type=float, default = 0.2, help="At what fraction do you become insane?")
 
     args = parser.parse_args()
 
@@ -374,7 +376,7 @@ if __name__ == '__main__':
         df_mfast = ring_operation_find_matrix(
             args.files[0], args.files[1], args.files[2],
             ry=args.ry, rx=args.rx, center=args.center_coord,
-            out_matrix_file=resp_file,
+            out_matrix_file=resp_file, sanity_tol=args.sanity_tol, 
             force=args.force)
         print("Done")
         exit(0)
