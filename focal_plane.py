@@ -834,7 +834,7 @@ def quick_check_raw_ring(rawfile,
     #            sew_out_trans['table']['Y_IMAGE'], s=40, facecolors='none', edgecolors='r')
 
     plt.plot(df['X_IMAGE'], df['Y_IMAGE'], 'c.', markersize=4, alpha=0.3)
-    center_pattern = [np.mean(df['X_IMAGE']), np.mean(df['Ypix'])]
+    center_pattern = [np.mean(df['X_IMAGE']), np.mean(df['Y_IMAGE'])]
 
     for i, row in df.iterrows():
         ax.annotate(row['Panel_ID_guess'], xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
