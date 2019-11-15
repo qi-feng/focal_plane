@@ -847,7 +847,8 @@ def quick_check_raw_ring(rawfile,
                                 alpha=0.7),
                 )
     if saveplot_name is not None:
-        fig.savefig(saveplot_name)
+        print("saving to file {}".format(saveplot_name))
+        plt.savefig(saveplot_name)
     if show:
         plt.show()
 
@@ -1573,6 +1574,7 @@ if __name__ == '__main__':
         exit(0)
 
     if args.quick_ring_check is not None:
+        print("doing a quick check on Panel IDs, using file {}".format(args.quick_ring_check))
         quick_check_raw_ring(args.rawfile1,
                              save_for_vvv=args.quick_ring_check,
                              saveplot_name=args.quick_ring_check[:-4]+".png", show=True)
