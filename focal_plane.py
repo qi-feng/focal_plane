@@ -1571,6 +1571,11 @@ if __name__ == '__main__':
                              save_for_vvv=vvv_ring_file,
                              saveplot_name=ring_file, show=False)
 
+            print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
+            quick_check_raw_ring(args.rawfile1,
+                                 save_for_vvv=vvv_ring_file,
+                                 saveplot_name=vvv_ring_file[:-4] + ".png", show=True)
+
         exit(0)
 
     elif args.quick_ring_check is not None:
