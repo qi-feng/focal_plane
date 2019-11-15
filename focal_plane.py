@@ -804,6 +804,53 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
     return
 
 
+def quick_check_raw_ring(rawfile,
+                 save_for_vvv="temp_ring_vvv_XY_pix.csv",
+                 saveplot_name=None, show=False,
+                         kernel_w = 3):
+    from astropy.table import Column
+    im_raw = read_raw(rawfile)
+    if has_cv2:
+        median = cv2.medianBlur(im_raw, kernel_w)
+    else:
+        print("+++ System doesn't have opencv installed, using noisy raw image without median blurring +++")
+        median = im_raw
+
+    max_pixel_crop = np.max(median[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+
+    df = pd.read_csv(save_for_vvv)
+    n_sources = len(df)
+
+
+    fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
+
+    ax_img = ax.imshow(median, vmax=max_pixel_crop, cmap='gray')
+    #else:
+    #ax_img = ax.imshow(dst_trans, cmap='gray')
+    fig.colorbar(ax_img)
+
+    # plt.plot(cat_test['X_IMAGE'], cat_test['Y_IMAGE'], color='r',  marker='o', ms=5, ls='')
+    # plt.scatter(sew_out_trans['table']['X_IMAGE'],
+    #            sew_out_trans['table']['Y_IMAGE'], s=40, facecolors='none', edgecolors='r')
+
+    plt.plot(df['Xpix'], df['Ypix'], 'c.', markersize=4, alpha=0.3)
+    center_pattern = [np.mean(df['Xpix']), np.mean(df['Ypix'])]
+
+    for i, row in df.iterrows():
+        ax.annotate(row['Panel_ID_guess'], xy=np.array([row['Xpix'], row['Ypix']]), size=8, xycoords='data',
+                # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
+                xytext=(np.array([row['Xpix'] + row['Xpix'] - center_pattern[0],
+                                  row['Ypix'] + row['Ypix'] - center_pattern[1]])),  # for orig lens
+                # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
+                color='c', alpha=0.8,
+                arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
+                                alpha=0.7),
+                )
+    if saveplot_name is not None:
+        fig.savefig(saveplot_name)
+    if show:
+        plt.show()
+
 
 def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
                      min_dist=20,
@@ -1407,6 +1454,7 @@ if __name__ == '__main__':
     parser.add_argument('--ring_file', default=None, help="File name for ring pattern. ")
     parser.add_argument('--search_xs', nargs = 2, type = float, default=[0, 0], help="Xmin and Xmax to list all centroid in a box. ")
     parser.add_argument('--search_ys', nargs = 2, type = float, default=[0, 0], help="Ymin and Ymax to list all centroid in a box. ")
+    parser.add_argument('--quick_ring_check', default=None, help="Do ring check; dubs as file name for ring pattern. ")
 
     args = parser.parse_args()
 
@@ -1523,6 +1571,11 @@ if __name__ == '__main__':
                              saveplot_name=ring_file, show=False)
 
         exit(0)
+
+    if args.quick_ring_check is not None:
+        quick_check_raw_ring(args.rawfile1,
+                             save_for_vvv=args.quick_ring_check,
+                             saveplot_name=args.quick_ring_check[:-4]+".png", show=True)
 
     else:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
