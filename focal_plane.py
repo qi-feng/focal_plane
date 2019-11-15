@@ -321,7 +321,8 @@ def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
         centroidy = np.average(sew_slice['Y_IMAGE'])
 
     r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
-
+    phase =  np.arcsin((centroidx - sew_slice['X_IMAGE']) / sew_slice['R_pattern'])
+    sew_slice['Phase'] = phase
 
     r2mean = np.mean(r2s)
     #r2std = np.std(r2s)
@@ -524,13 +525,14 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
         else:
             print("R Variance not decreasing anymore on the {}th iteration.".format(i))
             print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
+            print("R = {} pix, center(x,y) = {}, {}".format(rlast, clast[0], clast[1]))
             if r2std_last/len(sew_slice) < var_tol and len(sew_slice)>4:
                 print("Found {} panels on this ring".format(len(sew_slice)))
                 print("This seems to be a pretty good ring")
                 good_ring = True
             else:
                 print("Crappy ring")
-            break
+            #break
 
     if good_ring:
         if abs(len(sew_slice)-16) + 4 <= abs(len(sew_slice)-32) or chooseinner:
