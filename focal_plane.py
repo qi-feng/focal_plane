@@ -827,7 +827,7 @@ def quick_check_raw_ring(rawfile,
     ax_img = ax.imshow(median, vmax=max_pixel_crop, cmap='gray')
     #else:
     #ax_img = ax.imshow(dst_trans, cmap='gray')
-    fig.colorbar(ax_img)
+    #fig.colorbar(ax_img)
 
     # plt.plot(cat_test['X_IMAGE'], cat_test['Y_IMAGE'], color='r',  marker='o', ms=5, ls='')
     # plt.scatter(sew_out_trans['table']['X_IMAGE'],
@@ -839,8 +839,8 @@ def quick_check_raw_ring(rawfile,
     for i, row in df.iterrows():
         ax.annotate(int(row['Panel_ID_guess']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
                 # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
-                xytext=(np.array([row['X_IMAGE'] + (row['X_IMAGE'] - center_pattern[0])*1.4,
-                                  row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1])*1.4] )),  # for orig lens
+                xytext=(np.array([row['X_IMAGE'] + (row['X_IMAGE'] - center_pattern[0])*1.3,
+                                  row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1])*1.3] )),  # for orig lens
                 # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                 color='c', alpha=0.6,
                 arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
