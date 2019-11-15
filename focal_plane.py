@@ -833,7 +833,7 @@ def quick_check_raw_ring(rawfile,
     # plt.scatter(sew_out_trans['table']['X_IMAGE'],
     #            sew_out_trans['table']['Y_IMAGE'], s=40, facecolors='none', edgecolors='r')
 
-    plt.plot(df['X_IMAGE'], df['Y_IMAGE'], 'c.', markersize=1, alpha=0.3)
+    plt.plot(df['X_IMAGE'], df['Y_IMAGE'], 'c.', markersize=4, alpha=0.3)
     center_pattern = [np.mean(df['X_IMAGE']), np.mean(df['Y_IMAGE'])]
 
     for i, row in df.iterrows():
@@ -1456,6 +1456,7 @@ if __name__ == '__main__':
     parser.add_argument('--search_xs', nargs = 2, type = float, default=[0, 0], help="Xmin and Xmax to list all centroid in a box. ")
     parser.add_argument('--search_ys', nargs = 2, type = float, default=[0, 0], help="Ymin and Ymax to list all centroid in a box. ")
     parser.add_argument('--quick_ring_check', default=None, help="Do ring check; dubs as file name for ring pattern. ")
+    parser.add_argument("--show", action='store_true')
 
     args = parser.parse_args()
 
@@ -1574,7 +1575,7 @@ if __name__ == '__main__':
             print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
             quick_check_raw_ring(args.rawfile1,
                                  save_for_vvv=vvv_ring_file,
-                                 saveplot_name=vvv_ring_file[:-4] + ".png", show=True)
+                                 saveplot_name=vvv_ring_file[:-4] + ".png", show=args.show)
 
         exit(0)
 
@@ -1582,7 +1583,7 @@ if __name__ == '__main__':
         print("doing a quick check on Panel IDs, using file {}".format(args.quick_ring_check))
         quick_check_raw_ring(args.rawfile1,
                              save_for_vvv=args.quick_ring_check,
-                             saveplot_name=args.quick_ring_check[:-4]+".png", show=True)
+                             saveplot_name=args.quick_ring_check[:-4]+".png", show=args.show)
 
     else:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
