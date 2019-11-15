@@ -517,8 +517,8 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
     good_ring = False
     df_slice = None
 
-    centroidx = np.average(sewtable['X_IMAGE'], weights=sewtable['FLUX_ISO'])
-    centroidy = np.average(sewtable['Y_IMAGE'], weights=sewtable['FLUX_ISO'])
+    centroidx = np.average(sewtable['X_IMAGE'])#, weights=sewtable['FLUX_ISO'])
+    centroidy = np.average(sewtable['Y_IMAGE'])#, weights=sewtable['FLUX_ISO'])
 
     if np.sqrt((centroidx - pattern_center[0])**2 + (centroidy - pattern_center[1])**2 ) > 100:
         print("Your center is >100 pixels away from the flux-weighted center of gravity of all centoids")
