@@ -759,8 +759,8 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                     print("Panel {} already found...".format(pID))
                     print("Let's try a phase check")
                     df.loc[:, 'tmpistphase'] = abs(df['Phase'] - row['Phase'])
-                    pID = df.loc[df['tmpdist2'].idxmin(), 'Panel']
-                    vvvID = df.loc[df['tmpdist2'].idxmin(), '#']
+                    pID = df.loc[df['tmpistphase'].idxmin(), 'Panel']
+                    vvvID = df.loc[df['tmpistphase'].idxmin(), '#']
                     print("Now I guess this is panel {}".format(pID))
             sewtable['Panel_ID_guess'][i-1] = pID
             sewtable['#'][i-1] = vvvID
