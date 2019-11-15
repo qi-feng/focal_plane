@@ -614,6 +614,7 @@ def find_single_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/
 
 def process_raw(rawfile, kernel_w = 3,
                 DETECT_MINAREA = 30, THRESH = 5,
+                DEBLEND_MINCONT=0.02,
                 clean=True,
                 sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "KRON_RADIUS", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE", "THETA_IMAGE"],
                 cropxs=(1350, 1800), cropys=(1250, 800),
@@ -652,7 +653,7 @@ def process_raw(rawfile, kernel_w = 3,
                             "BACK_SIZE":128 ,
                             "BACK_FILTERSIZE":3,
                             "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH,
-                            "DEBLEND_MINCONT": 0.02,
+                            "DEBLEND_MINCONT": DEBLEND_MINCONT,
                             }
                     )
 
@@ -1362,7 +1363,10 @@ if __name__ == '__main__':
                                                                        "Config param for sextractor, our default is 30.")
     parser.add_argument('--THRESH', type=int, default=6, help="+++ Important parameter +++: "
                                                               "Config param for sextractor, our default is 6.")
-
+    parser.add_argument('--DEBLEND_MINCONT', type=int, default=0.01, help="+++ Important parameter +++: "
+                                                              "Config param for sextractor, our default is 0.01 "
+                                                                         "The smaller this number is, the harder we try to "
+                                                                         "deblend, i.e. to separate overlaying objects. ")
     parser.add_argument('--kernel_w', type=int, default=3, help="If you have cv2, this is the median blurring kernel width"
                                                                 "our default is 3 (for a 3x3 kernel).")
 
@@ -1546,6 +1550,7 @@ if __name__ == '__main__':
     if (args.single or args.rawfile2 is None) and args.quick_ring_check is None:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                               DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                                              DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                               sewpy_params=sew_params,
                                               cropxs=cropxs, cropys=cropys,
                                               clean=args.clean,
@@ -1572,9 +1577,9 @@ if __name__ == '__main__':
                              save_catlog_name=ring_cat_file,
                              save_for_vvv=vvv_ring_file,
                              saveplot_name=ring_file, show=False)
-
-            print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
-            quick_check_raw_ring(args.rawfile1,
+            if os.path.exists(vvv_ring_file):
+                print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
+                quick_check_raw_ring(args.rawfile1,
                                  save_for_vvv=vvv_ring_file,
                                  saveplot_name=vvv_ring_file[:-4] + ".png", show=args.show)
 
@@ -1589,6 +1594,7 @@ if __name__ == '__main__':
     else:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                               DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                                              DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                               sewpy_params=sew_params,
                                               cropxs=cropxs, cropys=cropys,
                                               clean=args.clean,
@@ -1598,6 +1604,7 @@ if __name__ == '__main__':
                                               )
         sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w,
                                             DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
+                                            DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                             sewpy_params=sew_params,
                                             cropxs=cropxs, cropys=cropys,
                                             clean=args.clean,
