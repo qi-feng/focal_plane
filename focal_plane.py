@@ -1541,7 +1541,7 @@ if __name__ == '__main__':
     sew_params = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "KRON_RADIUS", "A_IMAGE", "B_IMAGE",
                               "THETA_IMAGE"]
 
-    if args.single or args.rawfile2 is None:
+    if (args.single or args.rawfile2 is None) and args.quick_ring_check is None:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                               DETECT_MINAREA=args.DETECT_MINAREA, THRESH=args.THRESH,
                                               sewpy_params=sew_params,
@@ -1573,7 +1573,7 @@ if __name__ == '__main__':
 
         exit(0)
 
-    if args.quick_ring_check is not None:
+    elif args.quick_ring_check is not None:
         print("doing a quick check on Panel IDs, using file {}".format(args.quick_ring_check))
         quick_check_raw_ring(args.rawfile1,
                              save_for_vvv=args.quick_ring_check,
