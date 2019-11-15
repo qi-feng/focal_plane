@@ -554,7 +554,10 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
                                                     radius_mm=np.array([rlast/2 * 0.241, rlast * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
                                                     outfile=None, )
+            print("Found {} candidate centroid forming an outer ring".format(len(sew_slice)))
+            print("Center {}, radius {}".format(clast, rlast))
             df_slice = df_pattern[(abs(df_pattern.Rpix - rlast) < (rlast * rad_tol_frac))]
+            print("After applying a tolerance fraction cut = {}, {} panels left ".format(rad_tol_frac, df_slice.shape[0]))
     else:
         df_slice = None
 
@@ -750,9 +753,16 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
             pID = df.loc[df['tmpdist2'].idxmin(), 'Panel']
             vvvID = df.loc[df['tmpdist2'].idxmin(), '#']
             print("Guess this is panel {}".format(pID))
+            if i>1:
+                #if pID == sewtable['Panel_ID_guess'][i-1] or vvvID:
+                if pID in sewtable['Panel_ID_guess']:
+                    print("Let's try a phase check")
+                    df.loc[:, 'tmpistphase'] = abs(df['Phase'] - row['Phase'])
+                    pID = df.loc[df['tmpdist2'].idxmin(), 'Panel']
+                    vvvID = df.loc[df['tmpdist2'].idxmin(), '#']
             sewtable['Panel_ID_guess'][i-1] = pID
             sewtable['#'][i-1] = vvvID
-            plt.plot(df['Xpix'], df['Ypix'], 'm.', alpha=0.3)
+            plt.plot(df['Xpix'], df['Ypix'], 'm.', markersize=4, alpha=0.3)
         else:
             pID = int(row['ID'])
 
