@@ -51,11 +51,34 @@ matrices = {
 }
 """
 # file with rx ry resp matrix
-respM_file = "rx_ry_matrix_lens16mm.yaml"
+respM_file = "M1_matirx_fast.yaml"
 pattern_file = "pattern_position_lens16mm.txt"
 
 #data_dir = './'
 
+P2s = [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228,
+       1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328,
+       1421, 1422, 1423, 1424, 1425, 1426, 1427, 1428,
+       1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128]
+
+P1s = [1111, 1112, 1113, 1114,
+       1211, 1212, 1213, 1214,
+       1311, 1312, 1313, 1314,
+       1411, 1412, 1413, 1414]
+
+S1s = [2111, 2112,
+       2211, 2212,
+       2311, 2312,
+       2411, 2412]
+
+S2s = [2121,2122,2123,2124,
+       2221,2222,2223,2224,
+       2321,2322,2323,2324,
+       2421,2422,2423,2424]
+
+
+sectorDict = {'P1':P1s, 'P2':P2s, 'S1':S1s, 'S2':S2s,
+              'M1':P1s+P2s, 'M2': S1s+S2s, 'All':P1s+P2s+S1s+S2s}
 
 def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
                             cmod_xoffset = np.array([-109.25, -110.25, 108.75, 110.75]),
@@ -134,18 +157,19 @@ def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 12
     return df_pattern
 
 
-def load_rx_ry_matrix(panel, respfile=respM_file):
+def load_rx_ry_matrix(panel, respfile=respM_file, verbose=False):
 
     with open(respfile) as f:
         respM_yaml = yaml.load(f)
-    print(respM_yaml)
-    print(type(panel))
-    print(respM_yaml[1211])
+
+    #print(respM_yaml)
+    #print(type(panel))
 
     if panel in respM_yaml:
-        print("Loading rx ry response matrix for panel {} in file {}".format(panel, respfile))
         respM_panel = np.array(respM_yaml[panel])
-        print("Matrix is {}".format(respM_panel))
+        if verbose:
+            print("Loading rx ry response matrix for panel {} in file {}".format(panel, respfile))
+            print("Matrix is {}".format(respM_panel))
         return respM_panel
     else:
         print("Response matrix for panel {} does not exist in file {}. Exiting!".format(panel, respfile))
@@ -246,19 +270,59 @@ def calc_pattern_rx_ry(panel, x, y, pattern_file=pattern_file, resp=respM_file):
     return rx, ry
 
 
-def calc_center_to_pattern_rx_ry(panel, center=center, pattern_file=pattern_file, resp=respM_file):
+def calc_center_to_pattern_rx_ry(panel, center=center, pattern_file=None, resp=respM_file,
+                                 pattern_radius=0, verbose=True):
+    if pattern_file is None and pattern_radius == 0:
+        print("You'll need to either tell me a pattern file or the radius of the pattern to know c2p")
     respM = load_rx_ry_matrix(panel, respfile=resp)
-    xtarg, ytarg = load_pattern(panel, pattern_file=pattern_file)
+    if pattern_radius:
+        xtarg, ytarg = find_pattern_position(panel,
+                              center=np.array(center),
+                              radius_mm=np.array([pattern_radius, pattern_radius]),
+                              pixel_scale=0.241)
+    elif pattern_file is not None:
+        xtarg, ytarg = load_pattern(panel, pattern_file=pattern_file)
+
     dx = - center[0] + xtarg
     dy = - center[1] + ytarg
     rx, ry = calc_rx_ry(dx, dy, respM)
-    print("The motion to move panel {} \nfrom center x={:.3f}, y={:.3f} \nto pattern {:.3f}, {:.3f} is \nrx = {:.4f}, ry = {:.4f}".format(panel,
+    if verbose:
+        print("The motion to move panel {} \nfrom center x={:.3f}, y={:.3f} \nto pattern {:.3f}, {:.3f} is \nrx = {:.4f}, ry = {:.4f}".format(panel,
                                                                                                         center[0],
                                                                                                         center[1],
                                                                                                         xtarg,
                                                                                                         ytarg,
                                                                                                         rx,
                                                                                                         ry))
+    return rx, ry
+
+
+def calc_pattern_to_center_rx_ry(panel, center=center, pattern_file=None, resp=respM_file,
+                                 pattern_radius=0, verbose=True):
+    if pattern_file is None and pattern_radius == 0:
+        print("You'll need to either tell me a pattern file or the radius of the pattern to know p2c")
+    respM = load_rx_ry_matrix(panel, respfile=resp)
+    if pattern_radius:
+        xtarg, ytarg = find_pattern_position(panel,
+                                             center=np.array(center),
+                                             radius_mm=np.array([pattern_radius, pattern_radius]),
+                                             pixel_scale=0.241)
+    elif pattern_file is not None:
+        xtarg, ytarg = load_pattern(panel, pattern_file=pattern_file)
+
+    dx = center[0] - xtarg
+    dy = center[1] - ytarg
+    rx, ry = calc_rx_ry(dx, dy, respM)
+    if verbose:
+        print(
+        "The motion to move panel {} \nfrom center x={:.3f}, y={:.3f} \nto pattern {:.3f}, {:.3f} is \nrx = {:.4f}, ry = {:.4f}".format(
+            panel,
+            center[0],
+            center[1],
+            xtarg,
+            ytarg,
+            rx,
+            ry))
     return rx, ry
 
 
@@ -355,8 +419,11 @@ if __name__ == '__main__':
     parser.add_argument('--force', action='store_true', help="This will force write to resp_file without asking.")
     parser.add_argument('--center_coord', nargs = 2, type = float, default=list(center))
     parser.add_argument('--dry_run', action='store_true', help="This will not attempt to write resp mat to file. ")
-    parser.add_argument('--c2p', action='store_true')
+    parser.add_argument('--c2p', action='store_true', help="Center to pattern")
+    parser.add_argument('--p2c', action='store_true', help="Pattern to center (aka ring to focus)")
     parser.add_argument('--sanity_tol',type=float, default = 0.2, help="At what fraction do you become insane?")
+    parser.add_argument('--sector', default=None, help="Can choose a sector, only P1, P2 implemented for now, for c2p or p2c.")
+    parser.add_argument('--pattern_radius',type=float, default = 0, help="For c2p or p2c")
 
     args = parser.parse_args()
 
@@ -401,7 +468,60 @@ if __name__ == '__main__':
     if args.c2p:
         did_something = True
         print("Using resp file {}".format(args.resp_file))
-        calc_center_to_pattern_rx_ry(args.panel, center=args.center_coord, pattern_file=args.pattern_file, resp=args.resp_file)
+        print("calculating focus to ring")
+        if args.sector is not None:
+            if args.sector not in sectorDict:
+                print("Illegal sector {}".format(args.sector))
+            else:
+                print("Sector {} selected, found panels".format(args.sector))
+                ps = sectorDict[args.sector]
+                print(ps)
+            for panel in ps:
+                if args.pattern_radius > 0:
+                    rx, ry = calc_center_to_pattern_rx_ry(panel, center=args.center_coord,
+                                                          pattern_radius=args.pattern_radius,
+                                                          resp=args.resp_file, verbose=False)
+                else:
+                    rx, ry = calc_center_to_pattern_rx_ry(panel, center=args.center_coord,
+                                                          pattern_file=args.pattern_file,
+                                                          resp=args.resp_file, verbose=False)
+                print("Panel {}, rx={}, ry={}".format(panel, rx, ry))
+        else:
+            if args.pattern_radius > 0:
+                calc_center_to_pattern_rx_ry(args.panel, center=args.center_coord, pattern_radius=args.pattern_radius,
+                                             resp=args.resp_file, verbose=True)
+            else:
+                calc_center_to_pattern_rx_ry(args.panel, center=args.center_coord, pattern_file=args.pattern_file,
+                                             resp=args.resp_file, verbose=True)
+
+    if args.p2c:
+        did_something = True
+        print("Using resp file {}".format(args.resp_file))
+        print("calculating ring to focus")
+        if args.sector is not None:
+            if args.sector not in sectorDict:
+                print("Illegal sector {}".format(args.sector))
+            else:
+                print("Sector {} selected, found panels".format(args.sector))
+                ps = sectorDict[args.sector]
+                print(ps)
+            for panel in ps:
+                if args.pattern_radius > 0:
+                    rx, ry = calc_pattern_to_center_rx_ry(panel, center=args.center_coord,
+                                                          pattern_radius=args.pattern_radius,
+                                                          resp=args.resp_file, verbose=False)
+                else:
+                    rx, ry = calc_pattern_to_center_rx_ry(panel, center=args.center_coord,
+                                                          pattern_file=args.pattern_file,
+                                                          resp=args.resp_file, verbose=False)
+                print("Panel {}, rx={}, ry={}".format(panel, rx, ry))
+        else:
+            if args.pattern_radius > 0:
+                calc_pattern_to_center_rx_ry(args.panel, center=args.center_coord, pattern_radius=args.pattern_radius,
+                                             resp=args.resp_file, verbose=True)
+            else:
+                calc_pattern_to_center_rx_ry(args.panel, center=args.center_coord, pattern_file=args.pattern_file,
+                                             resp=args.resp_file, verbose=True)
 
 
     if args.dx1 * args.dy1 * args.dx2 * args.dy2 * args.rx * args.ry != 0:

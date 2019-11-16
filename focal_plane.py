@@ -506,7 +506,7 @@ def find_ring_pattern_clustering(sewtable, pattern_center=center_pattern, radius
 
 def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
                       n_iter=50, chooseinner=False, chooseouter=False, tryouter=True, fix_center=True,
-                      phase_offset_rad = 0,
+                      phase_offset_rad = 0, get_center = False,
                       var_tol=400):
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
@@ -536,7 +536,11 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
             print("R Variance not decreasing anymore on the {}th iteration.".format(i))
             print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
             print("R = {} pix, center(x,y) = {}, {}".format(rlast, clast[0], clast[1]))
-            if r2std_last/len(sew_slice) < var_tol and len(sew_slice)>4:
+            if r2std_last/len(sew_slice) < var_tol and len(sew_slice)>4 and not get_center:
+                print("Found {} panels on this ring".format(len(sew_slice)))
+                print("This seems to be a pretty good ring")
+                good_ring = True
+            elif r2std_last/len(sew_slice) < var_tol:
                 print("Found {} panels on this ring".format(len(sew_slice)))
                 print("This seems to be a pretty good ring")
                 good_ring = True
@@ -629,7 +633,7 @@ def process_raw(rawfile, kernel_w = 3,
                 cropxs=(1350, 1800), cropys=(1250, 800),
                 savecatalog_name=None,
                 savefits_name=None, overwrite_fits=True,
-                saveplot_name=None,
+                saveplot_name=None, show=False,
                 search_xs=[0,0], search_ys=[0,0]):
     from astropy.table import Column
 
@@ -704,7 +708,8 @@ def process_raw(rawfile, kernel_w = 3,
     if savecatalog_name is not None:
         from astropy.io import ascii
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
-
+    if show:
+        plt.show()
     return sew_out['table'], median
 
 
@@ -1474,6 +1479,7 @@ if __name__ == '__main__':
     parser.add_argument('--search_ys', nargs = 2, type = float, default=[0, 0], help="Ymin and Ymax to list all centroid in a box. ")
     parser.add_argument('--quick_ring_check', default=None, help="Do ring check; dubs as file name for ring pattern. ")
     parser.add_argument("--show", action='store_true')
+    parser.add_argument("--get_center", action='store_true')
 
     args = parser.parse_args()
 
