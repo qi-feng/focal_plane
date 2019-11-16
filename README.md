@@ -54,7 +54,7 @@ Same goes for the files with strings "diff_cat2" for image 2.
 "res_focal_plane_YYYY_MM_DD_HH_MM_SS_YYYY_MM_DD_HH_MM_SS_anime.gif" (now the two timestamps correspond to the timestamps in raw file name 1 and raw file name 2) shows an animated gif to assist with identification of centroid motion corresponding to a panel motion. 
 
 
-Update Nov 2019: 
+### Update Nov 2019: 
 
 focal_plane.py has been expanded to search for ring patters, which is frequently used for optical alignment. To search for a ring as of Nov 2019, run like: 
 
@@ -243,9 +243,7 @@ dx2 and dy2 is the motion of centroid when panel ry is introduced. Or
 calculate motion needed to go to center and pattern position for a given
 panel, need to provide current coordinates in camera x and y. **
 
-- To calculate rx ry response matrix 
-
-- Currently (Nov 2019) the default M1 resp matrix is "M1_matirx_fast.yaml", it is calculated using the collective motions of P1 and P2 rings, respectively, on Nov 14, 2019, in Rx and Ry for every panel in the ring. 
+### Currently (Nov 2019) the default M1 resp matrix is "M1_matirx_fast.yaml", it is calculated using the collective motions of P1 and P2 rings, respectively, on Nov 14, 2019, in Rx and Ry for every panel in the ring. 
 
 Ususally, a reference image is chosen with panels in a ring pattern, then all panels execute a delta rx (x rotation) motion and take an image (let's call this image Rx), similarly for image Ry. The "fast" way of calculating matrices for every panel in P1 or P2 ring using such images im_Ref, im_Rx, im_Ry is: 
 
