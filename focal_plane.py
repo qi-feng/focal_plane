@@ -1574,7 +1574,7 @@ if __name__ == '__main__':
                                               clean=args.clean,
                                               savefits_name=savefits_name1, overwrite_fits=True,
                                               saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
-                                              search_xs=args.search_xs, search_ys=args.search_ys
+                                              search_xs=args.search_xs, search_ys=args.search_ys,  show=args.show
                                               )
         print("Processing single image. Done.")
         if args.ring:
