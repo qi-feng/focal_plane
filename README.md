@@ -53,6 +53,21 @@ Same goes for the files with strings "diff_cat2" for image 2.
 
 "res_focal_plane_YYYY_MM_DD_HH_MM_SS_YYYY_MM_DD_HH_MM_SS_anime.gif" (now the two timestamps correspond to the timestamps in raw file name 1 and raw file name 2) shows an animated gif to assist with identification of centroid motion corresponding to a panel motion. 
 
+
+Update Nov 2019: 
+
+focal_plane.py has been expanded to search for ring patters, which is frequently used for optical alignment. To search for a ring as of Nov 2019, run like: 
+
+```
+python focal_plane.py [path_to/]rawfile -r --ring_rad 105 --ring_frac 0.25 -p 1913 1010 --ring_tol 0.2 --show
+```
+
+Note that it is not a very smart algorithm at figuring out where the center of the ring is; as early work involves many centroid that forms a far-from-ideal ring. 
+
+To only search for centroids near the center, can use --search_xs and --search_ys
+
+
+
 ## find_motion_focal_plane.py
 
 ** This code is run after focal_plane.py, if you believe you found two centroids that correspond to the same panel, use the green number in diff_cat1 image for this centroid and the yellow number in diff_cat2 image, and run this with -1 and -2 options. 
@@ -227,6 +242,31 @@ where dx1 and dy1 is the motion of centroid when panel rx is introduced, and
 dx2 and dy2 is the motion of centroid when panel ry is introduced. Or
 calculate motion needed to go to center and pattern position for a given
 panel, need to provide current coordinates in camera x and y. **
+
+- To calculate rx ry response matrix 
+
+- Currently (Nov 2019) the default M1 resp matrix is "M1_matirx_fast.yaml", it is calculated using the collective motions of P1 and P2 rings, respectively, on Nov 14, 2019, in Rx and Ry for every panel in the ring. 
+
+Ususally, a reference image is chosen with panels in a ring pattern, then all panels execute a delta rx (x rotation) motion and take an image (let's call this image Rx), similarly for image Ry. The "fast" way of calculating matrices for every panel in P1 or P2 ring using such images im_Ref, im_Rx, im_Ry is: 
+
+```
+python calc_motion.py --files im_Ry im_Ref im_Rx --ry Ry --rx Rx --resp out_matrix.yaml
+```
+
+We recommend you to test first with dry_run, this is safe, will not overwrite any files, and will perform sanity check (that recovers the introduced rx ry motion). 
+
+```
+python calc_motion.py --files im_Ry im_Ref im_Rx --ry Ry --rx Rx --dry_run
+```
+
+To calculate the rx ry motion needed to go from a pattern position to a center position (aka ring to focus), can run like below (resp mat has to be in the file). 
+
+```
+python calc_motion.py --p2c --sector 'P1' --pattern_radius 280 --resp_file M1_matirx_fast.yaml
+```
+
+Should expect very small rx motion and almost entirely ry motion. 
+
 
 - To calculate rx ry response matrix, run it like: 
 ```
