@@ -819,6 +819,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         df_vvv = sew_slice.to_pandas()
         df_vvv = df_vvv[['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE']]
         df_vvv.sort_values('#').to_csv(save_for_vvv, index=False)
+        print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
 
     return
 
