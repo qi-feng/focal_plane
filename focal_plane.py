@@ -1507,6 +1507,14 @@ if __name__ == '__main__':
         diffcatalog_name1 = os.path.join(args.datadir,args.save_filename_prefix1 + "_diff_cat1.txt")
         diffplot_name1 = os.path.join(args.datadir,args.save_filename_prefix1 + "_diff_cat1.pdf")
         motion_outfile_prefix =  os.path.join(args.datadir,args.save_filename_prefix1)
+        save_filename_prefix1 = args.save_filename_prefix1
+        if args.ring_file is None:
+            ring_file = save_filename_prefix1 + "_ring_search_1.pdf"
+            ring_cat_file = save_filename_prefix1 + "_ring_search_1.txt"
+        else:
+            ring_file =  os.path.join(args.datadir, args.ring_file)
+            ring_cat_file = os.path.join(args.datadir, args.ring_file[:-4]+".txt")
+        vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
     elif args.savefits_name1 is None or args.savecatalog_name1 is None or args.diffcatalog_name1 is None or args.diffplot_name1 is None:
         dt_match = get_datetime_rawname(args.rawfile1)
         print("Using default output file names with date {}".format(dt_match))
