@@ -686,7 +686,7 @@ def process_raw(rawfile, kernel_w = 3,
             ymax=search_ys[1]
         print("Only searching in X {} to {} and Y {} to {}".format(search_xs[0], search_xs[1], ymin, ymax))
         sew_out['table'] = sew_out['table'][(sew_out['table']['X_IMAGE'] <= search_xs[1]) & (sew_out['table']['X_IMAGE'] >= search_xs[0]) & \
-                                            (sew_out['table']['Y_IMAGE'] <= ymax) &(sew_out['table']['X_IMAGE'] >= ymax)]
+                                            (sew_out['table']['Y_IMAGE'] <= ymax) &(sew_out['table']['Y_IMAGE'] >= ymin)]
 
     n_sources = len(sew_out['table'])
     ID_ = Column(range(n_sources), name='ID')
