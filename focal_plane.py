@@ -673,8 +673,8 @@ def process_raw(rawfile, kernel_w = 3,
     sew_out = sew(savefits_name)
     sew_out['table'].sort('FLUX_ISO')
     sew_out['table'].reverse()
-    sew_out['table']['FLUX_AREA'] = np.pi * sew_out['table']['KRON_RADIUS'] * sew_out['table']['KRON_RADIUS'] * \
-                                    sew_out['table']['A_IMAGE'] * sew_out['table']['A_IMAGE']
+    sew_out['table']['FLUX_AREA'] = (1. /4.) *np.pi * sew_out['table']['KRON_RADIUS'] * sew_out['table']['KRON_RADIUS'] * \
+                                    sew_out['table']['A_IMAGE'] * sew_out['table']['B_IMAGE']
     if clean:
         sew_out['table'] = sew_out['table'][sew_out['table']['FLAGS'] <= 16]
         #sew_out['table'] = sew_out['table'][(sew_out['table']['FLUX_ISO'] / sew_out['table']['FLUX_AREA']) > 0.3]
@@ -817,7 +817,10 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
     if df is not None:
         # no crappy files for vvv
         df_vvv = sew_slice.to_pandas()
-        df_vvv = df_vvv[['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE']]
+        df_vvv['A_x_KR_in_pix'] = df_vvv["KRON_RADIUS"]*df_vvv['A_IMAGE'] / 2.
+        df_vvv['B_x_KR_in_pix'] = df_vvv["KRON_RADIUS"]*df_vvv['B_IMAGE'] / 2.
+        df_vvv = df_vvv[['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix",
+                                                      "THETA_IMAGE",'FLUX_AREA','KRON_RADIUS']]
         df_vvv.sort_values('#').to_csv(save_for_vvv, index=False)
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
 
