@@ -42,7 +42,7 @@ if not sys.version_info.major == 3:
 
 # New GR cam lens with 16mm focal length used (2x zoom in)
 #pix2mm = 0.2449
-pix2mm = 0.241
+PIX2MM = 0.241
 
 
 #these new corners mark the central module
@@ -59,6 +59,12 @@ pix2mm = 0.241
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
 
+PATTERN_LABEL_X_MIN = 1500
+PATTERN_LABEL_X_MAX = 1900
+PATTERN_LABEL_Y_MIN = 1500
+PATTERN_LABEL_Y_MAX = 1850
+PATTERN_CENTER_FROM_LABEL_BOUNDS = np.array([(PATTERN_LABEL_X_MIN + PATTERN_LABEL_X_MAX) / 2., (PATTERN_LABEL_Y_MIN + PATTERN_LABEL_Y_MAX) / 2.])
+
 
 def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
                             cmod_xoffset = np.array([-109.25, -110.25, 108.75, 110.75]),
@@ -68,19 +74,12 @@ def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
     return x_corners, y_corners
 
 
-pattern_label_x_min = 1500
-pattern_label_x_max = 1900
-pattern_label_y_min = 1500
-pattern_label_y_max = 1850
-center_pattern = np.array([(pattern_label_x_min+pattern_label_x_max)/2., (pattern_label_y_min+pattern_label_y_max)/2.])
-
-
-def find_pattern_position(panel_id,
-                          center=np.array([1891.25, 1063.75]),
-                          radius_mm=np.array([20, 40]),
-                          pixel_scale=0.241,
-                          phase_offset_rad=0,
-                          ):
+def get_panel_position_in_pattern(panel_id,
+                                  center=np.array([1891.25, 1063.75]),
+                                  radius_mm=np.array([20, 40]),
+                                  pixel_scale=0.241,
+                                  phase_offset_rad=0,
+                                  ):
     # in case of rx motion, we add a reference phase offset
     panel_id = str(panel_id)
 
@@ -139,11 +138,11 @@ def find_all_pattern_positions(all_panels = np.array([1221, 1222, 1223, 1224, 12
     df_pattern['Rpix'] = 0
     df_pattern['Phase'] = 0
     for i, row in df_pattern.iterrows():
-        x_, y_, r_pix_, phase_ = find_pattern_position(row['Panel'],
-                                                       center=center,
-                                                       radius_mm = radius_mm,
-                                                       phase_offset_rad=phase_offset_rad,
-                                                       pixel_scale = pixel_scale)
+        x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['Panel'],
+                                                               center=center,
+                                                               radius_mm = radius_mm,
+                                                               phase_offset_rad=phase_offset_rad,
+                                                               pixel_scale = pixel_scale)
         df_pattern.loc[i, 'Xpix'] = x_
         df_pattern.loc[i, 'Ypix'] = y_
         df_pattern.loc[i, 'Rpix'] = r_pix_
@@ -198,7 +197,9 @@ def plot_sew_cat(dst_trans, sew_out_trans,
                  pattern_label_x_min=0, pattern_label_x_max = 0,
                  pattern_label_y_min = 0, pattern_label_y_max = 0
 ):
-    # plt.figure()
+    '''
+    Plots image with imshow. On top, plots only sources in sew_out_trans DF within the pattern search region.
+    '''
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
     if vmax is not None:
@@ -206,10 +207,6 @@ def plot_sew_cat(dst_trans, sew_out_trans,
     else:
         ax_img = ax.imshow(dst_trans, cmap='gray')
     fig.colorbar(ax_img)
-
-    # plt.plot(cat_test['X_IMAGE'], cat_test['Y_IMAGE'], color='r',  marker='o', ms=5, ls='')
-    # plt.scatter(sew_out_trans['table']['X_IMAGE'],
-    #            sew_out_trans['table']['Y_IMAGE'], s=40, facecolors='none', edgecolors='r')
 
     i = 0
     for row in sew_out_trans['table']:
@@ -230,25 +227,21 @@ def plot_sew_cat(dst_trans, sew_out_trans,
         e.set_color('r')
         ax.add_artist(e)
 
-        #if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row['Y_IMAGE'] <= 1250:
         if pattern_label_x_max>0 and pattern_label_y_max>0 and \
-                row['X_IMAGE'] <= pattern_label_x_max and row['X_IMAGE'] >= pattern_label_x_min and row[
-            'Y_IMAGE'] >= pattern_label_y_min and row[
-            'Y_IMAGE'] <= pattern_label_y_max:
-            #print("Yo")
-            #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
+                row['X_IMAGE'] <= pattern_label_x_max and row['X_IMAGE'] >= pattern_label_x_min and \
+                row['Y_IMAGE'] >= pattern_label_y_min and row['Y_IMAGE'] <= pattern_label_y_max:
+
             center_pattern = np.array(
                 [(pattern_label_x_min + pattern_label_x_max) / 2., (pattern_label_y_min + pattern_label_y_max) / 2.])
 
             ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
-                        #xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
                         xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
                                           row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
-                        #xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
-                    color='c', alpha=0.8,
-                    arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
-                                    alpha=0.7),
-                    )
+                        # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
+                        color='c', alpha=0.8,
+                        arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
+                                        alpha=0.7),
+                        )
             e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]),
                         width=row['A_IMAGE'] * kr,
                         height=row['B_IMAGE'] * kr,
@@ -256,10 +249,7 @@ def plot_sew_cat(dst_trans, sew_out_trans,
                         linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_color('c')
-        # e.set_facecolor('r')
 
-    # plt.xlim(1350, 1800)
-    # plt.ylim(1250,800)
     zoom = False
     if xlim is not None:
         plt.xlim(xlim)
@@ -276,14 +266,20 @@ def plot_sew_cat(dst_trans, sew_out_trans,
         plt.show()
 
 
-def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.5,
+def calc_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_frac=0.5,
                       weight=False, fix_center=True):
+    '''
+    Draw a circle centered at some point and select sources within it, then get distance for those sources to
+    the center. For circular region, use pattern_center and given radius. If not circle, use entire sewtable and given center.
+    With this cut, get averaged center of sources, mean and std of radius, and sliced sewtable.
+    '''
+
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
         return
 
     if not fix_center:
-        #figure out center here
+        # figure out center here
         xlo = (pattern_center[0] - (1+rad_frac)*radius )
         xhi = (pattern_center[0] + (1+rad_frac)*radius )
         ylo = (pattern_center[1] - (1+rad_frac)*radius )
@@ -304,14 +300,14 @@ def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
         centroidy = pattern_center[1]
         sew_slice = sewtable
 
-    r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
+    r2s = (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
 
-    #iterate
+    # iterate
     sew_slice['R_pattern'] = np.sqrt(r2s)
-    #print(sew_slice)
+    # print(sew_slice)
     sew_slice = sew_slice[(sew_slice['R_pattern'] <= (radius*(1+rad_frac))) & (sew_slice['R_pattern'] >= (radius*(1-rad_frac)))]
-    #print("after")
-    #print(sew_slice)
+    # print("after")
+    # print(sew_slice)
 
     if weight:
         centroidx = np.average(sew_slice['X_IMAGE'], weights=sew_slice['FLUX_ISO'])
@@ -320,24 +316,24 @@ def calc_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
         centroidx = np.average(sew_slice['X_IMAGE'])
         centroidy = np.average(sew_slice['Y_IMAGE'])
 
-    r2s =  (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
-    phase =  np.arcsin((centroidx - sew_slice['X_IMAGE']) / sew_slice['R_pattern'])
+    r2s = (sew_slice['X_IMAGE']-centroidx)**2+(sew_slice['Y_IMAGE']-centroidy)**2
+    phase = np.arcsin((centroidx - sew_slice['X_IMAGE']) / sew_slice['R_pattern'])
     sew_slice['Phase'] = phase
 
     r2mean = np.mean(r2s)
-    #r2std = np.std(r2s)
+    # r2std = np.std(r2s)
     r2std = np.std(r2s) / (len(r2s) * 1.0)
     print(len(r2s), r2s.shape)
     print("r2std={}, r2std/(N)={}".format(r2std, r2std * (len(r2s) * 1.0)))
 
-    newc = np.array([centroidx, centroidy])
-    newr = np.sqrt(r2mean)
+    new_center = np.array([centroidx, centroidy])
+    new_radius = np.sqrt(r2mean)
 
-    return r2mean, r2std, newc, newr, sew_slice
+    return r2mean, r2std, new_center, new_radius, sew_slice
 
 
-def calc_ring_pattern_band(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_inner=0.5, rad_outer=1.2,
-                      weight=False):
+def calc_ring_pattern_band(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_inner=0.5, rad_outer=1.2,
+                           weight=False):
     # this is just a stupid calc func, no optimization / minimization
     if radius<0 or rad_inner > 1 or rad_outer<1:
         print("Params to find ring pattern is not sensible")
@@ -401,7 +397,7 @@ def calc_ring_pattern_band(sewtable, pattern_center=center_pattern, radius=20/pi
 
 
 def radii_clustering(sewtable, n_rings=2,
-                     pattern_center=center_pattern, radius=20/pix2mm, rad_inner=0.5, rad_outer=1.2,
+                     pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_inner=0.5, rad_outer=1.2,
                      weight=False):
     # implementing
     # filtering
@@ -437,12 +433,12 @@ def radii_clustering(sewtable, n_rings=2,
 
 
 
-def find_ring_pattern_clustering(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
-                           rad_frac=0.2, rad_tol_frac=0.1,
-                           n_rings=2,  rad_inner=0.5, rad_outer=1.2,
-                           rad_edges_pix=[50, 110, 150, 200], phase_offset = 0,
-                           n_iter=50, chooseinner=False, chooseouter=False, tryouter=True,
-                           ring_tol_rms=400):
+def find_ring_pattern_clustering(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM,
+                                 rad_frac=0.2, rad_tol_frac=0.1,
+                                 n_rings=2, rad_inner=0.5, rad_outer=1.2,
+                                 rad_edges_pix=[50, 110, 150, 200], phase_offset = 0,
+                                 n_iter=50, chooseinner=False, chooseouter=False, tryouter=True,
+                                 ring_tol_rms=400):
     # implementing
     """
     thoughts: we need to find imperfect rings, up to 3 rings, 1) 16 centroids from P1-S1 (bright); 2) 32 from P2-S1 (should be dimmer); 32 from P2-S2
@@ -504,16 +500,23 @@ def find_ring_pattern_clustering(sewtable, pattern_center=center_pattern, radius
     return clast, rlast, r2std_last, sew_slice, df_slice
 
 
-def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
+def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_frac=0.2, rad_tol_frac=0.1,
                       n_iter=50, chooseinner=False, chooseouter=False, tryouter=True, fix_center=True,
                       phase_offset_rad = 0, get_center = False,
                       var_tol=400):
+    '''
+    Use sewtable of sources to find the mean centroid of the sources. Start with some radius and get the sources within that
+    radius, their mean/std of their distances to center, and their mean center. Iterate with new radius cuts and new
+    source selections. At the minimum std of the distances to center, call that a good_ring. For this good ring, apply
+    Panel_ID label to each source in the corresponding locations.
+
+    '''
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
         return
     r2std_last = 1e9
-    clast = pattern_center
-    rlast = radius
+    last_center = pattern_center
+    last_radius = radius
     good_ring = False
     df_slice = None
 
@@ -521,21 +524,20 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
     centroidy = np.average(sewtable['Y_IMAGE'])#, weights=sewtable['FLUX_ISO'])
 
     if np.sqrt((centroidx - pattern_center[0])**2 + (centroidy - pattern_center[1])**2 ) > 100:
-        print("Your center is >100 pixels away from the flux-weighted center of gravity of all centoids")
-        print("Flux-weighted center of gravity of all centoids is X={}, Y={}".format(centroidx, centroidy))
-
+        print("Your center is >100 pixels away from the flux-weighted center of gravity of all centroids")
+        print("Flux-weighted center of gravity of all centroids is X={}, Y={}".format(centroidx, centroidy))
 
     for i in range(n_iter):
-        r2mean, r2std, newc, newr, sew_slice = calc_ring_pattern(sewtable, pattern_center=clast,
-                                                      radius=rlast, rad_frac=rad_frac, fix_center=fix_center)
+        r2mean, r2std, new_center, new_radius, sew_slice = calc_ring_pattern(sewtable, pattern_center=last_center,
+                                                      radius=last_radius, rad_frac=rad_frac, fix_center=fix_center)
         if r2std < r2std_last:
-            clast = newc
-            rlast = newr
+            last_center = new_center
+            last_radius = new_radius
             r2std_last = r2std
         else:
             print("R Variance not decreasing anymore on the {}th iteration.".format(i))
             print("Rvar/N = {}".format(r2std_last/len(sew_slice)))
-            print("R = {} pix, center(x,y) = {}, {}".format(rlast, clast[0], clast[1]))
+            print("R = {} pix, center(x,y) = {}, {}".format(last_radius, last_center[0], last_center[1]))
             if r2std_last/len(sew_slice) < var_tol and len(sew_slice)>4 and not get_center:
                 print("Found {} panels on this ring".format(len(sew_slice)))
                 print("This seems to be a pretty good ring")
@@ -551,35 +553,35 @@ def find_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm,
     if good_ring:
         if abs(len(sew_slice)-16) + 4 <= abs(len(sew_slice)-32) or chooseinner:
             #guess this is inner ring
-            df_pattern = find_all_pattern_positions(center=clast,
-                               radius_mm = np.array([rlast*0.241, rlast*2*0.241]),
+            df_pattern = find_all_pattern_positions(center=last_center,
+                               radius_mm = np.array([last_radius*0.241, last_radius*2*0.241]),
                                pixel_scale = 0.241, phase_offset_rad=phase_offset_rad,
                                outfile=None,)
             print("Found {} candidate centroid forming an inner ring".format(len(sew_slice)))
-            print("Center {}, radius {}".format(clast, rlast))
-            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast)<(rlast*rad_tol_frac))]
+            print("Center {}, radius {}".format(last_center, last_radius))
+            df_slice = df_pattern[(abs(df_pattern.Rpix - last_radius)<(last_radius*rad_tol_frac))]
             print("After applying a tolerance fraction cut = {}, {} panels left ".format(rad_tol_frac, df_slice.shape[0]))
-            if tryouter: 
-                df_outer_slice = df_pattern[(abs(df_pattern.Rpix - 2*rlast)<(2*rlast*rad_tol_frac))]
+            if tryouter:
+                df_outer_slice = df_pattern[(abs(df_pattern.Rpix - 2*last_radius)<(2*last_radius*rad_tol_frac))]
                 df_slice.append(df_outer_slice)
         elif abs(len(sew_slice)-16) > abs(len(sew_slice)-32) or chooseouter:
             # not tested
-            df_pattern = find_all_pattern_positions(center=clast,
-                                                    radius_mm=np.array([rlast/2 * 0.241, rlast * 0.241]),
+            df_pattern = find_all_pattern_positions(center=last_center,
+                                                    radius_mm=np.array([last_radius/2 * 0.241, last_radius * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
                                                     outfile=None, )
             print("Found {} candidate centroid forming an outer ring".format(len(sew_slice)))
-            print("Center {}, radius {}".format(clast, rlast))
-            df_slice = df_pattern[(abs(df_pattern.Rpix - rlast) < (rlast * rad_tol_frac))]
+            print("Center {}, radius {}".format(last_center, last_radius))
+            df_slice = df_pattern[(abs(df_pattern.Rpix - last_radius) < (last_radius * rad_tol_frac))]
             print("After applying a tolerance fraction cut = {}, {} panels left ".format(rad_tol_frac, df_slice.shape[0]))
     else:
         df_slice = None
 
-    return clast, rlast, r2std_last, sew_slice, df_slice
+    return last_center, last_radius, r2std_last, sew_slice, df_slice
 
 
-def find_single_ring_pattern(sewtable, pattern_center=center_pattern, radius=20/pix2mm, rad_frac=0.2, rad_tol_frac=0.1,
-                      n_iter=50, ):
+def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_frac=0.2, rad_tol_frac=0.1,
+                             n_iter=50, ):
     #implementing, may dropt it
     if rad_frac>1 or rad_frac<0 or radius<0:
         print("Params to find ring pattern is not sensible")
@@ -635,6 +637,11 @@ def process_raw(rawfile, kernel_w = 3,
                 savefits_name=None, overwrite_fits=True,
                 saveplot_name=None, show=False,
                 search_xs=[0,0], search_ys=[0,0]):
+    '''
+    This actually processes the file with sewpy and extracts sources. The 'rawfile' is a matrix (not the path to the .RAW image).
+    After processing with sewpy, it pushes the extracted sources object to a Pandas dataframe, then cleans for flags and search region.
+    With the remaining list, it plots the image and ellipse labels with `plot_sew_cat`.
+    '''
     from astropy.table import Column
 
     im_raw = read_raw(rawfile)
@@ -648,9 +655,6 @@ def process_raw(rawfile, kernel_w = 3,
     im_std = np.std(median)
     print("Standard deviation of the image is {:.2f}".format(im_std))
 
-    # plt.xlim(1050, 2592)
-    # plt.ylim(1850,250)
-    # plt.imshow(median_screen[250:1850, 1050:2592], cmap='gray')
     max_pixel_crop = np.max(median[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
     print("Brightest pixel in the zoomed area reaches {}".format(max_pixel_crop))
     if savefits_name is None:
@@ -677,7 +681,7 @@ def process_raw(rawfile, kernel_w = 3,
                                     sew_out['table']['A_IMAGE'] * sew_out['table']['B_IMAGE']
     if clean:
         sew_out['table'] = sew_out['table'][sew_out['table']['FLAGS'] <= 16]
-        #sew_out['table'] = sew_out['table'][(sew_out['table']['FLUX_ISO'] / sew_out['table']['FLUX_AREA']) > 0.3]
+        # sew_out['table'] = sew_out['table'][(sew_out['table']['FLUX_ISO'] / sew_out['table']['FLUX_AREA']) > 0.3]
 
     ymin=0
     ymax=0
@@ -720,6 +724,11 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                  save_catlog_name="temp_ring_search_cat.txt",
                  save_for_vvv="temp_ring_vvv_XY_pix.csv",
                  saveplot_name=None, show=False):
+    '''
+    Plots raw file (path to .RAW image) with imshow. If there is a 'df' object - this object is assumed to be the VVV
+    list of panels in the ring - find minimum distance between that source with source in the sewtable and assign that
+    panel number to the sewtable object. Plot the resulting image.
+    '''
     from astropy.table import Column
     im_raw = read_raw(rawfile)
     if has_cv2:
@@ -812,11 +821,11 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         plt.show()
 
     from astropy.io import ascii
-    ascii.write(sew_slice.group_by('#'), save_catlog_name, overwrite=True)
+    ascii.write(df.group_by('#'), save_catlog_name, overwrite=True)
 
     if df is not None:
-        # no crappy files for vvv
-        df_vvv = sew_slice.to_pandas()
+        # no 'crappy' files for vvv (N.B 'crappy' is undefined and subject to change)
+        df_vvv = df.to_pandas()
         df_vvv['A_x_KR_in_pix'] = df_vvv["KRON_RADIUS"]*df_vvv['A_IMAGE'] / 2.
         df_vvv['B_x_KR_in_pix'] = df_vvv["KRON_RADIUS"]*df_vvv['B_IMAGE'] / 2.
         df_vvv = df_vvv[['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix",
@@ -828,9 +837,10 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
 
 def quick_check_raw_ring(rawfile,
-                 save_for_vvv="temp_ring_vvv_XY_pix.csv",
-                 saveplot_name=None, show=False,
-                         kernel_w = 3):
+                         save_for_vvv="temp_ring_vvv_XY_pix.csv",
+                         saveplot_name=None, show=False,
+                         kernel_w = 3,
+                         cropxs=(1050, 2592), cropys=(1850, 250),):
     from astropy.table import Column
     im_raw = read_raw(rawfile)
     if has_cv2:
@@ -843,7 +853,6 @@ def quick_check_raw_ring(rawfile,
 
     df = pd.read_csv(save_for_vvv)
     n_sources = len(df)
-
 
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
@@ -869,6 +878,11 @@ def quick_check_raw_ring(rawfile,
                 arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
                                 alpha=0.4),
                 )
+    if cropxs is not None:
+        plt.xlim(cropxs)
+    if cropys is not None:
+        plt.ylim(cropys)
+
     if saveplot_name is not None:
         print("saving to file {}".format(saveplot_name))
         plt.savefig(saveplot_name)
@@ -941,14 +955,14 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
 
                 #if row['X_IMAGE'] <= 2100 and row['X_IMAGE'] >= 1700 and row['Y_IMAGE'] >= 880 and row[
                 #    'Y_IMAGE'] <= 1250:
-                if row['X_IMAGE'] <= pattern_label_x_max and row['X_IMAGE'] >= pattern_label_x_min and row[
-                    'Y_IMAGE'] >= pattern_label_y_min and row[
-                    'Y_IMAGE'] <= pattern_label_y_max:
+                if row['X_IMAGE'] <= PATTERN_LABEL_X_MAX and row['X_IMAGE'] >= PATTERN_LABEL_X_MIN and row[
+                    'Y_IMAGE'] >= PATTERN_LABEL_Y_MIN and row[
+                    'Y_IMAGE'] <= PATTERN_LABEL_Y_MAX:
                     #print("Yo")
                     #print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                     ax.annotate(int(row['ID']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
-                                xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
-                                                  row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
+                                xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - PATTERN_CENTER_FROM_LABEL_BOUNDS[0],
+                                                  row['Y_IMAGE'] + row['Y_IMAGE'] - PATTERN_CENTER_FROM_LABEL_BOUNDS[1]])),  # for orig lens
                                 #xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                                 color='c', alpha=0.8,
                                 arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
@@ -1009,14 +1023,14 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
 
             #if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
             #    'Y_IMAGE'] <= 1250:
-            if row1['X_IMAGE'] <= pattern_label_x_max and row1['X_IMAGE'] >= pattern_label_x_min and row1[
-                    'Y_IMAGE'] >= pattern_label_y_min and row1[
-                    'Y_IMAGE'] <= pattern_label_y_max:
+            if row1['X_IMAGE'] <= PATTERN_LABEL_X_MAX and row1['X_IMAGE'] >= PATTERN_LABEL_X_MIN and row1[
+                    'Y_IMAGE'] >= PATTERN_LABEL_Y_MIN and row1[
+                    'Y_IMAGE'] <= PATTERN_LABEL_Y_MAX:
                 # print("Yo")
                 # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                 ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8, xycoords='data',
-                            xytext=(np.array([ row1['X_IMAGE'] + row1['X_IMAGE'] - center_pattern[0] ,
-                                               row1['Y_IMAGE'] + row1['Y_IMAGE'] - center_pattern[1] ])),  # for orig lens
+                            xytext=(np.array([row1['X_IMAGE'] + row1['X_IMAGE'] - PATTERN_CENTER_FROM_LABEL_BOUNDS[0] ,
+                                              row1['Y_IMAGE'] + row1['Y_IMAGE'] - PATTERN_CENTER_FROM_LABEL_BOUNDS[1]])),  # for orig lens
                             #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                             color='c', alpha=0.8,
                             arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
@@ -1076,15 +1090,15 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
 
                 #if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
                 #    'Y_IMAGE'] <= 1250:
-                if row1['X_IMAGE'] <= pattern_label_x_max and row1['X_IMAGE'] >= pattern_label_x_min and row1[
-                    'Y_IMAGE'] >= pattern_label_y_min and row1[
-                    'Y_IMAGE'] <= pattern_label_y_max:
+                if row1['X_IMAGE'] <= PATTERN_LABEL_X_MAX and row1['X_IMAGE'] >= PATTERN_LABEL_X_MIN and row1[
+                    'Y_IMAGE'] >= PATTERN_LABEL_Y_MIN and row1[
+                    'Y_IMAGE'] <= PATTERN_LABEL_Y_MAX:
                     # print("Yo")
                     # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                     ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8,
                                 xycoords='data',
-                                xytext=(np.array([row1['X_IMAGE'] + row1['X_IMAGE'] - center_pattern[0],
-                                                  row1['Y_IMAGE'] + row1['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
+                                xytext=(np.array([row1['X_IMAGE'] + row1['X_IMAGE'] - PATTERN_CENTER_FROM_LABEL_BOUNDS[0],
+                                                  row1['Y_IMAGE'] + row1['Y_IMAGE'] - PATTERN_CENTER_FROM_LABEL_BOUNDS[1]])),  # for orig lens
 
                                 #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                                 color='c', alpha=0.8,
@@ -1124,14 +1138,14 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2,
             e.set_color('g')
             #if row1['X_IMAGE'] <= 2100 and row1['X_IMAGE'] >= 1700 and row1['Y_IMAGE'] >= 880 and row1[
             #    'Y_IMAGE'] <= 1250:
-            if row1['X_IMAGE'] <= pattern_label_x_max and row1['X_IMAGE'] >= pattern_label_x_min and row1[
-                'Y_IMAGE'] >= pattern_label_y_min and row1[
-                'Y_IMAGE'] <= pattern_label_y_max:
+            if row1['X_IMAGE'] <= PATTERN_LABEL_X_MAX and row1['X_IMAGE'] >= PATTERN_LABEL_X_MIN and row1[
+                'Y_IMAGE'] >= PATTERN_LABEL_Y_MIN and row1[
+                'Y_IMAGE'] <= PATTERN_LABEL_Y_MAX:
                 # print("Yo")
                 # print(int(row['ID']), row['X_IMAGE'], row['Y_IMAGE'])
                 ax.annotate(int(row1['ID']), xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), size=8, xycoords='data',
-                            xytext=(np.array([ row1['X_IMAGE'] + row1['X_IMAGE'] - center_pattern[0] ,
-                                               row1['Y_IMAGE'] + row1['Y_IMAGE'] - center_pattern[1] ])),  # for orig lens
+                            xytext=(np.array([row1['X_IMAGE'] + row1['X_IMAGE'] - PATTERN_CENTER_FROM_LABEL_BOUNDS[0] ,
+                                              row1['Y_IMAGE'] + row1['Y_IMAGE'] - PATTERN_CENTER_FROM_LABEL_BOUNDS[1]])),  # for orig lens
                             #xytext=(np.array([row1['X_IMAGE'] - 80, row1['Y_IMAGE'] - 80])),  # for new lens
                             color='c', alpha=0.8,
                             arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=2,
@@ -1373,8 +1387,7 @@ def grid2gif(im1, im2, output_gif):
     subprocess.call(str1, shell=True)
 
 
-if __name__ == '__main__':
-
+def main():
     parser = argparse.ArgumentParser(description='Compare two raw images of stars at the focal plane')
 
     parser.add_argument('rawfile1',type=str)
@@ -1472,7 +1485,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-C', '--center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate X_pix Y_pix. ")
     parser.add_argument('-p', '--pattern_center', nargs = 2, type = float, default=[1891.25, 1063.75], help="Center coordinate for ring pattern X_pix Y_pix. ")
-    parser.add_argument('--ring_rad', type = float, default=32/pix2mm, help="Radius in pixels for ring pattern. ")
+    parser.add_argument('--ring_rad', type = float, default=32 / PIX2MM, help="Radius in pixels for ring pattern. ")
     parser.add_argument('--ring_tol', type = float, default=0.1)
     parser.add_argument('--phase_offset_rad', type = float, default=0.)
     parser.add_argument('--ring_frac', type = float, default=0.3, help="Fraction (1-frac, 1+frac)*radius that you accept a centroid "
@@ -1660,3 +1673,7 @@ if __name__ == '__main__':
                            center=np.array(args.center))
 
         grid2gif(diffplot_name1, diffplot_name2, gifname)
+
+
+if __name__ == '__main__':
+    main()
