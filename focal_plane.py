@@ -768,11 +768,11 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         plt.show()
 
     from astropy.io import ascii
-    ascii.write(df.group_by('#'), save_catlog_name, overwrite=True)
+    ascii.write(sewtable.group_by('#'), save_catlog_name, overwrite=True)
 
     if df is not None:
         # no 'crappy' files for vvv (N.B 'crappy' is undefined and subject to change)
-        df_vvv = df.to_pandas()
+        df_vvv = sewtable.to_pandas()
         df_vvv['A_x_KR_in_pix'] = df_vvv["KRON_RADIUS"] * df_vvv['A_IMAGE'] / 2.
         df_vvv['B_x_KR_in_pix'] = df_vvv["KRON_RADIUS"] * df_vvv['B_IMAGE'] / 2.
         df_vvv = df_vvv[
