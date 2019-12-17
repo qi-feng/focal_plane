@@ -19,14 +19,35 @@ sectorDict = {'P1': P1s, 'P2': P2s, 'S2': P1s}
 layers_to_times_dict_5mm_motion = {"2019_12_13_22_06_23": 0, "2019_12_13_22_22_26": 1, "2019_12_13_22_55_27": 2,
                                    "2019_12_13_23_14_24": 3, "2019_12_13_23_41_36": 4}
 
-layers_to_times_prefix_dict_1mm_motion = {"2019_12_16_02_34_54": {"_M2_z_0": 0}, "2019_12_16_02_37_06": {"_M2_z_1": -1},
+layers_to_times_prefix_dict_1mm_motion = {"2019_12_16_02_34_54": {"_M2_z_0": 0},
+                                          "2019_12_16_02_37_06": {"_M2_z_1": -1},
                                           "2019_12_16_02_41_37": {"_M2_z_2": -2},
                                           "2019_12_16_02_44_38": {"_M2_z_3": -3},
-                                          "2019_12_16_02_49_05": {"_M2_z_4": -4}, "2019_12_16_02_55_13": {"_M2_z_0": 0},
+                                          "2019_12_16_02_49_05": {"_M2_z_4": -4},
+                                          "2019_12_16_02_55_13": {"_M2_z_0": 0},
                                           "2019_12_16_03_04_24": {"_M2_z_p1": 1},
                                           "2019_12_16_03_06_46": {"_M2_z_p2": 2},
                                           "2019_12_16_03_09_05": {"_M2_z_p3": 3},
                                           "2019_12_16_03_11_44": {"_M2_z_p4": 4}, }
+
+layers_to_times_prefix_dict_025mm_motion = {"2019_12_17_00_32_31":{"_z-1-1"   :0  },
+                                            "2019_12_17_00_35_18":{"_z-1+0.25":.25  },
+                                            "2019_12_17_00_37_33":{"_z-1+0.5" :.5  },
+                                            "2019_12_17_00_39_57":{"_z-1+0.75" :.75 },
+                                            "2019_12_17_00_42_43":{"_z-1+1.0"  :1 },
+                                            "2019_12_17_00_45_16":{"_z-1+1.25" :1.25 },
+                                            "2019_12_17_00_47_37":{"_z-1+1.5"  :1.5 },
+                                            "2019_12_17_00_49_44":{"_z-1+1.75":1.75  },
+                                            "2019_12_17_00_52_12":{"_z-1+2.0" :2.  },
+                                            "2019_12_17_00_58_22":{"_z-1+2.5" :2.5  },
+                                            "2019_12_17_01_16_22":{"_z-1"      :0 },
+                                            "2019_12_17_01_17_29":{"_z-1-0.25":-.25  },
+                                            "2019_12_17_01_19_43":{"_z-1-0.5" :-.5  },
+                                            "2019_12_17_01_22_15":{"_z-1-0.75" : -0.75},
+                                            "2019_12_17_01_24_26":{"_z-1-1.0" : -1. },
+                                            "2019_12_17_01_26_38":{"_z-1-1.25" :-1.25 },
+                                            "2019_12_17_01_28_57":{"_z-1-1.5"  :-1.5},
+                                            "2019_12_17_01_31_47":{"_z-1-1.75":-1.75}}
 
 
 def get_sewpy_data(csv_file):
@@ -210,8 +231,12 @@ def plot_avg_area_by_z_layer(layer_dict, res_dir):
     for ring in sectorDict.keys():
         if ring == "P2":
             continue
-        flux_area_avg = np.empty([9])
-        layer_value_array = np.empty([9])
+        if ring == "P1":
+            flux_area_avg = np.empty([15])
+            layer_value_array = np.empty([15])
+        elif ring == "S2":
+            flux_area_avg = np.empty([14])
+            layer_value_array = np.empty([14])
         i = 0
         for time, layer_prefix_dict in layer_dict.items():
             if time == "2019_12_16_02_55_13":
@@ -223,26 +248,29 @@ def plot_avg_area_by_z_layer(layer_dict, res_dir):
                     ring_data = get_sewpy_data(ring_filepath)
                     ring_data, flux_area, first_harmonic_index = flux_area_fourier_transform(ring_data, ring)
                     flux_area_avg[i] = flux_area['C_0'][0]
+                    # print(flux_area_avg[i])
                     layer_value_array[i] = layer
                     i += 1
                 else:
                     continue
         plt.figure()
         plt.plot(layer_value_array, flux_area_avg, 'o', linestyle=' ', label=ring)
+        print(layer_value_array)
+        print(flux_area_avg)
         plt.title("Flux Area Averages")
         plt.xlabel("M2 Motion (mm)")
-        plt.savefig("{}/{}_avg_area ".format(res_dir, ring))
         plt.legend()
         plt.ylabel("Flux Area (pix^2)")
+        plt.savefig("{}/{}_avg_area ".format(res_dir, ring))
         plt.show()
 
 
 def main():
-    res_dir = './data/Focal_Plane_Search_M2_Z_motion_1mm'
-    plot_fourier_decomp_by_z_layer(layers_to_times_prefix_dict_1mm_motion, res_dir, "eccentricity")
-    plot_avg_area_by_z_layer(layers_to_times_prefix_dict_1mm_motion, res_dir)
-    plot_eccentricity_on_pattern(layers_to_times_dict_5mm_motion,
-                                 data_dir='./data/Focal_Plane_Search_camera_Z_motion_5mm')
+    res_dir = '/Users/deividribeiro/Desktop/Focal_Plane_Search_camera_Z_motion_0.25mm/'
+    # plot_fourier_decomp_by_z_layer(layers_to_times_prefix_dict_1mm_motion, res_dir, "eccentricity")
+    # plot_eccentricity_on_pattern(layers_to_times_dict_5mm_motion,
+    #                              data_dir='./data/Focal_Plane_Search_camera_Z_motion_5mm')
+    plot_avg_area_by_z_layer(layers_to_times_prefix_dict_025mm_motion, res_dir)
 
 
 if __name__ == '__main__':
