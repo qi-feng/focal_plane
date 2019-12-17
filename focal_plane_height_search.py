@@ -1,40 +1,38 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
+P2s = [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
+       1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128]
 
-P2s = [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228,
-       1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328,
-       1421, 1422, 1423, 1424, 1425, 1426, 1427, 1428,
-       1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128]
+P1s = [1211, 1212, 1213, 1214, 1311, 1312, 1313, 1314, 1411, 1412, 1413, 1414, 1111, 1112, 1113, 1114]
 
-P1s = [1211, 1212, 1213, 1214,
-       1311, 1312, 1313, 1314,
-       1411, 1412, 1413, 1414,
-       1111, 1112, 1113, 1114]
+S1s = [2111, 2112, 2211, 2212, 2311, 2312, 2411, 2412]
 
-S1s = [2111, 2112,
-       2211, 2212,
-       2311, 2312,
-       2411, 2412]
+S2s = [2121, 2122, 2123, 2124, 2221, 2222, 2223, 2224, 2321, 2322, 2323, 2324, 2421, 2422, 2423, 2424]
 
-S2s = [2121,2122,2123,2124,
-       2221,2222,2223,2224,
-       2321,2322,2323,2324,
-       2421,2422,2423,2424]
+sectorDict = {'P1': P1s, 'P2': P2s, 'S2': P1s}
 
-sectorDict = {'P1':P1s, 'P2':P2s, 'S2':P1s}
+# Timestamp matching the number of layers added on the central module to 'move' the focal plane. Each layer is 5mm.
+layers_to_times_dict_5mm_motion = {"2019_12_13_22_06_23": 0, "2019_12_13_22_22_26": 1, "2019_12_13_22_55_27": 2,
+                                   "2019_12_13_23_14_24": 3, "2019_12_13_23_41_36": 4}
 
-data_dir='./data/FP_search'
-#Timestamp matching the number of layers added on the central module to 'move' the focal plane. Each layer is 5mm.
-layers_to_times_dict={"2019_12_13_22_06_23":0,
-                      "2019_12_13_22_22_26":1,
-                      "2019_12_13_22_55_27":2,
-                      "2019_12_13_23_14_24":3,
-                      "2019_12_13_23_41_36":4}
+layers_to_times_prefix_dict_1mm_motion = {"2019_12_16_02_34_54": {"_M2_z_0": 0}, "2019_12_16_02_37_06": {"_M2_z_1": -1},
+                                          "2019_12_16_02_41_37": {"_M2_z_2": -2},
+                                          "2019_12_16_02_44_38": {"_M2_z_3": -3},
+                                          "2019_12_16_02_49_05": {"_M2_z_4": -4}, "2019_12_16_02_55_13": {"_M2_z_0": 0},
+                                          "2019_12_16_03_04_24": {"_M2_z_p1": 1},
+                                          "2019_12_16_03_06_46": {"_M2_z_p2": 2},
+                                          "2019_12_16_03_09_05": {"_M2_z_p3": 3},
+                                          "2019_12_16_03_11_44": {"_M2_z_p4": 4}, }
+
 
 def get_sewpy_data(csv_file):
-    data=np.genfromtxt(csv_file, delimiter=',',skip_header=True)
+    data = pd.read_csv(csv_file)
     return data
+
 
 def FindPanelPosition(panel, ring, focal_plane_ordering=False):
     panel_id = str(panel)
@@ -58,9 +56,10 @@ def FindPanelPosition(panel, ring, focal_plane_ordering=False):
     elif not is_primary and not is_inner_ring:
         total_segment = 4.
     if focal_plane_ordering:
-        phase = 2*np.pi - ((quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment) - (0.5)*np.pi
+        phase = 2 * np.pi - ((quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment) - (
+            0.5) * np.pi
     else:
-        phase = ((quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment) #original phase form
+        phase = ((quadrant - 1) * 0.5 * np.pi + 0.5 * np.pi * (segment - 0.5) / total_segment)  # original phase form
     phase_width = 0.5 * np.pi * (1.0) / total_segment
     if is_inner_ring:
         radius = 1.5
@@ -70,55 +69,73 @@ def FindPanelPosition(panel, ring, focal_plane_ordering=False):
         radius *= 1.5
     return radius, phase, phase_width
 
-def plot_param_fourier_transform(time, data_dir = data_dir):
-    fig_F, ax_FT = plt.subplots(figsize=(6, 5), ncols=1)
-    for ring in sectorDict.keys():
-        ring_filename = "res_focal_plane_" + time + "_ring_search_vvv_" + ring + ".csv"
-        ring_data = get_sewpy_data(data_dir + '/' + ring_filename)
-        N = len(ring_data)
-        radius = np.empty(N)
-        phase = np.empty(N)
-        phi = 2*np.pi/N
-        for i in range(N):
-            radius[i], phase[i], _ = FindPanelPosition(ring_data[i, 0], ring, False)
-            if ring_data[i,0] == 1111 or ring_data[i,0] == 1121:
-                index_1=i
-        eccentricity = np.sqrt(1. - ((ring_data[:, 5]) / (ring_data[:, 4])) ** 2)
 
-        a0 = np.sum(eccentricity) / N
-        aN = np.empty(N)
-        bN = np.empty(N)
-        for i in range(N):
-            aN[i] = (2 / N) * np.sum(eccentricity * np.cos((i+1) * phase))
-            bN[i] = (2 / N) * np.sum(eccentricity * np.sin((i+1) * phase))
+def flux_area_fourier_transform(ring_data, ring):
+    N = len(ring_data)
+    index_1 = 0
+    for i in range(N):
+        ring_data.loc[i, 'radius'], ring_data.loc[i, 'phase'], ring_data.loc[i, 'phase_width'] = FindPanelPosition(
+            ring_data.iloc[i]['Panel_ID_guess'], ring, False)
+        if ring_data.iloc[i]['Panel_ID_guess'] == 1111 or ring_data.iloc[i]['Panel_ID_guess'] == 1121:
+            index_1 = i
 
-        f_transform = (a0 + aN + bN)
-        c = 'k'
-        if ring == 'P1':
-            c = 'r'
-        elif ring == 'P2':
-            c = 'g'
-        elif ring == 'S2':
-            c = 'b'
-        ax_FT.plot(np.rad2deg(phase), f_transform, 'o', label='ring {}'.format(ring), color=c)
-        print("For ring {}:\n\tC_0 = {}, C_1 = {}, S_1 = {} for phase i=1 ({},{})= {}".format(ring,a0, aN[index_1], bN[index_1],ring_data[index_1,0],index_1,np.rad2deg(phase[index_1])))
-    ax_FT.legend()
-    plt.show()
+    c_0 = np.sum(ring_data['FLUX_AREA']) / N
+    c_n = np.empty(N)
+    s_n = np.empty(N)
+    flux_area_ft = pd.DataFrame({'phase': ring_data.loc[:, 'phase'], "C_0": c_0, 'C_N': c_n, 'S_N': s_n})
 
-def plot_eccentricity_on_pattern(layers_to_times_dict):
+    for i in range(N):
+        c_n[i] = (2 / N) * np.sum(ring_data['FLUX_AREA'] * np.cos((i + 1) * ring_data['phase']))
+        s_n[i] = (2 / N) * np.sum(ring_data['FLUX_AREA'] * np.sin((i + 1) * ring_data['phase']))
+
+    ring_data['first_harmonic'] = c_n[index_1] * np.cos(ring_data['phase']) + s_n[index_1] * np.sin(ring_data['phase'])
+    ring_data['residuals'] = ring_data['FLUX_AREA'] - c_0 - ring_data['first_harmonic']
+
+    return ring_data, flux_area_ft, index_1
+
+
+def eccentricity_fourier_transform(ring_data, ring):
+    N = len(ring_data)
+    index_1 = 0
+    for i in range(N):
+        ring_data.loc[i, 'radius'], ring_data.loc[i, 'phase'], ring_data.loc[i, 'phase_width'] = FindPanelPosition(
+            ring_data.iloc[i]['Panel_ID_guess'], ring, False)
+        if ring_data.iloc[i]['Panel_ID_guess'] == 1111 or ring_data.iloc[i]['Panel_ID_guess'] == 1121:
+            index_1 = i
+    ring_data.loc[:, 'eccentricity'] = np.sqrt(1. - ((ring_data['B_x_KR_in_pix']) / (ring_data['A_x_KR_in_pix'])) ** 2)
+
+    c_0 = np.sum(ring_data['eccentricity']) / N
+    c_n = np.empty(N)
+    s_n = np.empty(N)
+    eccentricity_ft = pd.DataFrame({'phase': ring_data.loc[:, 'phase'], "C_0": c_0, 'C_N': c_n, 'S_N': s_n})
+
+    for i in range(N):
+        c_n[i] = (2 / N) * np.sum(ring_data['eccentricity'] * np.cos((i + 1) * ring_data['phase']))
+        s_n[i] = (2 / N) * np.sum(ring_data['eccentricity'] * np.sin((i + 1) * ring_data['phase']))
+
+    ring_data['first_harmonic'] = c_n[index_1] * np.cos(ring_data['phase']) + s_n[index_1] * np.sin(ring_data['phase'])
+    ring_data['residuals'] = ring_data['eccentricity'] - c_0 - ring_data['first_harmonic']
+
+    return ring_data, eccentricity_ft, index_1
+
+
+def plot_eccentricity_on_pattern(layers_to_times_dict, data_dir):
     '''
     Plots the eccentricity in color onto the mirror pattern.
     '''
-    for time,layer in layers_to_times_dict.items():
+    for time, layer in layers_to_times_dict.items():
         fig, ax = plt.subplots(figsize=(6, 5), ncols=1)
         for ring in sectorDict.keys():
-            ring_filename = "res_focal_plane_"+time+"_ring_search_vvv_"+ring+".csv"
-            ring_data = get_sewpy_data(data_dir + '/' + ring_filename)
+            ring_filename = "res_focal_plane_" + time + "_ring_search_vvv_" + ring + ".csv"
+            try:
+                ring_data = get_sewpy_data(data_dir + '/' + ring_filename)
+            except:
+                continue
             N = len(ring_data)
             radius = np.empty(N)
             phase = np.empty(N)
             for i in range(N):
-                radius[i], phase[i], _ = FindPanelPosition(ring_data[i,0], ring, False)
+                radius[i], phase[i], _ = FindPanelPosition(ring_data.iloc[i]['Panel_ID_guess'], ring, False)
             coor_x = radius * np.cos(phase)
             coor_y = radius * np.sin(phase)
 
@@ -134,14 +151,13 @@ def plot_eccentricity_on_pattern(layers_to_times_dict):
             cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmap.N)
 
             # define the bins and normalize
-            bounds = np.linspace(0,1,21)
+            bounds = np.linspace(0, 1, 21)
             norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
 
-            eccentricity = np.sqrt(1. - ((ring_data[:, 5])/ (ring_data[:, 4])) ** 2)
+            eccentricity = np.sqrt(1. - ((ring_data['B_x_KR_in_pix']) / (ring_data['A_x_KR_in_pix'])) ** 2)
 
-            scatter = plt.scatter(coor_x, coor_y, c=eccentricity,
-                                  cmap=cmap,norm=norm)
-            panel_string = [str(int(i)) for i in ring_data[:,0]]
+            scatter = plt.scatter(coor_x, coor_y, c=eccentricity, cmap=cmap, norm=norm)
+            panel_string = [str(int(i)) for i in ring_data['Panel_ID_guess']]
             for i in range(N):
                 plt.annotate(panel_string[i], (coor_x[i], coor_y[i]))
         plt.title("Layer " + str(layer))
@@ -151,11 +167,83 @@ def plot_eccentricity_on_pattern(layers_to_times_dict):
         ax.set_xticklabels([])
         cb = fig.colorbar(scatter, ax=ax)
         cb.set_label('Eccentricity', rotation=270)
-        plt.savefig(data_dir+"/eccentricity_layer_" + str(layer)+".png")
+        plt.savefig(data_dir + "/eccentricity_layer_" + str(layer) + ".png")
     plt.show()
 
+
+def plot_fourier_decomp_by_z_layer(layer_dict, res_dir, param):
+    for time, layer_prefix_dict in layer_dict.items():
+        for prefix, layer in layer_prefix_dict.items():
+            for ring in sectorDict.keys():
+                ring_filename = "res_focal_plane_" + time + "_ring_search_vvv_" + ring + prefix + ".csv"
+                ring_filepath = res_dir + '/' + ring_filename
+                if os.path.exists(ring_filepath):
+                    ring_data = get_sewpy_data(ring_filepath)
+                    if param == "eccentricity":
+                        param_name = "eccentricity"
+                        ring_data, eccentricity, first_harmonic_index = eccentricity_fourier_transform(ring_data, ring)
+                    elif param == "FLUX_AREA":
+                        param_name = "flux_area"
+                        ring_data, flux_area, first_harmonic_index = flux_area_fourier_transform(ring_data, ring)
+                    c = 'k'
+                    if ring == 'P1':
+                        c = 'r'  # continue
+                    elif ring == 'P2':
+                        c = 'b'  # continue
+                    elif ring == 'S2':
+                        c = 'g'  # continue
+                    plt.figure()
+                    ax = plt.gca()
+                    ring_data.plot(kind='scatter', x='phase', y='first_harmonic', color=c,
+                                   label=ring + " first harmonic", ax=ax)
+                    ring_data.plot(kind='scatter', x='phase', y='residuals', color=c, label=ring + " residual", ax=ax,
+                                   marker='+')
+                    plt.title("{} layer Z + {}".format(param_name, layer))
+                    plt.xlabel("Phase (rad)")
+                else:
+                    continue
+                plt.savefig("{}/{}_fourier_decomp_{}{}".format(res_dir, param_name, ring, prefix))
+                plt.show()
+
+
+def plot_avg_area_by_z_layer(layer_dict, res_dir):
+    for ring in sectorDict.keys():
+        if ring == "P2":
+            continue
+        flux_area_avg = np.empty([9])
+        layer_value_array = np.empty([9])
+        i = 0
+        for time, layer_prefix_dict in layer_dict.items():
+            if time == "2019_12_16_02_55_13":
+                continue
+            for prefix, layer in layer_prefix_dict.items():
+                ring_filename = "res_focal_plane_" + time + "_ring_search_vvv_" + ring + prefix + ".csv"
+                ring_filepath = res_dir + '/' + ring_filename
+                if os.path.exists(ring_filepath):
+                    ring_data = get_sewpy_data(ring_filepath)
+                    ring_data, flux_area, first_harmonic_index = flux_area_fourier_transform(ring_data, ring)
+                    flux_area_avg[i] = flux_area['C_0'][0]
+                    layer_value_array[i] = layer
+                    i += 1
+                else:
+                    continue
+        plt.figure()
+        plt.plot(layer_value_array, flux_area_avg, 'o', linestyle=' ', label=ring)
+        plt.title("Flux Area Averages")
+        plt.xlabel("M2 Motion (mm)")
+        plt.savefig("{}/{}_avg_area ".format(res_dir, ring))
+        plt.legend()
+        plt.ylabel("Flux Area (pix^2)")
+        plt.show()
+
+
+def main():
+    res_dir = './data/Focal_Plane_Search_M2_Z_motion_1mm'
+    plot_fourier_decomp_by_z_layer(layers_to_times_prefix_dict_1mm_motion, res_dir, "eccentricity")
+    plot_avg_area_by_z_layer(layers_to_times_prefix_dict_1mm_motion, res_dir)
+    plot_eccentricity_on_pattern(layers_to_times_dict_5mm_motion,
+                                 data_dir='./data/Focal_Plane_Search_camera_Z_motion_5mm')
+
+
 if __name__ == '__main__':
-    time='2019_12_15_00_48_33'
-    res_dir='./data/'
-    plot_param_fourier_transform(time,data_dir=res_dir)
-    plot_eccentricity_on_pattern(layers_to_times_dict)
+    main()
