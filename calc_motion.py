@@ -4,6 +4,9 @@ import pandas as pd
 import os
 import yaml
 import sys
+import pymysql
+
+from datetime import datetime
 if not sys.version_info.major == 3:
     print("You are running python 2...")
     input = raw_input
@@ -79,6 +82,7 @@ S2s = [2121,2122,2123,2124,
 
 sectorDict = {'P1':P1s, 'P2':P2s, 'S1':S1s, 'S2':S2s,
               'M1':P1s+P2s, 'M2': S1s+S2s, 'All':P1s+P2s+S1s+S2s}
+
 
 def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
                             cmod_xoffset = np.array([-109.25, -110.25, 108.75, 110.75]),
@@ -388,6 +392,60 @@ def ring_operation_find_matrix(f1, f2, f3,
     return df_m
 
 
+# just for mirrordeltacoords
+class pSCTDB_readonly:
+    def __init__(self, host='romulus.ucsc.edu'):
+        self.DB_HOST = host
+        self.DB_USER = os.getenv('CTADBUSERREADONLY')
+        self.DB_PASSWD = os.getenv('CTADBPASSREADONLY')
+        self.DB_ONLINE = os.getenv('CTAONLINEDB')
+        self.DB_OFFLINE = 'CTAoffline'
+        self.DB_PORT = int(os.getenv('CTADBPORT'))
+
+    def connect(self):
+        try:
+            self.conn = pymysql.connect(host=self.DB_HOST,
+                                        user=self.DB_USER,
+                                        passwd=self.DB_PASSWD,
+                                        db=self.DB_ONLINE,
+                                        port=self.DB_PORT)
+            self.cur = self.conn.cursor()
+        except:
+            print("Cannot connect to {}, consider changing this".format(self.DB_HOST))
+            exit()
+
+    def close_connect(self):
+        self.cur.close()
+        self.conn.close()
+
+    def do_query(self, query):
+        self.connect()
+        nentries = self.cur.execute(query)
+        # self.close_connect()
+        return self.cur
+
+    def get_panel_info(self, panels):
+        if not isinstance(panels, list):
+            panels = [str(panels)]
+        else:
+            panels = [str(i) for i in panels]
+        sers = []
+        ips = []
+        self.connect()
+        for p_ in panels:
+            #print("====")
+            query = "select serial_number, mpcb_ip_address from Opt_MPMMapping where position = {} and end_date is NULL".format(
+                p_)
+            nentries = self.cur.execute(query)
+            for i, row in enumerate(self.cur):
+                # ips.append(row[0])
+                #print("Panel {} serial {}".format(p_, row[0]))
+                #print("Panel {} IP {}".format(p_, row[1]))
+                sers.append(row[0])
+                ips.append(row[1])
+            #print("====")
+        self.close_connect()
+        return sers, ips
 
 
 if __name__ == '__main__':
@@ -423,7 +481,11 @@ if __name__ == '__main__':
     parser.add_argument('--p2c', action='store_true', help="Pattern to center (aka ring to focus)")
     parser.add_argument('--sanity_tol',type=float, default = 0.2, help="At what fraction do you become insane?")
     parser.add_argument('--sector', default=None, help="Can choose a sector, only P1, P2 implemented for now, for c2p or p2c.")
+    parser.add_argument('--z_factor', default=2, help="Factor for delta_z motion (delta_z/delta_ry). Default is 2, i.e. if delta_ry is 0.1, delta_z is 0.2")
     parser.add_argument('--pattern_radius',type=float, default = 0, help="For c2p or p2c")
+    parser.add_argument('--outfile', default=None,
+                        help="Text file name to write mirrordeltacoords.")
+    parser.add_argument('-H', '--host', default='172.17.10.10', help="Host for DB", type=str)
 
     args = parser.parse_args()
 
@@ -474,9 +536,30 @@ if __name__ == '__main__':
                 print("Illegal sector {}".format(args.sector))
             else:
                 print("Sector {} selected, found panels".format(args.sector))
+                if args.outfile is not None:
+                    if os.path.exists(args.outfile):
+                        sure = yes_or_no("Are you sure to overwrite mirrordeltacoords file \n{} ? ".format(args.outfile))
+                        if not sure:
+                            print("Okay, provide a different name then. Done. ")
+                            exit(0)
+
+                    with open(args.outfile, 'w') as outf:
+                        if args.sector == 'P1' or args.sector == 'P2':
+                            outf.write("Mirror: (1, 1, PrimaryMirror, 1)\n")
+                        elif args.sector == 'S1' or args.sector == 'S2':
+                            outf.write("Mirror: (2, 2, SecondaryMirror, 2)\n")
+                        now = datetime.now()
+                        #outf.write("Timestamp: Wed Nov 13 11:40:12 2019")
+                        outf.write("Timestamp: {}\n".format(now.strftime("%Y-%m-%d %A %H:%M:%S")))
+                        outf.write("Global coordinates:\n")
+                        outf.write("0.00E+00\n0.00E+00\n0.00E+00\n0.00E+00\n0.00E+00\n0.00E+00\n")
+
                 ps = sectorDict[args.sector]
                 print(ps)
-            for panel in ps:
+                testDB = pSCTDB_readonly(args.host)
+                sers, ips = testDB.get_panel_info(ps)
+
+            for i, panel in enumerate(ps):
                 if args.pattern_radius > 0:
                     rx, ry = calc_center_to_pattern_rx_ry(panel, center=args.center_coord,
                                                           pattern_radius=args.pattern_radius,
@@ -486,6 +569,14 @@ if __name__ == '__main__':
                                                           pattern_file=args.pattern_file,
                                                           resp=args.resp_file, verbose=False)
                 print("Panel {}, rx={}, ry={}".format(panel, rx, ry))
+                if args.outfile is not None:
+                    with open(args.outfile, 'a') as outf:
+                        outf.write("****************************************\n")
+                        outf.write("Panel: ({}, opc.tcp://{}:4840, Panel_{}, {})\n".format(sers[i], ips[i], panel, panel))
+                        outf.write("0\n0\n{}\n{}\n{}\n0\n".format(args.z_factor*ry, rx, ry))
+                print("****************************************\n")
+                print("Panel: ({}, opc.tcp://{}:4840, Panel_{}, {})".format(sers[i], ips[i], panel, panel))
+                print("0\n0\n{}\n{}\n{}\n0\n".format(args.z_factor * ry, rx, ry))
         else:
             if args.pattern_radius > 0:
                 calc_center_to_pattern_rx_ry(args.panel, center=args.center_coord, pattern_radius=args.pattern_radius,
