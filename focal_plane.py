@@ -1,3 +1,4 @@
+#! /usr/bin/python
 # from astropy.table import Table
 import argparse
 import os
