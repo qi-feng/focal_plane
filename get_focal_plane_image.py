@@ -290,17 +290,28 @@ class Camera(object):
             else:
                 return None
 
-    def try_save_frame(self, timestamp=True, work_dir='./'):
-        # timestamp, frame = self.try_pop_frame(timestamp=timestamp)
-        timestamp, frame = self.pop_frame(timestamp=timestamp)
-        self.logger.debug(timestamp, frame)
-        # example name: The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-02-01:46:38.raw
-        outfile = os.path.join(work_dir, "The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-{}.jpg".format(timestamp))
-        if buffer:
-            cv2.imwrite(outfile, frame)
+    def try_save_frame(self, timestamp=True, work_dir='./', save_filename=None):
+        if save_filename is None:
+            # timestamp, frame = self.try_pop_frame(timestamp=timestamp)
+            timestamp, frame = self.pop_frame(timestamp=timestamp)
+            self.logger.debug(timestamp, frame)
+            # example name: The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-02-01:46:38.raw
+            outfile = os.path.join(work_dir, "The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-{}.jpg".format(timestamp))
+            if buffer:
+                cv2.imwrite(outfile, frame)
+            else:
+                self.logger.error("*** Failed to save image skycam_image{}.jpeg ***".format(timestamp))
+            return outfile, timestamp
         else:
-            self.logger.error("*** Failed to save image skycam_image{}.jpeg ***".format(timestamp))
-        return outfile, timestamp
+            frame = self.pop_frame(timestamp=False)
+            self.logger.debug(frame)
+            # example name: The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-02-01:46:38.raw
+            outfile = os.path.join(work_dir, save_filename)
+            if buffer:
+                cv2.imwrite(outfile, frame)
+            else:
+                self.logger.error("*** Failed to save image {} ***".format(save_filename))
+            return outfile
 
     def __array_from_buffer_address(self, buf):
         if not buf:
@@ -361,27 +372,29 @@ def get_image_from_cam(args):
 
     timestamp_az = timezone('America/Phoenix').localize(datetime.now())
     timestamp_utc = timestamp_az.astimezone(timezone('UTC'))
-    workdir = os.path.join(args.data_outdir, timestamp_utc.strftime('%Y%m%d'))
+    workdir = args.data_outdir
 
     if not os.path.exists(workdir):
         os.makedirs(workdir)
     try:
         cam.start_acquisition(1)
-        figfile, timestamp = cam.try_save_frame(work_dir=workdir)
-        figfile = os.path.join(workdir, figfile)
-        if timestamp is None:
-            camera_logger.info("Trouble saving frame, trying again...")
-            cam.stop_acquisition()
-            cam.pop_frame()
+        if args.data_outfile is None:
+            figfile, timestamp = cam.try_save_frame(work_dir=workdir)
+            figfile = os.path.join(workdir, figfile)
+            if timestamp is None:
+                camera_logger.info("Trouble saving frame, trying again...")
+                cam.stop_acquisition()
+                cam.pop_frame()
+            else:
+                camera_logger.info("Frame saved to {}".format(figfile))
         else:
+            figfile = cam.try_save_frame(work_dir=workdir, save_filename=args.data_outfile)
             camera_logger.info("Frame saved to {}".format(figfile))
         cam.stop_acquisition()
 
     finally:
         camera_logger.info("Stopping camera acquisition")
         cam.stop_acquisition()
-        if args.data_outfile is not None:
-            outf.close()
 
 
 if __name__ == '__main__':
@@ -395,7 +408,7 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--gain', default=15, help="Gain of the camera, default is 15", type=float)
     parser.add_argument('-f', '--framerate', default=10, help="Frame rate of the camera, default is 10", type=float)
     parser.add_argument('--data_outdir', default='/home/ctauser/Pictures/Aravis')
-    parser.add_argument('--data_outfile', default=None, help='Create a local file with all the clean output. Default is None. ')
+    parser.add_argument('--data_outfile', default=None, help='Image file path to create. Default is None. ')
 
     args = parser.parse_args()
 
