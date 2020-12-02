@@ -139,7 +139,7 @@ class Camera(object):
         self.get_framerate()
         self.get_gain()
         if self.exposure != exposure:
-            self.set_exposure(exposure)  # print("Setting exposure to {}".format(exposure))
+            self.set_exposure(exposure)
         if self.gain != gain:
             self.set_gain(gain)
         if self.framerate != framerate:
@@ -164,7 +164,7 @@ class Camera(object):
     def set_exposure(self, exposure):
         self.cam.set_exposure_time(exposure)
         self.exposure = self.get_exposure_time()
-        print("Setting exposure time to {} us".format(self.exposure))
+        self.logger.info("Setting exposure time to {} us".format(self.exposure))
 
     def get_framerate(self):
         self.framerate = self.cam.get_frame_rate()
@@ -173,7 +173,7 @@ class Camera(object):
     def set_framerate(self, framerate):
         self.cam.set_frame_rate(framerate)
         self.framerate = self.get_framerate()
-        print("Setting frame rate to {} Hz".format(self.framerate))
+        self.logger.info("Setting frame rate to {} Hz".format(self.framerate))
 
     def get_gain(self):
         self.gain = self.cam.get_gain()
@@ -182,7 +182,7 @@ class Camera(object):
     def set_gain(self, gain):
         self.cam.set_gain(gain)
         self.gain = self.get_gain()
-        print("Setting gain to {}".format(self.gain))
+        self.logger.info("Setting gain to {}".format(self.gain))
 
     def get_feature_type(self, name):
         genicam = self.dev.get_genicam()
@@ -293,10 +293,9 @@ class Camera(object):
     def try_save_frame(self, timestamp=True, work_dir='./'):
         # timestamp, frame = self.try_pop_frame(timestamp=timestamp)
         timestamp, frame = self.pop_frame(timestamp=timestamp)
-        # print(timestamp, frame)
+        self.logger.debug(timestamp, frame)
         # example name: The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-02-01:46:38.raw
-        outfile = os.path.join(work_dir,
-                               "The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-{}.raw".format(timestamp))
+        outfile = os.path.join(work_dir, "The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-{}.jpg".format(timestamp))
         if buffer:
             cv2.imwrite(outfile, frame)
         else:
@@ -370,19 +369,16 @@ def get_image_from_cam(args):
         cam.start_acquisition(1)
         figfile, timestamp = cam.try_save_frame(work_dir=workdir)
         figfile = os.path.join(workdir, figfile)
-        print(figfile)
         if timestamp is None:
-            print("Trouble saving frame, trying again...")
             camera_logger.info("Trouble saving frame, trying again...")
             cam.stop_acquisition()
             cam.pop_frame()
         else:
-            print("Framed saved to {}".format(figfile))
-            camera_logger.info("Framed saved to {}".format(figfile))
+            camera_logger.info("Frame saved to {}".format(figfile))
         cam.stop_acquisition()
 
     finally:
-        print("Stopping camera acquisition")
+        camera_logger.info("Stopping camera acquisition")
         cam.stop_acquisition()
         if args.data_outfile is not None:
             outf.close()
