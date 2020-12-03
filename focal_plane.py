@@ -857,7 +857,7 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
                     # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                     xytext=(xytext_),  # for orig lens
                     color=labelcolor, alpha=0.7,
-                    arrowprops=dict(facecolor=labelcolor, edgecolor='c', shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
+                    arrowprops=dict(facecolor=labelcolor, edgecolor=labelcolor, shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
                                     alpha=0.3), )
     if cropxs is not None:
         plt.xlim(cropxs)
@@ -1423,6 +1423,7 @@ def main():
                              "as part of a ring pattern. ")
 
     parser.add_argument('--ring_file', default=None, help="File name for ring pattern. ")
+    parser.add_argument('--labelcolor', default='c', help="Label color. ")
     parser.add_argument('--search_xs', nargs=2, type=float, default=[0, 0],
                         help="Xmin and Xmax to list all centroid in a box. ")
     parser.add_argument('--search_ys', nargs=2, type=float, default=[0, 0],
@@ -1565,14 +1566,14 @@ def main():
                              saveplot_name=ring_file, show=False)
             if os.path.exists(vvv_ring_file):
                 print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
-                quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file,
+                quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file, labelcolor=args.labelcolor,
                                      saveplot_name=vvv_ring_file[:-4] + ".png", show=args.show)
 
         exit(0)
 
     elif args.quick_ring_check is not None:
         print("doing a quick check on Panel IDs, using file {}".format(args.quick_ring_check))
-        quick_check_raw_ring(args.rawfile1, save_for_vvv=args.quick_ring_check,
+        quick_check_raw_ring(args.rawfile1, save_for_vvv=args.quick_ring_check, labelcolor=args.labelcolor,
                              saveplot_name=args.quick_ring_check[:-4] + ".png", show=args.show)
 
     else:
