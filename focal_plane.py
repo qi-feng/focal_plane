@@ -1513,6 +1513,7 @@ def main():
                                               saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
                                               search_xs=args.search_xs, search_ys=args.search_ys, show=args.show)
         print("Processing single image. Done.")
+        chooseinner=False
         if args.ring:
             # new for S1 alignment
             if args.p1rx == 0:
@@ -1523,6 +1524,7 @@ def main():
             elif args.p1rx == -2:
                 print("Using Rx -2 centroid layout for S1 alignment. ")
                 all_panels = RXm2_CENTROID_LAYOUT
+                chooseinner=True
             else:
                 print("invalid option for p1rx")
             if args.clustering:
@@ -1533,6 +1535,7 @@ def main():
             else:
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1,
                                                                                   all_panels = all_panels,
+                                                                                  chooseinner=chooseinner,
                                                                                   pattern_center=args.pattern_center,
                                                                                   radius=args.ring_rad,
                                                                                   rad_frac=args.ring_frac, n_iter=20,
