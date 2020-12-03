@@ -1382,7 +1382,8 @@ def main():
     parser.add_argument('-c', '--clean', action='store_true', help="Whether or not to delete centroid with flag > 16.")
     parser.add_argument('-s', '--single', action='store_true', help="Only analyze a single image.")
     parser.add_argument('-r', '--ring', action='store_true', help="Try to find a ring.")
-    parser.add_argument('--p1rx', default=0, help="This is just for S1 alignment, P1 rx applied to check for ghost images due to S1 misalignment. Only a few values are valid. ")
+    parser.add_argument('--p1rx', default=0, type=float,
+                        help="This is just for S1 alignment, P1 rx applied to check for ghost images due to S1 misalignment. Only a few values are valid. ")
     parser.add_argument('--clustering', action='store_true')
 
     parser.add_argument('-C', '--center', nargs=2, type=float, default=[1891.25, 1063.75],
@@ -1512,6 +1513,8 @@ def main():
             elif args.p1rx == -1:
                 print("Using Rx -1 centroid layout for S1 alignment. ")
                 all_panels = RXm1_CENTROID_LAYOUT
+            else:
+                print("invalid option for p1rx")
             if args.clustering:
                 print("*** This is not implemented; don't use! ***")
                 find_ring_pattern_clustering(sew_out_table1, pattern_center=args.pattern_center, radius=args.ring_rad,
