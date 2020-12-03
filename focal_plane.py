@@ -809,7 +809,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
 
 def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False, kernel_w=3,
-                         cropxs=(1050, 2592), cropys=(1850, 250), ):
+                         cropxs=(1050, 2592), cropys=(1850, 250), labelcolor='c'):
     im_raw = read_raw(rawfile)
     if has_cv2:
         median = cv2.medianBlur(im_raw, kernel_w)
@@ -833,10 +833,17 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
     # plt.scatter(sew_out_trans['table']['X_IMAGE'],
     #            sew_out_trans['table']['Y_IMAGE'], s=40, facecolors='none', edgecolors='r')
 
-    plt.plot(df['X_IMAGE'], df['Y_IMAGE'], 'c.', markersize=4, alpha=0.3)
+    #plt.plot(df['X_IMAGE'], df['Y_IMAGE'], 'c.', markersize=4, alpha=0.3)
     center_pattern = [np.mean(df['X_IMAGE']), np.mean(df['Y_IMAGE'])]
 
     for i, row in df.iterrows():
+        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_x_KR_in_pix'] * 2,
+                    height=row['B_x_KR_in_pix'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.6)
+        e.set_clip_box(ax.bbox)
+        e.set_alpha(0.8)
+        e.set_color(labelcolor)
+        ax.add_artist(e)
+
         xytext_ = np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
                             row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])
         xytext_[0] = min(xytext_[0], 2700)
@@ -849,7 +856,7 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
         #                              row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1]) * 1.3])),  # for orig lens
                     # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                     xytext=(xytext_),  # for orig lens
-                    color='c', alpha=0.6,
+                    color=labelcolor, alpha=0.6,
                     arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
                                     alpha=0.4), )
     if cropxs is not None:
