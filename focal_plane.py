@@ -765,11 +765,14 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
             plt.plot(df['Xpix'], df['Ypix'], 'm.', markersize=4, alpha=0.3)
         else:
             pID = int(row['ID'])
-
+        xytext_ = np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
+                            row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])
+        xytext_[0] = min(xytext_[0], 2700)
+        xytext_[1] = min(xytext_[1], 2000)
+        xytext_[1] = max(xytext_[1], 200)
         ax.annotate(pID, xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
                     # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
-                    xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
-                                      row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
+                    xytext=(xytext_),  # for orig lens
                     # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                     color='c', alpha=0.8,
                     arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
@@ -1521,8 +1524,8 @@ def main():
             elif args.p1rx == -1:
                 print("Using Rx -1 centroid layout for S1 alignment. ")
                 all_panels = RXm1_CENTROID_LAYOUT
-            elif args.p1rx == -2:
-                print("Using Rx -2 centroid layout for S1 alignment. ")
+            elif args.p1rx == -2 or args.p1rx == -3:
+                print("Using Rx {} centroid layout for S1 alignment. ".format(args.p1rx))
                 all_panels = RXm2_CENTROID_LAYOUT
                 chooseinner=True
             else:
