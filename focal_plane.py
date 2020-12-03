@@ -132,13 +132,15 @@ def find_all_pattern_positions(all_panels=DEFAULT_CENTROID_LAYOUT, center=np.arr
                                pixel_scale=0.241, outfile="dummy_pattern_position.txt", num_vvv=np.array(
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
              30, 31, 32, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])):
-    df_pattern = pd.DataFrame({'Panel': all_panels, '#': num_vvv})
+    #df_pattern = pd.DataFrame({'Panel': all_panels, '#': num_vvv})
+    df_pattern = pd.DataFrame({'DefaultPanel': DEFAULT_CENTROID_LAYOUT, 'Panel': all_panels, '#': num_vvv})
     df_pattern['Xpix'] = 0
     df_pattern['Ypix'] = 0
     df_pattern['Rpix'] = 0
     df_pattern['Phase'] = 0
     for i, row in df_pattern.iterrows():
-        x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['Panel'], center=center, radius_mm=radius_mm,
+        #x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['Panel'], center=center, radius_mm=radius_mm,
+        x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['DefaultPanel'], center=center, radius_mm=radius_mm,
                                                                phase_offset_rad=phase_offset_rad,
                                                                pixel_scale=pixel_scale)
         df_pattern.loc[i, 'Xpix'] = x_
