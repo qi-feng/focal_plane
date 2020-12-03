@@ -838,7 +838,7 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
 
     for i, row in df.iterrows():
         e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_x_KR_in_pix'] * 2,
-                    height=row['B_x_KR_in_pix'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.6)
+                    height=row['B_x_KR_in_pix'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.4)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color(labelcolor)
@@ -856,9 +856,9 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
         #                              row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1]) * 1.3])),  # for orig lens
                     # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                     xytext=(xytext_),  # for orig lens
-                    color=labelcolor, alpha=0.6,
-                    arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
-                                    alpha=0.4), )
+                    color=labelcolor, alpha=0.7,
+                    arrowprops=dict(facecolor=labelcolor, edgecolor='c', shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
+                                    alpha=0.3), )
     if cropxs is not None:
         plt.xlim(cropxs)
     if cropys is not None:
