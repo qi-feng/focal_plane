@@ -768,6 +768,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         xytext_ = np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
                             row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])
         xytext_[0] = min(xytext_[0], 2700)
+        xytext_[0] = max(xytext_[0], 800)
         xytext_[1] = min(xytext_[1], 2000)
         xytext_[1] = max(xytext_[1], 200)
         ax.annotate(pID, xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
@@ -836,11 +837,18 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
     center_pattern = [np.mean(df['X_IMAGE']), np.mean(df['Y_IMAGE'])]
 
     for i, row in df.iterrows():
+        xytext_ = np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
+                            row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])
+        xytext_[0] = min(xytext_[0], 2700)
+        xytext_[0] = max(xytext_[0], 800)
+        xytext_[1] = min(xytext_[1], 2000)
+        xytext_[1] = max(xytext_[1], 200)
         ax.annotate(int(row['Panel_ID_guess']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
-                    # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
-                    xytext=(np.array([row['X_IMAGE'] + (row['X_IMAGE'] - center_pattern[0]) * 1.3,
-                                      row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1]) * 1.3])),  # for orig lens
+        #            # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
+        #            xytext=(np.array([row['X_IMAGE'] + (row['X_IMAGE'] - center_pattern[0]) * 1.3,
+        #                              row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1]) * 1.3])),  # for orig lens
                     # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
+                    xytext=(xytext_),  # for orig lens
                     color='c', alpha=0.6,
                     arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
                                     alpha=0.4), )
