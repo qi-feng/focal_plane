@@ -298,9 +298,9 @@ class Camera(object):
             # example name: The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-02-01:46:38.raw
             outfile = os.path.join(work_dir, "The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-{}.jpg".format(timestamp))
             if buffer:
-                cv2.imwrite(outfile, frame)
+                cv2.imwrite(outfile, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             else:
-                self.logger.error("*** Failed to save image skycam_image{}.jpeg ***".format(timestamp))
+                self.logger.error("*** Failed to save image The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-{}.jpeg ***".format(timestamp))
             return outfile, timestamp
         else:
             frame = self.pop_frame(timestamp=False)
@@ -308,7 +308,7 @@ class Camera(object):
             # example name: The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-02-01:46:38.raw
             outfile = os.path.join(work_dir, save_filename)
             if buffer:
-                cv2.imwrite(outfile, frame)
+                cv2.imwrite(outfile, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             else:
                 self.logger.error("*** Failed to save image {} ***".format(save_filename))
             return outfile
