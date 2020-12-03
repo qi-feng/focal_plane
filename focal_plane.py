@@ -157,6 +157,23 @@ def read_raw(f='./GAS_image.raw', cols=2592, rows=1944, outfile=None, show=False
     return im
 
 
+def read_png(f, show=False):
+    im = cv2.imread(f)
+    if show:
+        plt.imshow(im, cmap='gray')
+    return im
+
+
+def read_image(f, cols=2592, rows=1944, outfile=None, show=False):
+    if os.path.splitext(f)[1] == ".raw":
+        return read_raw(f, cols=cols, rows=rows, outfile=outfile, show=show)
+    elif os.path.splitext(f)[1] == ".jpg":
+        return read_png(f, show=show)
+    else:
+        print("Image extension not found for path {}, printing null matrix. ".format(f))
+        return np.zeros((rows, cols))
+
+
 def raw2fits(f='./GAS_image.raw', cols=2592, rows=1944, outfile=None):
     from astropy.io import fits
     fd = open(f, 'rb')
@@ -608,7 +625,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
     '''
     from astropy.table import Column
 
-    im_raw = read_raw(rawfile)
+    im_raw = read_image(rawfile)
 
     if has_cv2:
         median = cv2.medianBlur(im_raw, kernel_w)
@@ -683,7 +700,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
     panel number to the sewtable object. Plot the resulting image.
     '''
     from astropy.table import Column
-    im_raw = read_raw(rawfile)
+    im_raw = read_image(rawfile)
     if has_cv2:
         median = cv2.medianBlur(im_raw, kernel_w)
     else:
@@ -786,7 +803,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
 def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False, kernel_w=3,
                          cropxs=(1050, 2592), cropys=(1850, 250), ):
-    im_raw = read_raw(rawfile)
+    im_raw = read_image(rawfile)
     if has_cv2:
         median = cv2.medianBlur(im_raw, kernel_w)
     else:
@@ -1098,8 +1115,8 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2, ind1=None, ind2=None, motion_ou
     x_corners, y_corners = get_central_mod_corners(center=center)
 
     # cat1 and cat2 are the * diff * cats
-    im1 = read_raw(rawf1)
-    im2 = read_raw(rawf2)
+    im1 = read_image(rawf1)
+    im2 = read_image(rawf2)
 
     kernel_w = 3
     im1 = cv2.medianBlur(im1, kernel_w)
