@@ -66,6 +66,18 @@ PATTERN_CENTER_FROM_LABEL_BOUNDS = np.array(
     [(PATTERN_LABEL_X_MIN + PATTERN_LABEL_X_MAX) / 2., (PATTERN_LABEL_Y_MIN + PATTERN_LABEL_Y_MAX) / 2.])
 
 
+# let's just hardcode pattern layout; useful for S1 alignment
+DEFAULT_CENTROID_LAYOUT =  np.array(
+    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
+     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1211, 1212, 1213, 1214, 1311, 1312,
+     1313, 1314, 1411, 1412, 1413, 1414, 1111, 1112, 1113, 1114])
+
+RXm1_CENTROID_LAYOUT =  np.array(
+    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
+     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
+     1213, 1114, 1311, 1212,  1313, 1214, 1411, 1312,  1413, 1314, 1111, 1412, 1113, 1414, 1211, 1112])
+
+
 def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
                             cmod_xoffset=np.array([-109.25, -110.25, 108.75, 110.75]),
                             cmod_yoffset=np.array([111.25, -109.75, -111.75, 110.25])):
@@ -114,10 +126,7 @@ def get_panel_position_in_pattern(panel_id, center=np.array([1891.25, 1063.75]),
     return cx, cy, radius_pix, phase
 
 
-def find_all_pattern_positions(all_panels=np.array(
-    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
-     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1211, 1212, 1213, 1214, 1311, 1312,
-     1313, 1314, 1411, 1412, 1413, 1414, 1111, 1112, 1113, 1114]), center=np.array([1891.25, 1063.75]),
+def find_all_pattern_positions(all_panels=DEFAULT_CENTROID_LAYOUT, center=np.array([1891.25, 1063.75]),
                                radius_mm=np.array([20, 40]), phase_offset_rad=0,
                                # clockwise is positive, about 0.2 per outer panel
                                pixel_scale=0.241, outfile="dummy_pattern_position.txt", num_vvv=np.array(
@@ -475,7 +484,8 @@ def find_ring_pattern_clustering(sewtable, pattern_center=PATTERN_CENTER_FROM_LA
 
 def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_frac=0.2,
                       rad_tol_frac=0.1, n_iter=50, chooseinner=False, chooseouter=False, tryouter=True, fix_center=True,
-                      phase_offset_rad=0, get_center=False, var_tol=400):
+                      phase_offset_rad=0, get_center=False, var_tol=400,
+                      all_panels=DEFAULT_CENTROID_LAYOUT):
     '''
     Use sewtable of sources to find the mean centroid of the sources. Start with some radius and get the sources within that
     radius, their mean/std of their distances to center, and their mean center. Iterate with new radius cuts and new
@@ -525,7 +535,8 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
     if good_ring:
         if abs(len(sew_slice) - 16) + 4 <= abs(len(sew_slice) - 32) or chooseinner:
             # guess this is inner ring
-            df_pattern = find_all_pattern_positions(center=last_center,
+            df_pattern = find_all_pattern_positions(all_panels=all_panels,
+                                                    center=last_center,
                                                     radius_mm=np.array([last_radius * 0.241, last_radius * 2 * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
                                                     outfile=None, )
@@ -539,7 +550,8 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
                 df_slice.append(df_outer_slice)
         elif abs(len(sew_slice) - 16) > abs(len(sew_slice) - 32) or chooseouter:
             # not tested
-            df_pattern = find_all_pattern_positions(center=last_center,
+            df_pattern = find_all_pattern_positions(all_panels=all_panels,
+                                                    center=last_center,
                                                     radius_mm=np.array([last_radius / 2 * 0.241, last_radius * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
                                                     outfile=None, )
@@ -1370,6 +1382,7 @@ def main():
     parser.add_argument('-c', '--clean', action='store_true', help="Whether or not to delete centroid with flag > 16.")
     parser.add_argument('-s', '--single', action='store_true', help="Only analyze a single image.")
     parser.add_argument('-r', '--ring', action='store_true', help="Try to find a ring.")
+    parser.add_argument('--p1rx', default=0, help="This is just for S1 alignment, P1 rx applied to check for ghost images due to S1 misalignment. Only a few values are valid. ")
     parser.add_argument('--clustering', action='store_true')
 
     parser.add_argument('-C', '--center', nargs=2, type=float, default=[1891.25, 1063.75],
@@ -1493,12 +1506,20 @@ def main():
                                               search_xs=args.search_xs, search_ys=args.search_ys, show=args.show)
         print("Processing single image. Done.")
         if args.ring:
+            # new for S1 alignment
+            if args.p1rx == 0:
+                all_panels = DEFAULT_CENTROID_LAYOUT
+            elif args.p1rx == -1:
+                print("Using Rx -1 centroid layout for S1 alignment. ")
+                all_panels = RXm1_CENTROID_LAYOUT
             if args.clustering:
+                print("*** This is not implemented; don't use! ***")
                 find_ring_pattern_clustering(sew_out_table1, pattern_center=args.pattern_center, radius=args.ring_rad,
                                              rad_frac=args.ring_frac, rad_tol_frac=args.ring_tol, n_rings=2,
                                              rad_inner=0.5, rad_outer=1.2, )
             else:
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1,
+                                                                                  all_panels = all_panels,
                                                                                   pattern_center=args.pattern_center,
                                                                                   radius=args.ring_rad,
                                                                                   rad_frac=args.ring_frac, n_iter=20,
