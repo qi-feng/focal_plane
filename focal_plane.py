@@ -809,7 +809,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
 
 def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False, kernel_w=3,
-                         cropxs=(1050, 2592), cropys=(1850, 250), labelcolor='steelblue'):
+                         cropxs=(1050, 2592), cropys=(1850, 250), labelcolor='steelblue', labelalpha=0.3, textalpha=0.7):
     im_raw = read_raw(rawfile)
     if has_cv2:
         median = cv2.medianBlur(im_raw, kernel_w)
@@ -838,9 +838,9 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
 
     for i, row in df.iterrows():
         e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_x_KR_in_pix'] * 2,
-                    height=row['B_x_KR_in_pix'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.4)
+                    height=row['B_x_KR_in_pix'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=labelalpha)
         e.set_clip_box(ax.bbox)
-        e.set_alpha(0.8)
+        e.set_alpha(labelalpha)
         e.set_color(labelcolor)
         ax.add_artist(e)
 
@@ -856,9 +856,9 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
         #                              row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1]) * 1.3])),  # for orig lens
                     # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                     xytext=(xytext_),  # for orig lens
-                    color=labelcolor, alpha=0.7,
+                    color=labelcolor, alpha=textalpha,
                     arrowprops=dict(facecolor=labelcolor, edgecolor=labelcolor, shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
-                                    alpha=0.3), )
+                                    alpha=labelalpha), )
     if cropxs is not None:
         plt.xlim(cropxs)
     if cropys is not None:
