@@ -1,3 +1,4 @@
+#! /usr/bin/python
 # from astropy.table import Table
 import argparse
 import os
@@ -65,6 +66,23 @@ PATTERN_CENTER_FROM_LABEL_BOUNDS = np.array(
     [(PATTERN_LABEL_X_MIN + PATTERN_LABEL_X_MAX) / 2., (PATTERN_LABEL_Y_MIN + PATTERN_LABEL_Y_MAX) / 2.])
 
 
+# let's just hardcode pattern layout; useful for S1 alignment
+DEFAULT_CENTROID_LAYOUT =  np.array(
+    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
+     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
+     1211, 1212, 1213, 1214,  1311, 1312, 1313, 1314,  1411, 1412, 1413, 1414,  1111, 1112, 1113, 1114])
+
+RXm1_CENTROID_LAYOUT =  np.array(
+    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
+     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
+     1213, 1114, 1311, 1212,  1313, 1214, 1411, 1312,  1413, 1314, 1111, 1412, 1113, 1414, 1211, 1112])
+
+RXm2_CENTROID_LAYOUT =  np.array(
+    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
+     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
+     1112, 1311, 1114, 1313,  1212, 1411, 1214, 1413,  1312, 1111, 1314, 1113,  1412, 1211, 1414, 1213])
+
+
 def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
                             cmod_xoffset=np.array([-109.25, -110.25, 108.75, 110.75]),
                             cmod_yoffset=np.array([111.25, -109.75, -111.75, 110.25])):
@@ -113,22 +131,21 @@ def get_panel_position_in_pattern(panel_id, center=np.array([1891.25, 1063.75]),
     return cx, cy, radius_pix, phase
 
 
-def find_all_pattern_positions(all_panels=np.array(
-    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
-     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1211, 1212, 1213, 1214, 1311, 1312,
-     1313, 1314, 1411, 1412, 1413, 1414, 1111, 1112, 1113, 1114]), center=np.array([1891.25, 1063.75]),
+def find_all_pattern_positions(all_panels=DEFAULT_CENTROID_LAYOUT, center=np.array([1891.25, 1063.75]),
                                radius_mm=np.array([20, 40]), phase_offset_rad=0,
                                # clockwise is positive, about 0.2 per outer panel
                                pixel_scale=0.241, outfile="dummy_pattern_position.txt", num_vvv=np.array(
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
              30, 31, 32, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])):
-    df_pattern = pd.DataFrame({'Panel': all_panels, '#': num_vvv})
+    #df_pattern = pd.DataFrame({'Panel': all_panels, '#': num_vvv})
+    df_pattern = pd.DataFrame({'DefaultPanel': DEFAULT_CENTROID_LAYOUT, 'Panel': all_panels, '#': num_vvv})
     df_pattern['Xpix'] = 0
     df_pattern['Ypix'] = 0
     df_pattern['Rpix'] = 0
     df_pattern['Phase'] = 0
     for i, row in df_pattern.iterrows():
-        x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['Panel'], center=center, radius_mm=radius_mm,
+        #x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['Panel'], center=center, radius_mm=radius_mm,
+        x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['DefaultPanel'], center=center, radius_mm=radius_mm,
                                                                phase_offset_rad=phase_offset_rad,
                                                                pixel_scale=pixel_scale)
         df_pattern.loc[i, 'Xpix'] = x_
@@ -491,7 +508,8 @@ def find_ring_pattern_clustering(sewtable, pattern_center=PATTERN_CENTER_FROM_LA
 
 def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_frac=0.2,
                       rad_tol_frac=0.1, n_iter=50, chooseinner=False, chooseouter=False, tryouter=True, fix_center=True,
-                      phase_offset_rad=0, get_center=False, var_tol=400):
+                      phase_offset_rad=0, get_center=False, var_tol=400,
+                      all_panels=DEFAULT_CENTROID_LAYOUT):
     '''
     Use sewtable of sources to find the mean centroid of the sources. Start with some radius and get the sources within that
     radius, their mean/std of their distances to center, and their mean center. Iterate with new radius cuts and new
@@ -541,7 +559,8 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
     if good_ring:
         if abs(len(sew_slice) - 16) + 4 <= abs(len(sew_slice) - 32) or chooseinner:
             # guess this is inner ring
-            df_pattern = find_all_pattern_positions(center=last_center,
+            df_pattern = find_all_pattern_positions(all_panels=all_panels,
+                                                    center=last_center,
                                                     radius_mm=np.array([last_radius * 0.241, last_radius * 2 * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
                                                     outfile=None, )
@@ -555,7 +574,8 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
                 df_slice.append(df_outer_slice)
         elif abs(len(sew_slice) - 16) > abs(len(sew_slice) - 32) or chooseouter:
             # not tested
-            df_pattern = find_all_pattern_positions(center=last_center,
+            df_pattern = find_all_pattern_positions(all_panels=all_panels,
+                                                    center=last_center,
                                                     radius_mm=np.array([last_radius / 2 * 0.241, last_radius * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
                                                     outfile=None, )
@@ -762,11 +782,15 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
             plt.plot(df['Xpix'], df['Ypix'], 'm.', markersize=4, alpha=0.3)
         else:
             pID = int(row['ID'])
-
+        xytext_ = np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
+                            row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])
+        xytext_[0] = min(xytext_[0], 2700)
+        xytext_[0] = max(xytext_[0], 800)
+        xytext_[1] = min(xytext_[1], 2000)
+        xytext_[1] = max(xytext_[1], 200)
         ax.annotate(pID, xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
                     # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
-                    xytext=(np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
-                                      row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])),  # for orig lens
+                    xytext=(xytext_),  # for orig lens
                     # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
                     color='c', alpha=0.8,
                     arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
@@ -826,18 +850,32 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
     # plt.scatter(sew_out_trans['table']['X_IMAGE'],
     #            sew_out_trans['table']['Y_IMAGE'], s=40, facecolors='none', edgecolors='r')
 
-    plt.plot(df['X_IMAGE'], df['Y_IMAGE'], 'c.', markersize=4, alpha=0.3)
+    #plt.plot(df['X_IMAGE'], df['Y_IMAGE'], 'c.', markersize=4, alpha=0.3)
     center_pattern = [np.mean(df['X_IMAGE']), np.mean(df['Y_IMAGE'])]
 
     for i, row in df.iterrows():
+        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_x_KR_in_pix'] * 2,
+                    height=row['B_x_KR_in_pix'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=labelalpha)
+        e.set_clip_box(ax.bbox)
+        e.set_alpha(labelalpha)
+        e.set_color(labelcolor)
+        ax.add_artist(e)
+
+        xytext_ = np.array([row['X_IMAGE'] + row['X_IMAGE'] - center_pattern[0],
+                            row['Y_IMAGE'] + row['Y_IMAGE'] - center_pattern[1]])
+        xytext_[0] = min(xytext_[0], 2700)
+        xytext_[0] = max(xytext_[0], 800)
+        xytext_[1] = min(xytext_[1], 2000)
+        xytext_[1] = max(xytext_[1], 200)
         ax.annotate(int(row['Panel_ID_guess']), xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), size=8, xycoords='data',
-                    # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
-                    xytext=(np.array([row['X_IMAGE'] + (row['X_IMAGE'] - center_pattern[0]) * 1.3,
-                                      row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1]) * 1.3])),  # for orig lens
+        #            # xytext=(np.array([row['X_IMAGE'] - 40, row['Y_IMAGE'] - 40])), # for orig lens
+        #            xytext=(np.array([row['X_IMAGE'] + (row['X_IMAGE'] - center_pattern[0]) * 1.3,
+        #                              row['Y_IMAGE'] + (row['Y_IMAGE'] - center_pattern[1]) * 1.3])),  # for orig lens
                     # xytext=(np.array([row['X_IMAGE'] - 80, row['Y_IMAGE'] - 80])),  # for new lens
-                    color='c', alpha=0.6,
-                    arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
-                                    alpha=0.4), )
+                    xytext=(xytext_),  # for orig lens
+                    color=labelcolor, alpha=textalpha,
+                    arrowprops=dict(facecolor=labelcolor, edgecolor=labelcolor, shrink=0.05, headwidth=0.5, headlength=4, width=0.2,
+                                    alpha=labelalpha), )
     if cropxs is not None:
         plt.xlim(cropxs)
     if cropys is not None:
@@ -1386,6 +1424,8 @@ def main():
     parser.add_argument('-c', '--clean', action='store_true', help="Whether or not to delete centroid with flag > 16.")
     parser.add_argument('-s', '--single', action='store_true', help="Only analyze a single image.")
     parser.add_argument('-r', '--ring', action='store_true', help="Try to find a ring.")
+    parser.add_argument('--p1rx', default=0, type=float,
+                        help="This is just for S1 alignment, P1 rx applied to check for ghost images due to S1 misalignment. Only a few values are valid. ")
     parser.add_argument('--clustering', action='store_true')
 
     parser.add_argument('-C', '--center', nargs=2, type=float, default=[1891.25, 1063.75],
@@ -1400,6 +1440,7 @@ def main():
                              "as part of a ring pattern. ")
 
     parser.add_argument('--ring_file', default=None, help="File name for ring pattern. ")
+    parser.add_argument('--labelcolor', default='c', help="Label color. ")
     parser.add_argument('--search_xs', nargs=2, type=float, default=[0, 0],
                         help="Xmin and Xmax to list all centroid in a box. ")
     parser.add_argument('--search_ys', nargs=2, type=float, default=[0, 0],
@@ -1508,13 +1549,29 @@ def main():
                                               saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
                                               search_xs=args.search_xs, search_ys=args.search_ys, show=args.show)
         print("Processing single image. Done.")
+        chooseinner=False
         if args.ring:
+            # new for S1 alignment
+            if args.p1rx == 0:
+                all_panels = DEFAULT_CENTROID_LAYOUT
+            elif args.p1rx == -1:
+                print("Using Rx -1 centroid layout for S1 alignment. ")
+                all_panels = RXm1_CENTROID_LAYOUT
+            elif args.p1rx == -2 or args.p1rx == -3:
+                print("Using Rx {} centroid layout for S1 alignment. ".format(args.p1rx))
+                all_panels = RXm2_CENTROID_LAYOUT
+                chooseinner=True
+            else:
+                print("invalid option for p1rx")
             if args.clustering:
+                print("*** This is not implemented; don't use! ***")
                 find_ring_pattern_clustering(sew_out_table1, pattern_center=args.pattern_center, radius=args.ring_rad,
                                              rad_frac=args.ring_frac, rad_tol_frac=args.ring_tol, n_rings=2,
                                              rad_inner=0.5, rad_outer=1.2, )
             else:
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1,
+                                                                                  all_panels = all_panels,
+                                                                                  chooseinner=chooseinner,
                                                                                   pattern_center=args.pattern_center,
                                                                                   radius=args.ring_rad,
                                                                                   rad_frac=args.ring_frac, n_iter=20,
@@ -1526,14 +1583,14 @@ def main():
                              saveplot_name=ring_file, show=False)
             if os.path.exists(vvv_ring_file):
                 print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
-                quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file,
+                quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file, labelcolor=args.labelcolor,
                                      saveplot_name=vvv_ring_file[:-4] + ".png", show=args.show)
 
         exit(0)
 
     elif args.quick_ring_check is not None:
         print("doing a quick check on Panel IDs, using file {}".format(args.quick_ring_check))
-        quick_check_raw_ring(args.rawfile1, save_for_vvv=args.quick_ring_check,
+        quick_check_raw_ring(args.rawfile1, save_for_vvv=args.quick_ring_check, labelcolor=args.labelcolor,
                              saveplot_name=args.quick_ring_check[:-4] + ".png", show=args.show)
 
     else:
