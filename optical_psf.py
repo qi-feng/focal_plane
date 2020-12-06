@@ -686,3 +686,8 @@ def main():
                                        #df=df_best,
                                        log=False)  # , amp=200, xc=0, yc=0, A=df_best.A_IMAGE[0], B=df_best.B_IMAGE[0],
 
+
+
+
+if __name__ == '__main__':
+    main()
