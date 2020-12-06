@@ -410,8 +410,8 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
                        extent=[int(data.shape[0] / 2 - show_crop / 2), int(data.shape[0] / 2 + show_crop / 2),
                                int(data.shape[1] / 2 + show_crop / 2), int(data.shape[1] / 2 - show_crop / 2)]
                        )
-            print(int(data.shape[0] / 2 - show_crop / 2), int(data.shape[0] / 2 + show_crop / 2),
-                  int(data.shape[1] / 2 - show_crop / 2), int(data.shape[1] / 2 + show_crop / 2))
+            #print(int(data.shape[0] / 2 - show_crop / 2), int(data.shape[0] / 2 + show_crop / 2),
+            #      int(data.shape[1] / 2 - show_crop / 2), int(data.shape[1] / 2 + show_crop / 2))
         else:
             plt.imshow(data, cmap=plt.cm.gray)
 
@@ -427,12 +427,12 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     print(height, x, y, width_x, width_y, theta, baseline)
 
     center_crop = data[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
-    print("Frac contained in central image pixel from data")
-    print(center_crop.sum() / data.sum())
+    #print("Frac contained in central image pixel from data")
+    #print(center_crop.sum() / data.sum())
     center_crop = data[int(y - 27):int(y + 27), int(x - 27):int(x + 27)]
     # print(center_crop.sum(),data.sum(), center_crop.sum()/data.sum())
-    print("Frac contained in central trigger pixel from data")
-    print(center_crop.sum() / data.sum())
+    #print("Frac contained in central trigger pixel from data")
+    #print(center_crop.sum() / data.sum())
 
     if legend:
         plt.text(0.95, 0.05, """
@@ -524,82 +524,76 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
             plt.savefig(outfile, bbox_inches='tight',
                         pad_inches=0)
 
-    print(r"""
-                x : %.1f
-                y : %.1f
-                $\sigma_x$ : %.1f pix = %.1f mm = %.2f '
-                $\sigma_y$ : %.1f pix = %.1f mm = %.2f '""" % (
-        y, x, width_y, width_y * PIX2MM, width_y * PIX2MM * MM2ARCMIN,
-        width_x, width_x * PIX2MM, width_x * PIX2MM * MM2ARCMIN,))
-    print_sigma = 1
-    print("""
-            %.1f $\sigma_x$ : %.1f pix = %.2f mm = %.2f '
-            %.1f $\sigma_y$ : %.1f pix = %.2f mm = %.2f '""" % (
-        print_sigma, print_sigma * width_y, print_sigma * width_y * PIX2MM,
-        print_sigma * width_y * PIX2MM * MM2ARCMIN,
-        print_sigma, print_sigma * width_x, print_sigma * width_x * PIX2MM,
-        print_sigma * width_x * PIX2MM * MM2ARCMIN,))
-    print("""
-            %.1f $\sigma_x$x2 : %.1f pix = %.2f mm = %.2f '
-            %.1f $\sigma_y$x2 : %.1f pix = %.2f mm = %.2f '""" % (
-        print_sigma, 2 * print_sigma * width_y, 2 * print_sigma * width_y * PIX2MM,
-        2 * print_sigma * width_y * PIX2MM * MM2ARCMIN,
-        print_sigma, 2 * print_sigma * width_x, 2 * print_sigma * width_x * PIX2MM,
-        2 * print_sigma * width_x * PIX2MM * MM2ARCMIN,))
+    if False: # make output succint
+        print_sigma = 1
+        print("""
+                %.1f $\sigma_x$ : %.1f pix = %.2f mm = %.2f '
+                %.1f $\sigma_y$ : %.1f pix = %.2f mm = %.2f '""" % (
+            print_sigma, print_sigma * width_y, print_sigma * width_y * PIX2MM,
+            print_sigma * width_y * PIX2MM * MM2ARCMIN,
+            print_sigma, print_sigma * width_x, print_sigma * width_x * PIX2MM,
+            print_sigma * width_x * PIX2MM * MM2ARCMIN,))
+        print("""
+                %.1f $\sigma_x$x2 : %.1f pix = %.2f mm = %.2f '
+                %.1f $\sigma_y$x2 : %.1f pix = %.2f mm = %.2f '""" % (
+            print_sigma, 2 * print_sigma * width_y, 2 * print_sigma * width_y * PIX2MM,
+            2 * print_sigma * width_y * PIX2MM * MM2ARCMIN,
+            print_sigma, 2 * print_sigma * width_x, 2 * print_sigma * width_x * PIX2MM,
+            2 * print_sigma * width_x * PIX2MM * MM2ARCMIN,))
 
-    print_sigma = 1.5
-    print("""
-            %.1f $\sigma_x$ : %.1f pix = %.2f mm = %.2f '
-            %.1f $\sigma_y$ : %.1f pix = %.2f mm = %.2f '""" % (
-        print_sigma, print_sigma * width_y, print_sigma * width_y * PIX2MM,
-        print_sigma * width_y * PIX2MM * MM2ARCMIN,
-        print_sigma, print_sigma * width_x, print_sigma * width_x * PIX2MM,
-        print_sigma * width_x * PIX2MM * MM2ARCMIN,))
-    print("""
-            %.1f $\sigma_x$x2 : %.1f pix = %.2f mm = %.2f '
-            %.1f $\sigma_y$x2 : %.1f pix = %.2f mm = %.2f '""" % (
-        print_sigma, 2 * print_sigma * width_y, 2 * print_sigma * width_y * PIX2MM,
-        2 * print_sigma * width_y * PIX2MM * MM2ARCMIN,
-        print_sigma, 2 * print_sigma * width_x, 2 * print_sigma * width_x * PIX2MM,
-        2 * print_sigma * width_x * PIX2MM * MM2ARCMIN,))
+        print_sigma = 1.5
+        print("""
+                %.1f $\sigma_x$ : %.1f pix = %.2f mm = %.2f '
+                %.1f $\sigma_y$ : %.1f pix = %.2f mm = %.2f '""" % (
+            print_sigma, print_sigma * width_y, print_sigma * width_y * PIX2MM,
+            print_sigma * width_y * PIX2MM * MM2ARCMIN,
+            print_sigma, print_sigma * width_x, print_sigma * width_x * PIX2MM,
+            print_sigma * width_x * PIX2MM * MM2ARCMIN,))
+        print("""
+                %.1f $\sigma_x$x2 : %.1f pix = %.2f mm = %.2f '
+                %.1f $\sigma_y$x2 : %.1f pix = %.2f mm = %.2f '""" % (
+            print_sigma, 2 * print_sigma * width_y, 2 * print_sigma * width_y * PIX2MM,
+            2 * print_sigma * width_y * PIX2MM * MM2ARCMIN,
+            print_sigma, 2 * print_sigma * width_x, 2 * print_sigma * width_x * PIX2MM,
+            2 * print_sigma * width_x * PIX2MM * MM2ARCMIN,))
 
-    print_sigma = 1.8
-    print("""
-            %.1f $\sigma_x$ : %.1f pix = %.2f mm = %.2f '
-            %.1f $\sigma_y$ : %.1f pix = %.2f mm = %.2f '""" % (
-        print_sigma, print_sigma * width_y, print_sigma * width_y * PIX2MM,
-        print_sigma * width_y * PIX2MM * MM2ARCMIN,
-        print_sigma, print_sigma * width_x, print_sigma * width_x * PIX2MM,
-        print_sigma * width_x * PIX2MM * MM2ARCMIN,))
+        print_sigma = 1.8
+        print("""
+                %.1f $\sigma_x$ : %.1f pix = %.2f mm = %.2f '
+                %.1f $\sigma_y$ : %.1f pix = %.2f mm = %.2f '""" % (
+            print_sigma, print_sigma * width_y, print_sigma * width_y * PIX2MM,
+            print_sigma * width_y * PIX2MM * MM2ARCMIN,
+            print_sigma, print_sigma * width_x, print_sigma * width_x * PIX2MM,
+            print_sigma * width_x * PIX2MM * MM2ARCMIN,))
 
-    print("""
-            %.1f $\sigma_x$x2 : %.1f pix = %.2f mm = %.2f '
-            %.1f $\sigma_y$x2 : %.1f pix = %.2f mm = %.2f '""" % (
-        print_sigma, 2 * print_sigma * width_y, 2 * print_sigma * width_y * PIX2MM,
-        2 * print_sigma * width_y * PIX2MM * MM2ARCMIN,
-        print_sigma, 2 * print_sigma * width_x, 2 * print_sigma * width_x * PIX2MM,
-        2 * print_sigma * width_x * PIX2MM * MM2ARCMIN,))
+        print("""
+                %.1f $\sigma_x$x2 : %.1f pix = %.2f mm = %.2f '
+                %.1f $\sigma_y$x2 : %.1f pix = %.2f mm = %.2f '""" % (
+            print_sigma, 2 * print_sigma * width_y, 2 * print_sigma * width_y * PIX2MM,
+            2 * print_sigma * width_y * PIX2MM * MM2ARCMIN,
+            print_sigma, 2 * print_sigma * width_x, 2 * print_sigma * width_x * PIX2MM,
+            2 * print_sigma * width_x * PIX2MM * MM2ARCMIN,))
 
-    print_sigma = 2.146
-    print("""
-            %.1f $\sigma_x$ : %.1f pix = %.2f mm = %.2f '
-            %.1f $\sigma_y$ : %.1f pix = %.2f mm = %.2f '""" % (
-        print_sigma, print_sigma * width_y, print_sigma * width_y * PIX2MM,
-        print_sigma * width_y * PIX2MM * MM2ARCMIN,
-        print_sigma, print_sigma * width_x, print_sigma * width_x * PIX2MM,
-        print_sigma * width_x * PIX2MM * MM2ARCMIN,))
+        print_sigma = 2.146
+        print("""
+                %.1f $\sigma_x$ : %.1f pix = %.2f mm = %.2f '
+                %.1f $\sigma_y$ : %.1f pix = %.2f mm = %.2f '""" % (
+            print_sigma, print_sigma * width_y, print_sigma * width_y * PIX2MM,
+            print_sigma * width_y * PIX2MM * MM2ARCMIN,
+            print_sigma, print_sigma * width_x, print_sigma * width_x * PIX2MM,
+            print_sigma * width_x * PIX2MM * MM2ARCMIN,))
 
-    print("""
-            %.1f $\sigma_x$x2 : %.1f pix = %.2f mm = %.2f '
-            %.1f $\sigma_y$x2 : %.1f pix = %.2f mm = %.2f '""" % (
-        print_sigma, 2 * print_sigma * width_y, 2 * print_sigma * width_y * PIX2MM,
-        2 * print_sigma * width_y * PIX2MM * MM2ARCMIN,
-        print_sigma, 2 * print_sigma * width_x, 2 * print_sigma * width_x * PIX2MM,
-        2 * print_sigma * width_x * PIX2MM * MM2ARCMIN,))
+        print("""
+                %.1f $\sigma_x$x2 : %.1f pix = %.2f mm = %.2f '
+                %.1f $\sigma_y$x2 : %.1f pix = %.2f mm = %.2f '""" % (
+            print_sigma, 2 * print_sigma * width_y, 2 * print_sigma * width_y * PIX2MM,
+            2 * print_sigma * width_y * PIX2MM * MM2ARCMIN,
+            print_sigma, 2 * print_sigma * width_x, 2 * print_sigma * width_x * PIX2MM,
+            2 * print_sigma * width_x * PIX2MM * MM2ARCMIN,))
 
     plt.figure()
     gaus_arr = gaussian_baseline(*params)(*np.indices(data.shape))
-    print(gaus_arr.shape, data.shape)
+    #print(gaus_arr.shape, data.shape)
 
     from matplotlib.colors import LogNorm
     # plt.imshow(gaus_arr, cmap=plt.cm.gray, norm=LogNorm(vmin=0.01, vmax=np.max(gaus_arr)))
@@ -615,7 +609,7 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
                                      )
     lnL_LC = -0.5 * chi2LC
     print("fit Chisq is %.3f, dof is %d, reduced Chisq is %.2f" % (chi2LC, dofLC, redchi2LC))
-    print("Log likelihood lnL={0}".format(lnL_LC))
+    #print("Log likelihood lnL={0}".format(lnL_LC))
 
     plt.text(0.6, 0.05,
              "baseline %.1f \n chisq %.1f \n dof %d \n red-chisq %.1f" % (baseline, chi2LC, dofLC, redchi2LC),
@@ -623,11 +617,11 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
              verticalalignment='bottom', transform=ax.transAxes, color='k')
 
     plt.tight_layout()
-    plt.savefig("Residual_gaussian_fit_with_baseline.pdf")
+    plt.savefig("data/Residual_gaussian_fit_with_baseline.pdf")
     print("baseline data {}, model {}".format(np.mean(data[80:, 80:]), baseline))
     data = gaus_arr
 
-    print(params)
+    #print(params)
     center_crop = data[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
     print("Frac contained in central image pixel from model")
     print(center_crop.sum() / data.sum())
@@ -645,9 +639,20 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     print("Frac contained in central trigger pixel from only the gaussian component in model")
     print(center_crop.sum() / clean_gaussian.sum())
 
-    print("Moments after subtracting basline")
-    print(fitgaussian_baseline(data - baseline))
-    print(moments_baseline(data - baseline))
+    #print("Moments after subtracting basline")
+    #print(fitgaussian_baseline(data - baseline))
+    #print(moments_baseline(data - baseline))
+
+    print(r"""
+                    x : %.1f
+                    y : %.1f
+                    $\sigma_x$ : %.1f pix = %.1f mm = %.2f '
+                    $\sigma_y$ : %.1f pix = %.1f mm = %.2f '
+                    The optical PSF (2 x max{$\sigma_x$, $\sigma_y$}) is: 
+                    %.2f '
+                    """ % (
+        y, x, width_y, width_y * PIX2MM, width_y * PIX2MM * MM2ARCMIN,
+        width_x, width_x * PIX2MM, width_x * PIX2MM * MM2ARCMIN, max(width_x, width_y) * PIX2MM * MM2ARCMIN,))
 
     return fit
 
