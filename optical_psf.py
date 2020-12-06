@@ -4,6 +4,7 @@ import pandas as pd
 import sewpy
 from matplotlib.patches import Ellipse
 import argparse
+import re
 
 
 font = {'size': 14}
@@ -617,7 +618,7 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
              verticalalignment='bottom', transform=ax.transAxes, color='k')
 
     plt.tight_layout()
-    plt.savefig("data/Residual_gaussian_fit_with_baseline.pdf")
+    plt.savefig(outfile[:-4]+"residual_gaussian_fit_with_baseline.pdf")
     print("baseline data {}, model {}".format(np.mean(data[80:, 80:]), baseline))
     data = gaus_arr
 
@@ -655,6 +656,15 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
         width_x, width_x * PIX2MM, width_x * PIX2MM * MM2ARCMIN, max(width_x, width_y) * PIX2MM * MM2ARCMIN,))
 
     return fit
+
+
+def get_datetime_rawname(raw_name):
+    pattern = r'\b\w{1,4}-\d{1,2}-\d{1,2}-\d{1,2}:\d{1,2}:\d{1,2}'
+    match = re.search(pattern, raw_name)
+    dt_match = match.group()  # raw_name[:match.start()]
+    dt_match = "_".join(dt_match.split('-'))
+    dt_match = "_".join(dt_match.split(':'))
+    return dt_match
 
 
 def main():
@@ -699,7 +709,9 @@ def main():
                                           log=False)  # , amp=200, xc=0, yc=0, A=df_best.A_IMAGE[0], B=df_best.B_IMAGE[0],
     """
 
-    data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="opticalPSF_2d_log_80perc_v3.pdf",
+    dt_match = get_datetime_rawname(args.rawfile)
+
+    data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}.pdf".format(dt_match),
                                        # draw_pixel=False,
                                        # legend=True,
                                        #df=df_best,
