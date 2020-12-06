@@ -618,7 +618,7 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
              verticalalignment='bottom', transform=ax.transAxes, color='k')
 
     plt.tight_layout()
-    plt.savefig(outfile[:-4]+"residual_gaussian_fit_with_baseline.pdf")
+    plt.savefig(outfile[:-4]+"_residual_gaussian_fit_with_baseline.pdf")
     print("baseline data {}, model {}".format(np.mean(data[80:, 80:]), baseline))
     data = gaus_arr
 
@@ -649,11 +649,13 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
                     y : %.1f
                     $\sigma_x$ : %.1f pix = %.1f mm = %.2f '
                     $\sigma_y$ : %.1f pix = %.1f mm = %.2f '
+                    ========
                     The optical PSF (2 x max{$\sigma_x$, $\sigma_y$}) is: 
                     %.2f '
+                    ========
                     """ % (
         y, x, width_y, width_y * PIX2MM, width_y * PIX2MM * MM2ARCMIN,
-        width_x, width_x * PIX2MM, width_x * PIX2MM * MM2ARCMIN, max(width_x, width_y) * PIX2MM * MM2ARCMIN,))
+        width_x, width_x * PIX2MM, width_x * PIX2MM * MM2ARCMIN, 2.*max(width_x, width_y) * PIX2MM * MM2ARCMIN,))
 
     return fit
 
