@@ -654,24 +654,38 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
 
 def main():
     parser = argparse.ArgumentParser(description='Compute optical PSF')
-    parser.add_argument('rawfile', default="/home/ctauser/Pictures/Aravis/The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-05-02:15:31.raw", type=str)
+    #parser.add_argument('rawfile', default="/home/ctauser/Pictures/Aravis/The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-05-02:15:31.raw", type=str)
+    parser.add_argument('rawfile', default="/home/ctauser/Pictures/Aravis/The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2019-12-16-23:58:26.raw", type=str)
+    parser.add_argument('--catalog', default="data/res_focal_plane_2019_12_16_23_58_26_cat1.txt", type=str)
 
     args = parser.parse_args()
 
+    # IO
     #fim_best = "/home/ctauser/Pictures/Aravis/The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-05-02:15:31.raw"
     fim_best = args.rawfile
     im_best = read_raw(fim_best)
 
+    f_best = args.catalog
+    df_best = pd.read_csv(f_best, sep=r'\s+')
+
+    # cropping
     halfwidth = 50
+    """
     x_center = 1898
     y_center = 1104
     xmin = int(x_center - halfwidth)
     xmax = int(x_center + halfwidth)
     ymax = int(y_center + halfwidth)
     ymin = int(y_center - halfwidth)
+    """
+    xmin = int(df_best.X_IMAGE[0] - halfwidth)
+    xmax = int(df_best.X_IMAGE[0] + halfwidth)
+    ymax = int(df_best.Y_IMAGE[0] + halfwidth)
+    ymin = int(df_best.Y_IMAGE[0] - halfwidth)
 
     im_best_crop = im_best[ymin:ymax, xmin:xmax]
 
+    # computing
     """
     data_fitted = fit_gaussian2d_baseline(im_best_crop, outfile="opticalPSF_2d_log_noaxes_nolegend_80perc_baseline.pdf",
                                           # draw_pixel=False,
