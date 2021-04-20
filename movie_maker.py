@@ -65,7 +65,8 @@ def main():
     png_list = []
     for single_file in args.RAW_files:
         im_raw = read_raw(single_file)
-        im_raw = im_raw[cropys[1]:cropys[0], cropxs[0]:cropxs[1]]
+        if not args.nozoom:
+            im_raw = im_raw[cropys[1]:cropys[0], cropxs[0]:cropxs[1]]
         print("Read file {}".format(single_file))
         if has_cv2:
             median = cv2.medianBlur(im_raw, args.kernel_w)
