@@ -184,7 +184,7 @@ def read_png(f, show=False):
 def read_image(f, cols=2592, rows=1944, outfile=None, show=False):
     if os.path.splitext(f)[1] == ".raw":
         return read_raw(f, cols=cols, rows=rows, outfile=outfile, show=show)
-    elif os.path.splitext(f)[1] == ".jpg":
+    elif os.path.splitext(f)[1] == ".png":
         return read_png(f, show=show)
     else:
         print("Image extension not found for path {}, printing null matrix. ".format(f))
