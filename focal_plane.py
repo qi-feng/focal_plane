@@ -1444,6 +1444,8 @@ def main():
                         help="Center coordinate X_pix Y_pix. ")
     parser.add_argument('-p', '--pattern_center', nargs=2, type=float, default=None, #default=[1891.25, 1063.75],
                         help="Center coordinate for ring pattern X_pix Y_pix. ")
+    parser.add_argument('--vvv_tag', default=None,
+                        help="A string to identify which ring. ")
     parser.add_argument('--ring_rad', type=float, default=32 / PIX2MM, help="Radius in pixels for ring pattern. ")
     parser.add_argument('--ring_tol', type=float, default=0.1)
     parser.add_argument('--phase_offset_rad', type=float, default=0.)
@@ -1494,7 +1496,11 @@ def main():
         else:
             ring_file = os.path.join(args.datadir, args.ring_file)
             ring_cat_file = os.path.join(args.datadir, args.ring_file[:-4] + ".txt")
-        vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
+        if args.vvv_tag is not None:
+            vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv_{}.csv".format(args.vvv_tag)
+        else:
+            vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
+
     elif args.savefits_name1 is None or args.savecatalog_name1 is None or args.diffcatalog_name1 is None or args.diffplot_name1 is None:
         dt_match = get_datetime_rawname(args.rawfile1)
         print("Using default output file names with date {}".format(dt_match))
@@ -1511,7 +1517,10 @@ def main():
         else:
             ring_file = os.path.join(args.datadir, args.ring_file)
             ring_cat_file = os.path.join(args.datadir, args.ring_file[:-4] + ".txt")
-        vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
+        if args.vvv_tag is not None:
+            vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv_{}.csv".format(args.vvv_tag)
+        else:
+            vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
     else:
         savefits_name1 = os.path.join(args.datadir, args.savefits_name1)
         savecatalog_name1 = os.path.join(args.datadir, args.savecatalog_name1)
