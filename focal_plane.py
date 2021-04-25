@@ -1602,6 +1602,8 @@ def main():
                 plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
                              kernel_w=3, save_catlog_name=ring_cat_file, save_for_vvv=vvv_ring_file,
                              saveplot_name=ring_file, show=False)
+                if args.pattern_center is None:
+                    print("Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
             if os.path.exists(vvv_ring_file):
                 print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
                 quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file, labelcolor=args.labelcolor,
