@@ -91,6 +91,18 @@ def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
     return x_corners, y_corners
 
 
+def get_centroid_global(sew_out_table):
+    xs_ = np.array(sew_out_table['X_IMAGE'], dtype=float)
+    ys_ = np.array(sew_out_table['Y_IMAGE'], dtype=float)
+    fs_ = np.array(sew_out_table['FLUX_ISO'], dtype=float)
+    ind_ = np.where((xs_> 1200) & (xs_< 2500) & (ys_> 400) & (ys_< 1700) )
+    #print(xs_[ind_], ys_[ind_], fs_[ind_])
+    xc = np.average(xs_[ind_], weights=fs_[ind_])
+    yc = np.average(ys_[ind_], weights=fs_[ind_])
+    print("==== Center of all centroids weighted by flux: {} {} ====".format(xc, yc))
+    return xc, yc
+
+
 def get_panel_position_in_pattern(panel_id, center=np.array([1891.25, 1063.75]), radius_mm=np.array([20, 40]),
                                   pixel_scale=0.241, phase_offset_rad=0, ):
     # in case of rx motion, we add a reference phase offset
@@ -1430,7 +1442,7 @@ def main():
 
     parser.add_argument('-C', '--center', nargs=2, type=float, default=[1891.25, 1063.75],
                         help="Center coordinate X_pix Y_pix. ")
-    parser.add_argument('-p', '--pattern_center', nargs=2, type=float, default=[1891.25, 1063.75],
+    parser.add_argument('-p', '--pattern_center', nargs=2, type=float, default=None, #default=[1891.25, 1063.75],
                         help="Center coordinate for ring pattern X_pix Y_pix. ")
     parser.add_argument('--ring_rad', type=float, default=32 / PIX2MM, help="Radius in pixels for ring pattern. ")
     parser.add_argument('--ring_tol', type=float, default=0.1)
@@ -1565,14 +1577,23 @@ def main():
                 print("invalid option for p1rx")
             if args.clustering:
                 print("*** This is not implemented; don't use! ***")
+                if args.pattern_center is None:
+                    xc, yc = get_centroid_global(sew_out_table1)
+                    args.pattern_center = [xc, yc]
                 find_ring_pattern_clustering(sew_out_table1, pattern_center=args.pattern_center, radius=args.ring_rad,
                                              rad_frac=args.ring_frac, rad_tol_frac=args.ring_tol, n_rings=2,
                                              rad_inner=0.5, rad_outer=1.2, )
             else:
+                if args.pattern_center is None:
+                    xc, yc = get_centroid_global(sew_out_table1)
+                else:
+                    xc, yc = args.pattern_center[0], args.pattern_center[1]
+                #print(xc, yc)
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1,
                                                                                   all_panels = all_panels,
                                                                                   chooseinner=chooseinner,
-                                                                                  pattern_center=args.pattern_center,
+                                                                                  #pattern_center=args.pattern_center,
+                                                                                  pattern_center=[xc,yc],
                                                                                   radius=args.ring_rad,
                                                                                   rad_frac=args.ring_frac, n_iter=20,
                                                                                   rad_tol_frac=args.ring_tol,
