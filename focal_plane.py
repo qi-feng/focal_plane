@@ -83,6 +83,14 @@ RXm2_CENTROID_LAYOUT =  np.array(
      1112, 1311, 1114, 1313,  1212, 1411, 1214, 1413,  1312, 1111, 1314, 1113,  1412, 1211, 1414, 1213])
 
 
+SEWPY_PARAMS = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', 'BACKGROUND',
+                              "KRON_RADIUS", "FLUX_RADIUS", "FLAGS", "A_IMAGE",
+                              "B_IMAGE", "THETA_IMAGE", "ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
+
+VVV_COLS = ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE", 'FLUX_AREA',
+             'KRON_RADIUS', "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', 'BACKGROUND',"ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
+
+
 def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
                             cmod_xoffset=np.array([-109.25, -110.25, 108.75, 110.75]),
                             cmod_yoffset=np.array([111.25, -109.75, -111.75, 110.25])):
@@ -646,8 +654,7 @@ def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_
 
 
 def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCONT=0.02, clean=True,
-                sewpy_params=["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "KRON_RADIUS", "FLUX_RADIUS", "FLAGS", "A_IMAGE",
-                              "B_IMAGE", "THETA_IMAGE"], cropxs=(1350, 1800), cropys=(1250, 800), savecatalog_name=None,
+                sewpy_params=SEWPY_PARAMS, cropxs=(1350, 1800), cropys=(1250, 800), savecatalog_name=None,
                 savefits_name=None, overwrite_fits=True, saveplot_name=None, show=False, search_xs=[0, 0],
                 search_ys=[0, 0]):
     '''
@@ -828,9 +835,12 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         df_vvv = sewtable.to_pandas()
         df_vvv['A_x_KR_in_pix'] = df_vvv["KRON_RADIUS"] * df_vvv['A_IMAGE'] / 2.
         df_vvv['B_x_KR_in_pix'] = df_vvv["KRON_RADIUS"] * df_vvv['B_IMAGE'] / 2.
-        df_vvv = df_vvv[
-            ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE", 'FLUX_AREA',
-             'KRON_RADIUS']]
+        #df_vvv = df_vvv[
+        #    ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE", 'FLUX_AREA',
+        #     'KRON_RADIUS']]
+        df_vvv = df_vvv[VVV_COLS]
+
+
         df_vvv.sort_values('#').to_csv(save_for_vvv, index=False)
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
 
@@ -1449,7 +1459,7 @@ def main():
     parser.add_argument('--ring_rad', type=float, default=32 / PIX2MM, help="Radius in pixels for ring pattern. ")
     parser.add_argument('--ring_tol', type=float, default=0.1)
     parser.add_argument('--phase_offset_rad', type=float, default=0.)
-    parser.add_argument('--ring_frac', type=float, default=0.3,
+    parser.add_argument('--ring_frac', type=float, default=0.2,
                         help="Fraction (1-frac, 1+frac)*radius that you accept a centroid "
                              "as part of a ring pattern. ")
 
@@ -1559,8 +1569,7 @@ def main():
         if args.gifname is not None:
             gifname = os.path.join(args.datadir, args.gifname)
 
-    sew_params = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUX_RADIUS", "FLAGS", "KRON_RADIUS", "A_IMAGE", "B_IMAGE",
-                  "THETA_IMAGE"]
+    sew_params = SEWPY_PARAMS
 
     if (args.single or args.rawfile2 is None) and args.quick_ring_check is None:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
@@ -1568,7 +1577,7 @@ def main():
                                               sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
                                               savefits_name=savefits_name1, overwrite_fits=True,
                                               saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
-                                              search_xs=args.search_xs, search_ys=args.search_ys, show=args.show)
+                                              search_xs=args.search_xs, search_ys=args.search_ys, show=False) #args.show)
         print("Processing single image. Done.")
         chooseinner=False
         if args.ring:
@@ -1611,12 +1620,35 @@ def main():
                 plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
                              kernel_w=3, save_catlog_name=ring_cat_file, save_for_vvv=vvv_ring_file,
                              saveplot_name=ring_file, show=False)
+
+                #automatically try P2S2 ring
+                P2S2ring_rad = 1.59 * args.ring_rad
+                ring_cat_file2 = ring_cat_file[:-4]+"_P2.txt"
+                ring_file2 = ring_file[:-4]+"_P2.pdf"
+                vvv_ring_file2 = vvv_ring_file[:-4]+"_P2.csv"
+                c2, r2, r2std2, sew_slice2, df_slice2 = find_ring_pattern(sew_out_table1,
+                                                                                  all_panels=all_panels,
+                                                                                  chooseinner=not(chooseinner),
+                                                                                  # pattern_center=args.pattern_center,
+                                                                                  pattern_center=[xc, yc],
+                                                                                  radius=P2S2ring_rad,
+                                                                                  rad_frac=args.ring_frac, n_iter=20,
+                                                                                  rad_tol_frac=args.ring_tol,
+                                                                                  phase_offset_rad=args.phase_offset_rad,
+                                                                                  fix_center=True, var_tol=4000)
+                plot_raw_cat(args.rawfile1, sew_slice2, df=df_slice2, center_pattern=c2, cropxs=cropxs, cropys=cropys,
+                             kernel_w=3, save_catlog_name=ring_cat_file2, save_for_vvv=vvv_ring_file2,
+                             saveplot_name=ring_file2, show=False)
                 if args.pattern_center is None:
-                    print("Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
+                    print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
             if os.path.exists(vvv_ring_file):
                 print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
                 quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file, labelcolor=args.labelcolor,
-                                     saveplot_name=vvv_ring_file[:-4] + ".png", show=args.show)
+                                     saveplot_name=vvv_ring_file[:-4] + ".png", show=False)
+                                     #saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
+                print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file2))
+                quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
+                                     saveplot_name=vvv_ring_file2[:-4] + ".png", show=args.show)
 
         exit(0)
 
