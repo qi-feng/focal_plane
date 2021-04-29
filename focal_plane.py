@@ -1608,6 +1608,7 @@ def main():
                     xc, yc = args.pattern_center[0], args.pattern_center[1]
                 #print(xc, yc)
                 ring_file1 = ring_file[:-4]+"_P1.pdf"
+                ring_cat_file1 = ring_cat_file[:-4]+"_P1.txt"
                 vvv_ring_file1 = vvv_ring_file[:-4]+"_P1.csv"
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1,
                                                                                   all_panels = all_panels,
@@ -1621,7 +1622,7 @@ def main():
                                                                                   fix_center=True, var_tol=4000)
                 plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
                              kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1,
-                             saveplot_name=ring_file, show=False)
+                             saveplot_name=ring_file1, show=False)
 
                 #automatically try P2S2 ring
                 P2S2ring_rad = 1.59 * args.ring_rad
@@ -1644,9 +1645,9 @@ def main():
                 if args.pattern_center is None:
                     print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
             if os.path.exists(vvv_ring_file):
-                print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file))
-                quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file, labelcolor=args.labelcolor,
-                                     saveplot_name=vvv_ring_file[:-4] + ".png", show=False)
+                print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file1))
+                quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
+                                     saveplot_name=vvv_ring_file1[:-4] + ".png", show=False)
                                      #saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
                 print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file2))
                 quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
