@@ -1512,7 +1512,7 @@ def main():
         else:
             ring_file = os.path.join(args.datadir, args.ring_file)
             ring_cat_file = os.path.join(args.datadir, args.ring_file[:-4] + ".txt")
-            vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
+        vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
 
     elif args.savefits_name1 is None or args.savecatalog_name1 is None or args.diffcatalog_name1 is None or args.diffplot_name1 is None:
         dt_match = get_datetime_rawname(args.rawfile1)
@@ -1530,7 +1530,7 @@ def main():
         else:
             ring_file = os.path.join(args.datadir, args.ring_file)
             ring_cat_file = os.path.join(args.datadir, args.ring_file[:-4] + ".txt")
-            vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
+        vvv_ring_file = save_filename_prefix1 + "_ring_search_vvv.csv"
     else:
         savefits_name1 = os.path.join(args.datadir, args.savefits_name1)
         savecatalog_name1 = os.path.join(args.datadir, args.savecatalog_name1)
