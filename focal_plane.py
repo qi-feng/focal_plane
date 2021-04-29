@@ -1631,7 +1631,11 @@ def main():
 
                 if os.path.exists(vvv_ring_file1):
                     print("Let's do a quick ring check on Panel IDs for P1S1 ring, using file {}".format(vvv_ring_file1))
-                    quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
+                    if args.skip_p2 and args.skip_s2:
+                        quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
+                                             saveplot_name=vvv_ring_file1[:-4] + ".png", show=True)
+                    else:
+                        quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
                                          saveplot_name=vvv_ring_file1[:-4] + ".png", show=False)
                     # saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
 
@@ -1658,9 +1662,12 @@ def main():
                         print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
                     if os.path.exists(vvv_ring_file2):
                         print("Let's do a quick ring check on Panel IDs for P2S1 ring, using file {}".format(vvv_ring_file2))
-                        quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
+                        if args.skip_s2:
+                            quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
                                              saveplot_name=vvv_ring_file2[:-4] + ".png", show=args.show)
-
+                        else:
+                            quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
+                                                 saveplot_name=vvv_ring_file2[:-4] + ".png", show=False)
                 if not args.skip_s2:
                     #automatically try P2S2 ring
                     P2S2ring_rad = 2. * args.ring_rad
