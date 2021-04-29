@@ -1628,7 +1628,7 @@ def main():
                 vvv_ring_file2 = vvv_ring_file[:-4]+"_P2.csv"
                 c2, r2, r2std2, sew_slice2, df_slice2 = find_ring_pattern(sew_out_table1,
                                                                                   all_panels=all_panels,
-                                                                                  chooseinner=not(chooseinner),
+                                                                                  chooseinner=False,
                                                                                   # pattern_center=args.pattern_center,
                                                                                   pattern_center=[xc, yc],
                                                                                   radius=P2S2ring_rad,
