@@ -1607,6 +1607,8 @@ def main():
                 else:
                     xc, yc = args.pattern_center[0], args.pattern_center[1]
                 #print(xc, yc)
+                ring_file1 = ring_file[:-4]+"_P1.pdf"
+                vvv_ring_file1 = vvv_ring_file[:-4]+"_P1.csv"
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1,
                                                                                   all_panels = all_panels,
                                                                                   chooseinner=chooseinner,
@@ -1618,7 +1620,7 @@ def main():
                                                                                   phase_offset_rad=args.phase_offset_rad,
                                                                                   fix_center=True, var_tol=4000)
                 plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
-                             kernel_w=3, save_catlog_name=ring_cat_file, save_for_vvv=vvv_ring_file,
+                             kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1,
                              saveplot_name=ring_file, show=False)
 
                 #automatically try P2S2 ring
