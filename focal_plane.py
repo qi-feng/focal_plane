@@ -1644,11 +1644,12 @@ def main():
                              saveplot_name=ring_file2, show=False)
                 if args.pattern_center is None:
                     print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
-            if os.path.exists(vvv_ring_file):
+            if os.path.exists(vvv_ring_file1):
                 print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file1))
                 quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
                                      saveplot_name=vvv_ring_file1[:-4] + ".png", show=False)
                                      #saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
+            if os.path.exists(vvv_ring_file2):
                 print("Let's do a quick ring check on Panel IDs, using file {}".format(vvv_ring_file2))
                 quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
                                      saveplot_name=vvv_ring_file2[:-4] + ".png", show=args.show)
