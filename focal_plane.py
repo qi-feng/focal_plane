@@ -1810,7 +1810,7 @@ def main():
                     print(" Center of the S2 ring is {:.2f} pix, {:.2f} pix".format(c3[0], c3[1]))
                     dp3x = c3[0] - centerP1[0]
                     dp3y = c3[1] - centerP1[1]
-                    print(" Offset between center of the S2 ring and P1 ring is {:.2f}, {:.2f} ".format(
+                    print(" Offset between center of the S2 ring and P1 ring is {:.2f} pix, {:.2f} pix".format(
                         dp3x, dp3y))
 
         exit(0)
