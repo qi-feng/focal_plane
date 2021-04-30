@@ -1672,7 +1672,7 @@ def main():
                                                  saveplot_name=vvv_ring_file2[:-4] + ".png", show=False)
                 if not args.skip_s2:
                     #automatically try P2S2 ring
-                    P2S2ring_rad = 2. * args.ring_rad
+                    P2S2ring_rad = 2.2 * args.ring_rad
                     ring_cat_file3 = ring_cat_file[:-4]+"_S2.txt"
                     ring_file3 = ring_file[:-4]+"_S2.pdf"
                     vvv_ring_file3 = vvv_ring_file[:-4]+"_S2.csv"
