@@ -1663,6 +1663,7 @@ def main():
                 plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
                              kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1,
                              saveplot_name=ring_file1, show=False)
+                centerP1 = clast
 
                 if os.path.exists(vvv_ring_file1):
                     print("Let's do a quick ring check on Panel IDs for P1S1 ring, using file {}".format(vvv_ring_file1))
@@ -1673,6 +1674,7 @@ def main():
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
                                          saveplot_name=vvv_ring_file1[:-4] + ".png", show=False)
                     # saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
+                print("==== Center of the P1 ring is {:.2f}, {:.2f} ====".format(centerP1[0], centerP1[1]))
                 print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
 
                 if not args.skip_p2:
