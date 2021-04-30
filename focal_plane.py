@@ -573,6 +573,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
                 print("Found {} panels on this ring".format(len(sew_slice)))
                 print("This seems to be a pretty good ring")
                 good_ring = True
+                continue
             else:
                 print("Crappy ring")  # break
 
