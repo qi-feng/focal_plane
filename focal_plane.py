@@ -1644,7 +1644,8 @@ def main():
                                               search_xs=args.search_xs, search_ys=args.search_ys, show=(args.show and not args.ring))
         print("Processing single image. Done.")
         df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
-        df_LEDs.to_csv(save_filename_prefix1 + "_LEDs.csv")
+        LED_filename = save_filename_prefix1 + "_LEDs.csv"
+        df_LEDs.to_csv(LED_filename)
         chooseinner=False
         if args.ring:
             # new for S1 alignment
@@ -1790,6 +1791,7 @@ def main():
                 #print useful info at the end
                 print("================")
                 print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
+                print("LED centroids saved in file {}".format(LED_filename))
                 print("========")
                 print(" Found {} P1s ".format(N_P1))
                 print(" Center of the P1 ring is {:.2f}, {:.2f} ".format(centerP1[0], centerP1[1]))
