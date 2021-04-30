@@ -1731,6 +1731,8 @@ def main():
                                  saveplot_name=ring_file2, show=False)
                     if df_slice2 is not None:
                         N_P2 = len(df_slice2)
+                    else:
+                        N_P2 = 0
                     if args.pattern_center is None:
                         print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
                     if os.path.exists(vvv_ring_file2):
@@ -1775,6 +1777,9 @@ def main():
                                  saveplot_name=ring_file3, show=False)
                     if df_slice3 is not None:
                         N_S2 = len(df_slice3)
+                    else:
+                        N_S2 = 0
+
                     #if args.pattern_center is None:
                     #    print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
                     if os.path.exists(vvv_ring_file3):
