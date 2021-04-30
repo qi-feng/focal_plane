@@ -1468,11 +1468,11 @@ def main():
 
     parser.add_argument('--ring_file', default=None, help="File name for ring pattern. ")
     parser.add_argument('--labelcolor', default='c', help="Label color. ")
-    #parser.add_argument('--search_xs', nargs=2, type=float, default=[0, 0],
-    parser.add_argument('--search_xs', nargs=2, type=float, default=[1050, 2592],
+    parser.add_argument('--search_xs', nargs=2, type=float, default=[0, 0],
+    #parser.add_argument('--search_xs', nargs=2, type=float, default=[1050, 2592],
                         help="Xmin and Xmax to list all centroid in a box. ")
-    #parser.add_argument('--search_ys', nargs=2, type=float, default=[0, 0],
-    parser.add_argument('--search_ys', nargs=2, type=float, default=[1850, 250],
+    parser.add_argument('--search_ys', nargs=2, type=float, default=[0, 0],
+    #parser.add_argument('--search_ys', nargs=2, type=float, default=[1850, 250],
                         help="Ymin and Ymax to list all centroid in a box. ")
     parser.add_argument('--quick_ring_check', default=None, help="Do ring check; dubs as file name for ring pattern. ")
     parser.add_argument("--show", action='store_true')
