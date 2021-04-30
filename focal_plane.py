@@ -1729,7 +1729,8 @@ def main():
                     plot_raw_cat(args.rawfile1, sew_slice2, df=df_slice2, center_pattern=c2, cropxs=cropxs, cropys=cropys,
                                  kernel_w=3, save_catlog_name=ring_cat_file2, save_for_vvv=vvv_ring_file2,df_LEDs=df_LEDs,
                                  saveplot_name=ring_file2, show=False)
-                    N_P2 = len(df_slice2)
+                    if df_slice2 is not None:
+                        N_P2 = len(df_slice2)
                     if args.pattern_center is None:
                         print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
                     if os.path.exists(vvv_ring_file2):
@@ -1772,7 +1773,8 @@ def main():
                     plot_raw_cat(args.rawfile1, sew_slice3, df=df_slice3, center_pattern=c3, cropxs=cropxs, cropys=cropys,
                                  kernel_w=3, save_catlog_name=ring_cat_file3, save_for_vvv=vvv_ring_file3,df_LEDs=df_LEDs,
                                  saveplot_name=ring_file3, show=False)
-                    N_S2 = len(df_slice3)
+                    if df_slice3 is not None:
+                        N_S2 = len(df_slice3)
                     #if args.pattern_center is None:
                     #    print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
                     if os.path.exists(vvv_ring_file3):
@@ -1781,25 +1783,29 @@ def main():
                                              df_LEDs=df_LEDs,
                                              saveplot_name=vvv_ring_file3[:-4] + ".png", show=args.show)
                 #print useful info at the end
+                print("================")
                 print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
-                print("=== Found {} P1s ===".format(N_P1))
-                print("== Center of the P1 ring is {:.2f}, {:.2f} ==".format(centerP1[0], centerP1[1]))
+                print("========")
+                print(" Found {} P1s ".format(N_P1))
+                print(" Center of the P1 ring is {:.2f}, {:.2f} ".format(centerP1[0], centerP1[1]))
                 dp1x = centerP1[0] - center_LEDs[0]
                 dp1y = centerP1[1] - center_LEDs[1]
-                print("== Offset between center of the P1 ring and center of the LEDs is {:.2f}, {:.2f} ==".format(dp1x, dp1y))
+                print(" Offset between center of the P1 ring and center of the LEDs is {:.2f} pix, {:.2f} pix ".format(dp1x, dp1y))
                 if not args.skip_p2:
-                    print("=== Found {} P2s ===".format(N_P2))
-                    print("== Center of the P2 ring is {:.2f}, {:.2f} ==".format(c2[0], c2[1]))
+                    print("========")
+                    print(" Found {} P2s ".format(N_P2))
+                    print(" Center of the P2 ring is {:.2f}, {:.2f} ".format(c2[0], c2[1]))
                     dp2x = c2[0] - centerP1[0]
                     dp2y = c2[1] - centerP1[1]
-                    print("== Offset between center of the P2 ring and P1 ring is {:.2f}, {:.2f} ==".format(
+                    print(" Offset between center of the P2 ring and P1 ring is {:.2f} pix, {:.2f} pix".format(
                         dp2x, dp2y))
                 if not args.skip_s2:
-                    print("=== Found {} S2s ===".format(N_S2))
-                    print("== Center of the S2 ring is {:.2f}, {:.2f} ==".format(c3[0], c3[1]))
+                    print("========")
+                    print(" Found {} S2s ".format(N_S2))
+                    print(" Center of the S2 ring is {:.2f} pix, {:.2f} pix".format(c3[0], c3[1]))
                     dp3x = c3[0] - centerP1[0]
                     dp3y = c3[1] - centerP1[1]
-                    print("== Offset between center of the S2 ring and P1 ring is {:.2f}, {:.2f} ==".format(
+                    print(" Offset between center of the S2 ring and P1 ring is {:.2f}, {:.2f} ".format(
                         dp3x, dp3y))
 
         exit(0)
