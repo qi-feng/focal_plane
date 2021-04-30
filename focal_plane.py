@@ -1696,7 +1696,7 @@ def main():
                              kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1, df_LEDs=df_LEDs,
                              saveplot_name=ring_file1, show=False)
                 centerP1 = clast
-                N_P1 = len(df_slice)
+                N_P1 = len(sew_slice)
                 if os.path.exists(vvv_ring_file1):
                     print("Let's do a quick ring check on Panel IDs for P1S1 ring, using file {}".format(vvv_ring_file1))
                     if args.skip_p2 and args.skip_s2:
@@ -1730,11 +1730,11 @@ def main():
                     plot_raw_cat(args.rawfile1, sew_slice2, df=df_slice2, center_pattern=c2, cropxs=cropxs, cropys=cropys,
                                  kernel_w=3, save_catlog_name=ring_cat_file2, save_for_vvv=vvv_ring_file2,df_LEDs=df_LEDs,
                                  saveplot_name=ring_file2, show=False)
-                    if df_slice2 is not None:
-                        N_P2 = len(df_slice2)
-                        print(N_P2, df_slice2.shape, df_slice2)
-                    else:
-                        N_P2 = 0
+                    #if df_slice2 is not None:
+                    N_P2 = len(sew_slice2)
+                    print(N_P2, sew_slice2.shape, sew_slice2)
+                    #else:
+                    #    N_P2 = 0
                     if args.pattern_center is None:
                         print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
                     if os.path.exists(vvv_ring_file2):
@@ -1777,10 +1777,10 @@ def main():
                     plot_raw_cat(args.rawfile1, sew_slice3, df=df_slice3, center_pattern=c3, cropxs=cropxs, cropys=cropys,
                                  kernel_w=3, save_catlog_name=ring_cat_file3, save_for_vvv=vvv_ring_file3,df_LEDs=df_LEDs,
                                  saveplot_name=ring_file3, show=False)
-                    if df_slice3 is not None:
-                        N_S2 = len(df_slice3)
-                    else:
-                        N_S2 = 0
+                    #if df_slice3 is not None:
+                    N_S2 = len(sew_slice3)
+                    #else:
+                    #    N_S2 = 0
 
                     #if args.pattern_center is None:
                     #    print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
