@@ -610,6 +610,36 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
     return last_center, last_radius, r2std_last, sew_slice, df_slice
 
 
+def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 597]],
+              search_width_x=50, search_width_y=30, center_offset=[0,0]):
+    df_out = pd.DataFrame()
+    N_LEDs = len(coords)
+    for i, c_ in enumerate(coords):
+        x, y = c_[0], c_[1]
+        xmin = x - search_width_x
+        xmax = x + search_width_x
+        ymin = y - search_width_y
+        ymax = y + search_width_y
+        df_ = sewtable[
+                (sewtable['X_IMAGE'] <= xmax) & (sewtable['X_IMAGE'] >= xmin) & (
+                sewtable['Y_IMAGE'] <= ymax) & (sewtable['Y_IMAGE'] >= ymin)].to_pandas()
+        #print(i, x,y)
+        #print(df_)
+        #if df_out.empty:
+        #    df_out = df_
+        #else:
+        df_out = df_out.append(df_)
+    print(df_out)
+    if len(df_out) == N_LEDs:
+        print("==== All {} LEDs found ====".format(N_LEDs))
+        center = [ np.mean(df_out['X_IMAGE']) + center_offset[0],
+                   np.mean(df_out['Y_IMAGE']) + center_offset[1] ]
+        print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center[0], center[1]))
+    else:
+        print("==== *** Only {} LEDs found out of {}!!! *** ====".format(len(df_out), N_LEDs))
+        center = [0 , 0]
+    return df_out, center
+
 def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM,
                              rad_frac=0.2, rad_tol_frac=0.1, n_iter=50, ):
     # implementing, may dropt it
@@ -1581,6 +1611,8 @@ def main():
                                               saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
                                               search_xs=args.search_xs, search_ys=args.search_ys, show=False) #args.show)
         print("Processing single image. Done.")
+        df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
+        df_LEDs.to_csv(save_filename_prefix1 + "_LEDs.csv")
         chooseinner=False
         if args.ring:
             # new for S1 alignment
