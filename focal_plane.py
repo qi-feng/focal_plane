@@ -1672,6 +1672,7 @@ def main():
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
                                          saveplot_name=vvv_ring_file1[:-4] + ".png", show=False)
                     # saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
+                print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
 
                 if not args.skip_p2:
                     #automatically try P2S1 ring
@@ -1702,6 +1703,7 @@ def main():
                         else:
                             quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
                                                  saveplot_name=vvv_ring_file2[:-4] + ".png", show=False)
+                    print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
                 if not args.skip_s2:
                     #automatically try P2S2 ring
                     P2S2ring_rad = 2.2 * args.ring_rad
@@ -1737,6 +1739,7 @@ def main():
                         print("Let's do a quick ring check on Panel IDs for P2S2 ring, using file {}".format(vvv_ring_file3))
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file3, labelcolor=args.labelcolor,
                                              saveplot_name=vvv_ring_file3[:-4] + ".png", show=args.show)
+                    print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
 
         exit(0)
 
