@@ -763,6 +763,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
 
 def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1063.75]), cropxs=(1050, 2592),
                  cropys=(1850, 250), kernel_w=3, save_catlog_name="temp_ring_search_cat.txt",
+                 df_LEDs = None, center_offset=[0,0],
                  save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False):
     '''
     Plots raw file (path to .RAW image) with imshow. If there is a 'df' object - this object is assumed to be the VVV
@@ -846,6 +847,19 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                     arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
                                     alpha=0.7), )
 
+    if df_LEDs is not None:
+        for i, row in df_LEDs.iterrows():
+            kr = row['KRON_RADIUS']
+            e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
+                        height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+            e.set_clip_box(ax.bbox)
+            e.set_alpha(0.8)
+            e.set_color('gold')
+            ax.add_artist(e)
+        center = [np.mean(df_LEDs['X_IMAGE']) + center_offset[0],
+                  np.mean(df_LEDs['Y_IMAGE']) + center_offset[1]]
+        plt.plot([center[0]], [center[1]], color='gold', marker='+')
+
     if cropxs is not None:
         plt.xlim(cropxs)
     if cropys is not None:
@@ -879,7 +893,8 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
 
 def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False, kernel_w=3,
-                         cropxs=(1050, 2592), cropys=(1850, 250), labelcolor='steelblue', labelalpha=0.3, textalpha=0.9):
+                         cropxs=(1050, 2592), cropys=(1850, 250), labelcolor='steelblue', labelalpha=0.3, textalpha=0.9,
+                         plot_center=True):
     im_raw = read_image(rawfile)
     if has_cv2:
         median = cv2.medianBlur(im_raw, kernel_w)
@@ -933,7 +948,8 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
         plt.xlim(cropxs)
     if cropys is not None:
         plt.ylim(cropys)
-
+    if plot_center:
+        plt.plot([center_pattern[0]], [center_pattern[1]], color='c', marker='x')
     if saveplot_name is not None:
         print("saving to file {}".format(saveplot_name))
         plt.savefig(saveplot_name)
@@ -1610,7 +1626,7 @@ def main():
                                               sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
                                               savefits_name=savefits_name1, overwrite_fits=True,
                                               saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
-                                              search_xs=args.search_xs, search_ys=args.search_ys, show=False) #args.show)
+                                              search_xs=args.search_xs, search_ys=args.search_ys, show=(args.show and not args.ring))
         print("Processing single image. Done.")
         df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
         df_LEDs.to_csv(save_filename_prefix1 + "_LEDs.csv")
@@ -1661,10 +1677,10 @@ def main():
                                                                                   phase_offset_rad=args.phase_offset_rad,
                                                                                   fix_center=True, var_tol=4000)
                 plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
-                             kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1,
+                             kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1, df_LEDs=df_LEDs,
                              saveplot_name=ring_file1, show=False)
                 centerP1 = clast
-
+                N_P1 = len(df_slice)
                 if os.path.exists(vvv_ring_file1):
                     print("Let's do a quick ring check on Panel IDs for P1S1 ring, using file {}".format(vvv_ring_file1))
                     if args.skip_p2 and args.skip_s2:
@@ -1674,8 +1690,8 @@ def main():
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
                                          saveplot_name=vvv_ring_file1[:-4] + ".png", show=False)
                     # saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
-                print("==== Center of the P1 ring is {:.2f}, {:.2f} ====".format(centerP1[0], centerP1[1]))
-                print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
+                #print("==== Center of the P1 ring is {:.2f}, {:.2f} ====".format(centerP1[0], centerP1[1]))
+                #print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
 
                 if not args.skip_p2:
                     #automatically try P2S1 ring
@@ -1694,8 +1710,9 @@ def main():
                                                                                       phase_offset_rad=args.phase_offset_rad,
                                                                                       fix_center=True, var_tol=4000)
                     plot_raw_cat(args.rawfile1, sew_slice2, df=df_slice2, center_pattern=c2, cropxs=cropxs, cropys=cropys,
-                                 kernel_w=3, save_catlog_name=ring_cat_file2, save_for_vvv=vvv_ring_file2,
+                                 kernel_w=3, save_catlog_name=ring_cat_file2, save_for_vvv=vvv_ring_file2,df_LEDs=df_LEDs,
                                  saveplot_name=ring_file2, show=False)
+                    N_P2 = len(df_slice2)
                     if args.pattern_center is None:
                         print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
                     if os.path.exists(vvv_ring_file2):
@@ -1734,16 +1751,25 @@ def main():
                                                                                       phase_offset_rad=args.phase_offset_rad,
                                                                                       fix_center=True, var_tol=4000)
                     plot_raw_cat(args.rawfile1, sew_slice3, df=df_slice3, center_pattern=c3, cropxs=cropxs, cropys=cropys,
-                                 kernel_w=3, save_catlog_name=ring_cat_file3, save_for_vvv=vvv_ring_file3,
+                                 kernel_w=3, save_catlog_name=ring_cat_file3, save_for_vvv=vvv_ring_file3,df_LEDs=df_LEDs,
                                  saveplot_name=ring_file3, show=False)
+                    N_S2 = len(df_slice3)
                     #if args.pattern_center is None:
                     #    print("(diagnostic) Center of centroids weighted by flux: {:.2f} {:.2f}".format(xc, yc))
                     if os.path.exists(vvv_ring_file3):
                         print("Let's do a quick ring check on Panel IDs for P2S2 ring, using file {}".format(vvv_ring_file3))
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file3, labelcolor=args.labelcolor,
                                              saveplot_name=vvv_ring_file3[:-4] + ".png", show=args.show)
-                    print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
-
+                #print useful info at the end
+                print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
+                print("== Found {} P1s ==".format(N_P1))
+                print("== Center of the P1 ring is {:.2f}, {:.2f} ==".format(centerP1[0], centerP1[1]))
+                if not args.skip_p2:
+                    print("== Found {} P2s ==".format(N_P2))
+                    print("== Center of the P2 ring is {:.2f}, {:.2f} ==".format(c3[0], c3[1]))
+                if not args.skip_s2:
+                    print("== Found {} S2s ==".format(N_S2))
+                    print("== Center of the S2 ring is {:.2f}, {:.2f} ==".format(c3[0], c3[1]))
         exit(0)
 
     elif args.quick_ring_check is not None:
