@@ -1732,6 +1732,7 @@ def main():
                                  saveplot_name=ring_file2, show=False)
                     if df_slice2 is not None:
                         N_P2 = len(df_slice2)
+                        print(N_P2, df_slice2.shape, df_slice2)
                     else:
                         N_P2 = 0
                     if args.pattern_center is None:
