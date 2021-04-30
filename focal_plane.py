@@ -906,6 +906,7 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
 
     df = pd.read_csv(save_for_vvv)
     n_sources = len(df)
+    print("{} centroids found".format(n_sources))
 
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
