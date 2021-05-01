@@ -1550,6 +1550,7 @@ def main():
     parser.add_argument("--skip_s2", action='store_true')
     parser.add_argument("--psf", action='store_true')
     parser.add_argument("--psf_search_width", type=float, default=50 )
+    parser.add_argument("--LED_search_width", type=float, default=800 )
 
 
     args = parser.parse_args()
@@ -1650,9 +1651,9 @@ def main():
                 xc, yc = get_centroid_global(sew_out_table1)
             else:
                 xc, yc = args.pattern_center[0], args.pattern_center[1]
-            LED_width = 500
-            search_LEDxs = [xc-LED_width, xc+LED_width]
-            search_LEDys = [yc-LED_width, yc+LED_width]
+            LED_search_width = args.LED_search_width
+            search_LEDxs = [xc-LED_search_width, xc+LED_search_width]
+            search_LEDys = [yc-LED_search_width, yc+LED_search_width]
             search_xs = [xc - args.psf_search_width, xc + args.psf_search_width]
             search_ys = [yc - args.psf_search_width, yc + args.psf_search_width]
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
