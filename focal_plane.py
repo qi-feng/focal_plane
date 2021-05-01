@@ -1548,6 +1548,8 @@ def main():
     parser.add_argument("--get_center", action='store_true')
     parser.add_argument("--skip_p2", action='store_true')
     parser.add_argument("--skip_s2", action='store_true')
+    parser.add_argument("--psf", action='store_true')
+    parser.add_argument("--psf_search_width", type=float, default=50 )
 
 
     args = parser.parse_args()
@@ -1643,16 +1645,54 @@ def main():
     sew_params = SEWPY_PARAMS
 
     if (args.single or args.rawfile2 is None) and args.quick_ring_check is None:
-        sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
-                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
-                                              sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
-                                              savefits_name=savefits_name1, overwrite_fits=True,
-                                              saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
-                                              search_xs=args.search_xs, search_ys=args.search_ys, show=(args.show and not args.ring))
-        print("Processing single image. Done.")
-        df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
-        LED_filename = save_filename_prefix1 + "_LEDs.csv"
-        df_LEDs.to_csv(LED_filename)
+        if args.psf:
+            if args.pattern_center is None:
+                xc, yc = get_centroid_global(sew_out_table1)
+            else:
+                xc, yc = args.pattern_center[0], args.pattern_center[1]
+            LED_width = 500
+            search_LEDxs = [xc-LED_width, xc+LED_width]
+            search_LEDys = [yc-LED_width, yc+LED_width]
+            search_xs = [xc - args.psf_search_width, xc + args.psf_search_width]
+            search_ys = [yc - args.psf_search_width, yc + args.psf_search_width]
+            sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
+                                                  DETECT_MINAREA=args.DETECT_MINAREA,
+                                                  THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                                  sewpy_params=sew_params, cropxs=cropxs, cropys=cropys,
+                                                  clean=args.clean,
+                                                  savefits_name=savefits_name1, overwrite_fits=True,
+                                                  saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
+                                                  search_xs=search_LEDxs, search_ys=search_LEDys,
+                                                  show=(args.show and not args.ring))
+            print("Processing single image for LEDs. Done.")
+            df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
+            if len(df_LEDs) == 4:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
+                LED_filename = save_filename_prefix1 + "_LEDs.csv"
+                df_LEDs.to_csv(LED_filename)
+            sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
+                                                  DETECT_MINAREA=args.DETECT_MINAREA,
+                                                  THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                                  sewpy_params=sew_params, cropxs=cropxs, cropys=cropys,
+                                                  clean=args.clean,
+                                                  savefits_name=savefits_name1, overwrite_fits=True,
+                                                  saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
+                                                  search_xs=search_xs, search_ys=search_ys,
+                                                  show=(args.show and not args.ring))
+            print("Processing single image. Done.")
+        else:
+            search_xs = args.search_xs
+            search_ys = args.search_ys
+            sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
+                                                  THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                                  sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
+                                                  savefits_name=savefits_name1, overwrite_fits=True,
+                                                  saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
+                                                  search_xs=search_xs, search_ys=search_ys, show=(args.show and not args.ring))
+            print("Processing single image. Done.")
+            df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
+            if len(df_LEDs) == 4: # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
+                LED_filename = save_filename_prefix1 + "_LEDs.csv"
+                df_LEDs.to_csv(LED_filename)
         chooseinner=False
         if args.ring:
             # new for S1 alignment
