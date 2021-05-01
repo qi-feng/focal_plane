@@ -2,9 +2,15 @@ pSCT optical alignment using optical images of a star at the focal plane
 
 # Intro
 
-Python scripts are in this repo, they are quickly put together and not smart, user be aware. 
+Python scripts for the alignment of the pSCT Optical System (OS) using defocused images of a bright star are in this repo; they have grown over the years to adapt the need of alignment, with a certain level of automation, but they are not smart, users should be aware. 
+The procedure for the alignment of the pSCT OS using defocused images of a bright star can be found in this reference 
+Adams et al., 2020, Proc. SPIE 11488, Optical System Alignment, Tolerancing, and Verification XIII, 1148805 (20 August 2020); doi: 10.1117/12.2568134
+link here: https://spie.org/Publications/Proceedings/Paper/10.1117/12.2568134
 
-To identify a panel motion in the focal plane image, first run focal_plane.py to create catalog of centroids, and then identify by eye the number (as shown in the pdf for centroids that are not common in both imamges) of the first (green) centroid and the second (yellow) centroid, finally run find_motion_focal_plane.pyto produce a clean output of the information of these two centroid. 
+As of 2021, the pSCT Optics team is able to maintain a OS configuration with a 3-ring defocused image from a bright star to break the degeneracy of images at the focal plane from each individual mirror panel. The associated alignment procedure aims to maintain the optical PSF at different elevation, azimuth, and temperature. This procedure is in two steps: 1) maintaining an ideal defocused pattern of rings at different elevation, azimuth, and temperature; and 2) maintainig an ideal optical PSF from moving panels from defocused configuration to focused configuration (collapse the rings). 
+The script focal_plane.py is automated to some degree to identify the ring patterns for P1-S1 panels (inner ring), P2-S1 panels (middle ring), and P2-S2 panels (outer ring), and characterize all centroids in these patterns (centroid coordinates and shape in the CCD camera and flux etc.). 
+
+For earlier work (done in 2019) to identify a panel motion in the focal plane image in order to form the defocused ring patterns, first run focal_plane.py to create catalog of centroids, and then identify by eye the number (as shown in the pdf for centroids that are not common in both imamges) of the first (green) centroid and the second (yellow) centroid, finally run find_motion_focal_plane.pyto produce a clean output of the information of these two centroid. 
 
 # Prerequisite 
 
