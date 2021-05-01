@@ -631,7 +631,14 @@ def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 
         #else:
         df_out = df_out.append(df_)
     print(df_out)
-    if len(df_out) == N_LEDs:
+    if len(df_out) > N_LEDs:
+        print("==== {} LEDs found, more than expected {} ====".format(len(df_out), N_LEDs))
+        print("Will only keep the brightest {}".format(len(df_out)))
+        df_out = df_out.sort_values('FLUX_ISO', ascending=False).nlargest(N_LEDs)
+        center = [np.mean(df_out['X_IMAGE']) + center_offset[0],
+                  np.mean(df_out['Y_IMAGE']) + center_offset[1]]
+        print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center[0], center[1]))
+    elif len(df_out) == N_LEDs:
         print("==== All {} LEDs found ====".format(N_LEDs))
         center = [ np.mean(df_out['X_IMAGE']) + center_offset[0],
                    np.mean(df_out['Y_IMAGE']) + center_offset[1] ]
