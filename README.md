@@ -21,7 +21,22 @@ Ideally, opencv2.4 (cv2)
 # Usage
 ## focal_plane.py
 
-** This code processes the raw images using Sextractor, create catalog of centroids, and isolate unique centroids in image1 and image2 if the distance between them is larger than min_dist, make "diff_cat" plot with unique sources in the 1st image labelled in green, and those in the 2nd image labelled in yellow. Common images are shown as red (or not shown in the "diff_cat" plots). ** 
+** This code processes the raw images using Sextractor, create catalog of centroids, compare two images to identify centroids that moved, and identify ring patterns associated with panels in the defocused configuration. It can also just search for centroids within a rectangle, useful for optical PSF measurement. ** 
+
+To identify and characterize all 3 ring patterns, run the script with the -r option, e.g., 
+python focal_plane.py  --show rawfile -r
+
+To identify and characterize only 2 ring patterns (inner and middle, e.g., when the secondary mirror is aligned, i.e., S2s aligned to S1s), run the script with the options -r and --skip_s2, e.g., 
+python focal_plane.py  --show rawfile -r --skip_s2
+
+Similarly, to identify and characterize only 1 ring pattern (inner, e.g., when the middle P2 ring is collapsed to the center), run the script with the options -r and --skip_s2 and --skip_p2, e.g., 
+python focal_plane.py  --show rawfile -r --skip_p2 --skip_s2
+
+In all of the above situations, important parameters for sextractor are often needed, and eyeballed coordinates for the ring center may be needed using the option -p [center_x] [center_y], e.g., 
+python focal_plane.py  --show ~/Pictures/Aravis/The\ Imaging\ Source\ Europe\ GmbH-37514083-2592-1944-Mono8-2021-04-30-22\:02\:40.raw -r --THRESH 3 -p 1840 1060 --skip_s2 --DEBLEND_MINCONT 0.0001
+In this example, -p 1840 1060 is specified, --THRESH 3 and -DEBLEND_MINCONT 0.0001 are used in combination to identify a very out-of-focus image from one S2 panel, which appears extended and dim and close to a neighboring image. 
+
+For early work, to isolate unique centroids in image1 and image2 if the distance between them is larger than min_dist, make "diff_cat" plot with unique sources in the 1st image labelled in green, and those in the 2nd image labelled in yellow. Common images are shown as red (or not shown in the "diff_cat" plots). 
 
 The easiest example to run focal_plane.py is 
 ```
