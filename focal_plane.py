@@ -88,7 +88,7 @@ SEWPY_PARAMS = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'F
                  "B_IMAGE", "THETA_IMAGE", "ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
 
 VVV_COLS = ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE", 'FLUX_AREA',
-             'KRON_RADIUS', "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', "FLUX_MAX", 
+             'KRON_RADIUS', "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', "FLUX_MAX",
             'BACKGROUND',"ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
 
 
@@ -1551,7 +1551,11 @@ def main():
     parser.add_argument("--skip_s2", action='store_true')
     parser.add_argument("--psf", action='store_true')
     parser.add_argument("--psf_search_width", type=float, default=50 )
-    parser.add_argument("--LED_search_width", type=float, default=800 )
+    #parser.add_argument("--LED_search_width", type=float, default=800 )
+    parser.add_argument('--LED_search_xs', nargs=2, type=float, default=[1230, 2560],
+                        help="Xmin and Xmax to search for LED centroid in a box. ")
+    parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[200, 1660],
+                        help="Ymin and Ymax to search for LED centroid in a box. ")
 
 
     args = parser.parse_args()
@@ -1653,8 +1657,10 @@ def main():
             else:
                 xc, yc = args.pattern_center[0], args.pattern_center[1]
             LED_search_width = args.LED_search_width
-            search_LEDxs = [xc-LED_search_width, xc+LED_search_width]
-            search_LEDys = [yc-LED_search_width, yc+LED_search_width]
+            #search_LEDxs = [xc-LED_search_width, xc+LED_search_width]
+            #search_LEDys = [yc-LED_search_width, yc+LED_search_width]
+            search_LEDxs = args.LED_search_xs
+            search_LEDys = args.LED_search_ys
             search_xs = [xc - args.psf_search_width, xc + args.psf_search_width]
             search_ys = [yc - args.psf_search_width, yc + args.psf_search_width]
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
