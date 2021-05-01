@@ -674,6 +674,7 @@ def main():
     #parser.add_argument('rawfile', default="/home/ctauser/Pictures/Aravis/The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2020-12-05-02:15:31.raw", type=str)
     parser.add_argument('rawfile', default="/home/ctauser/Pictures/Aravis/The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2019-12-16-23:58:26.raw", type=str)
     parser.add_argument('--catalog', default="data/res_focal_plane_2019_12_16_23_58_26_cat1.txt", type=str)
+    parser.add_argument("--psf_search_halfwidth", type=float, default=50 )
 
     args = parser.parse_args()
 
@@ -686,7 +687,7 @@ def main():
     df_best = pd.read_csv(f_best, sep=r'\s+')
 
     # cropping
-    halfwidth = 50
+    halfwidth = args.psf_search_halfwidth
     """
     x_center = 1898
     y_center = 1104
