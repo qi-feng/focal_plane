@@ -1656,7 +1656,7 @@ def main():
                 xc, yc = get_centroid_global(sew_out_table1)
             else:
                 xc, yc = args.pattern_center[0], args.pattern_center[1]
-            LED_search_width = args.LED_search_width
+            #LED_search_width = args.LED_search_width
             #search_LEDxs = [xc-LED_search_width, xc+LED_search_width]
             #search_LEDys = [yc-LED_search_width, yc+LED_search_width]
             search_LEDxs = args.LED_search_xs
