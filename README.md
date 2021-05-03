@@ -1,8 +1,8 @@
-pSCT optical alignment using optical images of a star at the focal plane
+pSCT optical alignment using defocused optical images of a star at the focal plane
 
 # Intro
 
-Python scripts for the alignment of the pSCT Optical System (OS) using defocused images of a bright star are in this repo; they have grown over the years to adapt the need of alignment, with a certain level of automation, but they are not smart, users should be aware. 
+Python scripts for the alignment of the pSCT Optical System (OS) using defocused images of a bright star are in this repo; they have grown over the years to adapt the evolving need of the alignment. There is a certain level of automation, but the scripts are not fully smart, users should be aware. 
 The procedure for the alignment of the pSCT OS using defocused images of a bright star can be found in this reference 
 Adams et al., 2020, Proc. SPIE 11488, Optical System Alignment, Tolerancing, and Verification XIII, 1148805 (20 August 2020); doi: 10.1117/12.2568134
 link here: https://spie.org/Publications/Proceedings/Paper/10.1117/12.2568134
