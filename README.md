@@ -27,7 +27,16 @@ To identify and characterize all 3 ring patterns, run the script with the -r opt
 ```
 python focal_plane.py  --show rawfile -r
 ```
+One specific example is shown below: 
+```
+python focal_plane.py  --show ~/Pictures/Aravis/The\ Imaging\ Source\ Europe\ GmbH-37514083-2592-1944-Mono8-2021-04-30-20\:00\:16.raw -r --THRESH 3 -p 1875 1072 --DEBLEND_MINCONT 0.002
+```
+An example showing one (outer P2-S2) of the three ring patterns identified using the command above.
 ![Alt text](examples/res_focal_plane_2021_04_30_20_00_16_ring_search_vvv_S2.png?raw=true "An example showing one (outer P2-S2) of the three ring patterns identified.")
+
+The same example showing the middle (P2-S1) and inner (P1-S1) ring patterns identified at the same time.
+![Alt text](examples/res_focal_plane_2021_04_30_20_00_16_ring_search_vvv_P2.png?raw=true "An example showing one (outer P2-S2) of the three ring patterns identified.")
+![Alt text](examples/res_focal_plane_2021_04_30_20_00_16_ring_search_vvv_P1.png?raw=true "An example showing one (outer P2-S2) of the three ring patterns identified.")
 
 To identify and characterize only 2 ring patterns (inner and middle, e.g., when the secondary mirror is aligned, i.e., S2s aligned to S1s), run the script with the options -r and --skip_s2, e.g., 
 ```
