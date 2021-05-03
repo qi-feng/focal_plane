@@ -173,7 +173,9 @@ Full use of focal_plane.py can be found using:
 
 ```
 python focal_plane.py -h
-usage: focal_plane.py [-h] [--DETECT_MINAREA DETECT_MINAREA] [--THRESH THRESH]
+usage: focal_plane.py [-h] [--DETECT_MINAREA DETECT_MINAREA]
+                      [--DETECT_MINAREA_S2 DETECT_MINAREA_S2]
+                      [--THRESH THRESH] [--DEBLEND_MINCONT DEBLEND_MINCONT]
                       [--kernel_w KERNEL_W] [--min_dist MIN_DIST]
                       [--save_filename_prefix1 SAVE_FILENAME_PREFIX1]
                       [--save_filename_prefix2 SAVE_FILENAME_PREFIX2]
@@ -186,10 +188,24 @@ usage: focal_plane.py [-h] [--DETECT_MINAREA DETECT_MINAREA] [--THRESH THRESH]
                       [--diffcatalog_name1 DIFFCATALOG_NAME1]
                       [--diffcatalog_name2 DIFFCATALOG_NAME2]
                       [--diffplot_name1 DIFFPLOT_NAME1]
-                      [--diffplot_name2 DIFFPLOT_NAME2] [--cropx1 CROPX1]
-                      [--cropx2 CROPX2] [--cropy1 CROPY1] [--cropy2 CROPY2]
-                      [-o MOTION_OUTFILE_PREFIX] [--nozoom] [-v]
-                      rawfile1 rawfile2
+                      [--diffplot_name2 DIFFPLOT_NAME2] [--datadir DATADIR]
+                      [--gifname GIFNAME] [--cropx1 CROPX1] [--cropx2 CROPX2]
+                      [--cropy1 CROPY1] [--cropy2 CROPY2]
+                      [-o MOTION_OUTFILE_PREFIX] [--nozoom] [-v] [-c] [-s]
+                      [-r] [--p1rx P1RX] [--clustering] [-C CENTER CENTER]
+                      [-p PATTERN_CENTER PATTERN_CENTER] [--vvv_tag VVV_TAG]
+                      [--ring_rad RING_RAD] [--ring_tol RING_TOL]
+                      [--phase_offset_rad PHASE_OFFSET_RAD]
+                      [--ring_frac RING_FRAC] [--ring_file RING_FILE]
+                      [--labelcolor LABELCOLOR]
+                      [--search_xs SEARCH_XS SEARCH_XS]
+                      [--search_ys SEARCH_YS SEARCH_YS]
+                      [--quick_ring_check QUICK_RING_CHECK] [--show]
+                      [--get_center] [--skip_p2] [--skip_s2] [--psf]
+                      [--psf_search_width PSF_SEARCH_WIDTH]
+                      [--LED_search_xs LED_SEARCH_XS LED_SEARCH_XS]
+                      [--LED_search_ys LED_SEARCH_YS LED_SEARCH_YS]
+                      rawfile1 [rawfile2]
 
 Compare two raw images of stars at the focal plane
 
@@ -202,8 +218,17 @@ optional arguments:
   --DETECT_MINAREA DETECT_MINAREA
                         +++ Important parameter +++: Config param for
                         sextractor, our default is 30.
+  --DETECT_MINAREA_S2 DETECT_MINAREA_S2
+                        +++ Important parameter +++: Config param for
+                        sextractor for P2S2 (outer ring) images, our default
+                        is 500.
   --THRESH THRESH       +++ Important parameter +++: Config param for
                         sextractor, our default is 6.
+  --DEBLEND_MINCONT DEBLEND_MINCONT
+                        +++ Important parameter +++: Config param for
+                        sextractor, our default is 0.01 The smaller this
+                        number is, the harder we try to deblend, i.e. to
+                        separate overlaying objects.
   --kernel_w KERNEL_W   If you have cv2, this is the median blurring kernel
                         widthour default is 3 (for a 3x3 kernel).
   --min_dist MIN_DIST   +++ Important parameter +++: Minimum distance we use
@@ -251,6 +276,9 @@ optional arguments:
   --diffplot_name2 DIFFPLOT_NAME2
                         File name of the image catalog for sources only in the
                         second image, default is diff_cat2.pdf.
+  --datadir DATADIR     Folder to save all output files. Default is ./data
+                        (ignored by git)
+  --gifname GIFNAME     File name to save gif animation.
   --cropx1 CROPX1       zooming into xlim that you want to plot, use None for
                         no zoom, default is (1650, 2100).
   --cropx2 CROPX2       zooming into xlim that you want to plot, use None for
@@ -264,6 +292,45 @@ optional arguments:
                         motion.
   --nozoom              Do not zoom/crop the image.
   -v, --verbose
+  -c, --clean           Whether or not to delete centroid with flag > 16.
+  -s, --single          Only analyze a single image.
+  -r, --ring            Try to find a ring.
+  --p1rx P1RX           This is just for S1 alignment, P1 rx applied to check
+                        for ghost images due to S1 misalignment. Only a few
+                        values are valid.
+  --clustering
+  -C CENTER CENTER, --center CENTER CENTER
+                        Center coordinate X_pix Y_pix.
+  -p PATTERN_CENTER PATTERN_CENTER, --pattern_center PATTERN_CENTER PATTERN_CENTER
+                        Center coordinate for ring pattern X_pix Y_pix.
+  --vvv_tag VVV_TAG     A string to identify which ring.
+  --ring_rad RING_RAD   Radius in pixels for ring pattern.
+  --ring_tol RING_TOL
+  --phase_offset_rad PHASE_OFFSET_RAD
+  --ring_frac RING_FRAC
+                        Fraction (1-frac, 1+frac)*radius that you accept a
+                        centroid as part of a ring pattern.
+  --ring_file RING_FILE
+                        File name for ring pattern.
+  --labelcolor LABELCOLOR
+                        Label color.
+  --search_xs SEARCH_XS SEARCH_XS
+                        Xmin and Xmax to list all centroid in a box.
+  --search_ys SEARCH_YS SEARCH_YS
+                        Ymin and Ymax to list all centroid in a box.
+  --quick_ring_check QUICK_RING_CHECK
+                        Do ring check; dubs as file name for ring pattern.
+  --show
+  --get_center
+  --skip_p2
+  --skip_s2
+  --psf
+  --psf_search_width PSF_SEARCH_WIDTH
+  --LED_search_xs LED_SEARCH_XS LED_SEARCH_XS
+                        Xmin and Xmax to search for LED centroid in a box.
+  --LED_search_ys LED_SEARCH_YS LED_SEARCH_YS
+                        Ymin and Ymax to search for LED centroid in a box.
+
 ```
 
 Full use of find_motion_focal_plane.py and be found using: 
@@ -317,6 +384,24 @@ optional arguments:
                         no zoom, default is (1250, 800).
   --cropy2 CROPY2       zooming into ylim that you want to plot, use None for
                         no zoom, default is (1250, 800).
+
+```
+
+```
+python optical_psf.py -h
+usage: optical_psf.py [-h] [--catalog CATALOG]
+                      [--psf_search_halfwidth PSF_SEARCH_HALFWIDTH]
+                      rawfile
+
+Compute optical PSF
+
+positional arguments:
+  rawfile
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --catalog CATALOG
+  --psf_search_halfwidth PSF_SEARCH_HALFWIDTH
 
 ```
 
