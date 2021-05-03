@@ -27,6 +27,7 @@ To identify and characterize all 3 ring patterns, run the script with the -r opt
 ```
 python focal_plane.py  --show rawfile -r
 ```
+![Alt text](examples/res_focal_plane_2021_04_30_20_00_16_ring_search_vvv_S2.png?raw=true "An example showing one (outer P2-S2) of the three ring patterns identified.")
 
 To identify and characterize only 2 ring patterns (inner and middle, e.g., when the secondary mirror is aligned, i.e., S2s aligned to S1s), run the script with the options -r and --skip_s2, e.g., 
 ```
@@ -103,6 +104,31 @@ Same goes for the files with strings "diff_cat2" for image 2.
 
 "res_focal_plane_YYYY_MM_DD_HH_MM_SS_YYYY_MM_DD_HH_MM_SS_anime.gif" (now the two timestamps correspond to the timestamps in raw file name 1 and raw file name 2) shows an animated gif to assist with identification of centroid motion corresponding to a panel motion. 
 
+### Characterizing the optical PSF:
+
+This is done in two steps: 
+step 1 to analyze a single spot centered at coordinates in the CCD camera center_x center_y (in pixels; over a box with a default half width is 50 pixels): 
+```
+python focal_plane.py --show rawfile --psf -p [center_x] [center_y]
+```
+step 2 to fit a 2D gaussian plus a constant background in a box (default half width is 50 pixels): 
+```
+python optical_psf.py rawfile --catalog ./data/res_focal_plane_YYYY_MM_DD_HH_MM_SS_cat1.txt
+```
+The above script will produce a plot that looks like the example below, and print the optical PSF to standard output. 
+
+![Alt text](examples/opticalPSF_2019_12_16_23_58_26.png?raw=true "An example showing one (outer P2-S2) of the three ring patterns identified.")
+
+```
+                    x : 49.1
+                    y : 48.6
+                    $\sigma_x$ : 8.2 pix = 2.0 mm = 1.22 '
+                    $\sigma_y$ : 9.3 pix = 2.2 mm = 1.38 '
+                    ========
+                    The optical PSF (2 x max{$\sigma_x$, $\sigma_y$}) is: 
+                    2.75 '
+                    ========
+```
 
 ### Update Nov 2019: 
 
