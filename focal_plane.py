@@ -72,6 +72,11 @@ DEFAULT_CENTROID_LAYOUT =  np.array(
      1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
      1211, 1212, 1213, 1214,  1311, 1312, 1313, 1314,  1411, 1412, 1413, 1414,  1111, 1112, 1113, 1114])
 
+P1RY_OVERSHOOT_CENTROID_LAYOUT =  np.array(
+    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
+     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
+     1411, 1412, 1413, 1414, 1111, 1112, 1113, 1114, 1211, 1212, 1213, 1214, 1311, 1312, 1313, 1314])
+
 RXm1_CENTROID_LAYOUT =  np.array(
     [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
      1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
@@ -1520,6 +1525,8 @@ def main():
     parser.add_argument('-r', '--ring', action='store_true', help="Try to find a ring.")
     parser.add_argument('--p1rx', default=0, type=float,
                         help="This is just for S1 alignment, P1 rx applied to check for ghost images due to S1 misalignment. Only a few values are valid. ")
+    parser.add_argument('--p1ry', default=0, type=float,
+                        help="This is just for P1 alignment, P1 ry applied to check for tube dragging by overshooting center. Only a few values are valid. ")
     parser.add_argument('--clustering', action='store_true')
 
     parser.add_argument('-C', '--center', nargs=2, type=float, default=[1891.25, 1063.75],
@@ -1713,6 +1720,8 @@ def main():
                 print("Using Rx {} centroid layout for S1 alignment. ".format(args.p1rx))
                 all_panels = RXm2_CENTROID_LAYOUT
                 chooseinner=True
+            elif args.p1ry == -1:
+                all_panels = P1RY_OVERSHOOT_CENTROID_LAYOUT
             else:
                 print("invalid option for p1rx")
             if args.clustering:
