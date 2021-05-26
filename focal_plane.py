@@ -1711,7 +1711,7 @@ def main():
         chooseinner=False
         if args.ring:
             # new for S1 alignment
-            if args.p1rx == 0:
+            if (args.p1rx == 0) and (args.p1ry == 0):
                 all_panels = DEFAULT_CENTROID_LAYOUT
             elif args.p1rx == -1:
                 print("Using Rx -1 centroid layout for S1 alignment. ")
@@ -1720,7 +1720,7 @@ def main():
                 print("Using Rx {} centroid layout for S1 alignment. ".format(args.p1rx))
                 all_panels = RXm2_CENTROID_LAYOUT
                 chooseinner=True
-            elif args.p1ry == -1:
+            elif (args.p1ry == -1) and (args.p1rx == 0):
                 all_panels = P1RY_OVERSHOOT_CENTROID_LAYOUT
             else:
                 print("invalid option for p1rx")
