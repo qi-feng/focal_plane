@@ -77,6 +77,12 @@ P1RY_OVERSHOOT_CENTROID_LAYOUT =  np.array(
      1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
      1411, 1412, 1413, 1414, 1111, 1112, 1113, 1114, 1211, 1212, 1213, 1214, 1311, 1312, 1313, 1314])
 
+P2RY_OVERSHOOT_CENTROID_LAYOUT =  np.array(
+    [1421, 1422, 1423, 1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
+     1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328,
+     1211, 1212, 1213, 1214,  1311, 1312, 1313, 1314,  1411, 1412, 1413, 1414,  1111, 1112, 1113, 1114])
+
+
 RXm1_CENTROID_LAYOUT =  np.array(
     [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
      1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
@@ -1527,6 +1533,9 @@ def main():
                         help="This is just for S1 alignment, P1 rx applied to check for ghost images due to S1 misalignment. Only a few values are valid. ")
     parser.add_argument('--p1ry', default=0, type=float,
                         help="This is just for P1 alignment, P1 ry applied to check for tube dragging by overshooting center. Only a few values are valid. ")
+    parser.add_argument('--p2ry', default=0, type=float,
+                        help="This is just for P2 alignment, P2 ry applied to check for tube dragging by overshooting center. Only a few values are valid. ")
+
     parser.add_argument('--clustering', action='store_true')
 
     parser.add_argument('-C', '--center', nargs=2, type=float, default=[1891.25, 1063.75],
@@ -1711,7 +1720,7 @@ def main():
         chooseinner=False
         if args.ring:
             # new for S1 alignment
-            if (args.p1rx == 0) and (args.p1ry == 0):
+            if (args.p1rx == 0) and (args.p1ry == 0) and (args.p2ry == 0):
                 all_panels = DEFAULT_CENTROID_LAYOUT
             elif args.p1rx == -1:
                 print("Using Rx -1 centroid layout for S1 alignment. ")
@@ -1720,8 +1729,10 @@ def main():
                 print("Using Rx {} centroid layout for S1 alignment. ".format(args.p1rx))
                 all_panels = RXm2_CENTROID_LAYOUT
                 chooseinner=True
-            elif (args.p1ry == -1) and (args.p1rx == 0):
+            elif (args.p1ry == -1) and (args.p1rx == 0) and (args.p2ry == 0):
                 all_panels = P1RY_OVERSHOOT_CENTROID_LAYOUT
+            elif (args.p2ry == -1) and (args.p1rx == 0) and (args.p1ry == 0):
+                all_panels = P2RY_OVERSHOOT_CENTROID_LAYOUT
             else:
                 print("invalid option for p1rx")
             if args.clustering:
@@ -1743,9 +1754,14 @@ def main():
                     ring_file1 = ring_file[:-4]+"_"+args.vvv_tag+".pdf"
                     ring_cat_file1 = ring_cat_file[:-4]+"_"+args.vvv_tag+".txt"
                 else:
-                    ring_file1 = ring_file[:-4]+"_P1.pdf"
-                    ring_cat_file1 = ring_cat_file[:-4]+"_P1.txt"
-                    vvv_ring_file1 = vvv_ring_file[:-4]+"_P1.csv"
+                    if (args.p1ry != -1) :
+                        ring_file1 = ring_file[:-4]+"_P1.pdf"
+                        ring_cat_file1 = ring_cat_file[:-4]+"_P1.txt"
+                        vvv_ring_file1 = vvv_ring_file[:-4]+"_P1.csv"
+                    else:
+                        ring_file1 = ring_file[:-4]+"_P1_doubleFocusOvershoot.pdf"
+                        ring_cat_file1 = ring_cat_file[:-4]+"_P1_doubleFocusOvershoot.txt"
+                        vvv_ring_file1 = vvv_ring_file[:-4]+"_P1_doubleFocusOvershoot.csv"
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1,
                                                                                   all_panels = all_panels,
                                                                                   chooseinner=chooseinner,
@@ -1778,9 +1794,14 @@ def main():
                 if not args.skip_p2:
                     #automatically try P2S1 ring
                     P2S1ring_rad = 1.59 * args.ring_rad
-                    ring_cat_file2 = ring_cat_file[:-4]+"_P2.txt"
-                    ring_file2 = ring_file[:-4]+"_P2.pdf"
-                    vvv_ring_file2 = vvv_ring_file[:-4]+"_P2.csv"
+                    if (args.p2ry != -1):
+                        ring_cat_file2 = ring_cat_file[:-4]+"_P2.txt"
+                        ring_file2 = ring_file[:-4]+"_P2.pdf"
+                        vvv_ring_file2 = vvv_ring_file[:-4]+"_P2.csv"
+                    else:
+                        ring_cat_file2 = ring_cat_file[:-4] + "_P2_doubleFocusOvershoot.txt"
+                        ring_file2 = ring_file[:-4] + "_P2_doubleFocusOvershoot.pdf"
+                        vvv_ring_file2 = vvv_ring_file[:-4] + "_P2_doubleFocusOvershoot.csv"
                     c2, r2, r2std2, sew_slice2, df_slice2 = find_ring_pattern(sew_out_table1,
                                                                                       all_panels=all_panels,
                                                                                       chooseinner=False,
