@@ -1507,18 +1507,18 @@ def main():
     parser.add_argument('--gifname', default=None,  # default="compare.gif",
                         help="File name to save gif animation. ")
 
-    parser.add_argument('--cropx1', default=1050,  # default=1170,
+    parser.add_argument('--cropx1', default=580, type=int,  # default=1170,
                         # default=(1350, 1800),
                         help="zooming into xlim that you want to plot, use None for no zoom, default is (1650, 2100).")
-    parser.add_argument('--cropx2', default=2592,  # default=1970,
+    parser.add_argument('--cropx2', default=2592, type=int,  # default=1970,
                         # default=(1350, 1800),
                         help="zooming into xlim that you want to plot, use None for no zoom, default is (1650, 2100).")
 
     parser.add_argument('--cropy1',  # default=1410,
-                        default=1850,
+                        default=1944, type=int, 
                         help="zooming into ylim that you want to plot, use None for no zoom, default is (1250, 800).")
     parser.add_argument('--cropy2',  # default=610,
-                        default=250,
+                        default=150, type=int, 
                         help="zooming into ylim that you want to plot, use None for no zoom, default is (1250, 800).")
 
     parser.add_argument('-o', '--motion_outfile_prefix', dest="motion_outfile_prefix", default="motion_output",
