@@ -665,7 +665,7 @@ def find_LEDs(sewtable, coords=[[1085, 500], [1077, 1472], [2060, 1476], [2065, 
     #df_out = df_out.sort_values(['X_IMAGE', 'Y_IMAGE'], ascending=[True, False])
     df_out = df_out.sort_values(['X100', 'Y100'], ascending=[True, False])
     df_out = df_out.drop(columns=['X100', 'Y100'])
-
+    df_out['ID'] = range(len(df_out))
     return df_out, center
 
 def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM,
