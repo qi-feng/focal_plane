@@ -1700,7 +1700,7 @@ def main():
             df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
             if len(df_LEDs) == 4:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
                 LED_filename = save_filename_prefix1 + "_LEDs.csv"
-                df_LEDs.to_csv(LED_filename)
+                df_LEDs.to_csv(LED_filename, index=False)
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                                   DETECT_MINAREA=args.DETECT_MINAREA,
                                                   THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
@@ -1711,6 +1711,13 @@ def main():
                                                   search_xs=search_xs, search_ys=search_ys,
                                                   show=(args.show and not args.ring))
             print("Processing single image. Done.")
+
+            #Preparing a file for VVV
+            df_centroid = pd.read_csv(savecatalog_name1, sep=r"\s+")
+            df_centroid = df_centroid.append(pd.Series("", index=df_centroid.columns), ignore_index=True)
+            df = pd.concat([df_centroid, df_LEDs])
+            df.to_csv(save_filename_prefix1 + "_centerPSF_and_LEDs.csv", index=False)
+
         else:
             search_xs = args.search_xs
             search_ys = args.search_ys
@@ -1724,7 +1731,7 @@ def main():
             df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
             if len(df_LEDs) == 4: # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
                 LED_filename = save_filename_prefix1 + "_LEDs.csv"
-                df_LEDs.to_csv(LED_filename)
+                df_LEDs.to_csv(LED_filename, index=False)
         chooseinner=False
         if args.ring:
             # new for S1 alignment
