@@ -1576,9 +1576,9 @@ def main():
     parser.add_argument("--psf", action='store_true')
     parser.add_argument("--psf_search_width", type=float, default=50 )
     #parser.add_argument("--LED_search_width", type=float, default=800 )
-    parser.add_argument('--LED_search_xs', nargs=2, type=float, default=[1230, 2560],
+    parser.add_argument('--LED_search_xs', nargs=2, type=float, default=[630, 2560],
                         help="Xmin and Xmax to search for LED centroid in a box. ")
-    parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[200, 1660],
+    parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[200, 1860],
                         help="Ymin and Ymax to search for LED centroid in a box. ")
 
 
