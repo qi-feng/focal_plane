@@ -643,7 +643,7 @@ def find_LEDs(sewtable, coords=[[1085, 500], [1077, 1472], [2060, 1476], [2065, 
         #    df_out = df_
         #else:
         df_out = df_out.append(df_)
-    print(df_out)
+    #print(df_out)
     if len(df_out) > N_LEDs:
         print("==== {} LEDs found, more than expected {} ====".format(len(df_out), N_LEDs))
         print("Will only keep the brightest {}".format(len(df_out)))
