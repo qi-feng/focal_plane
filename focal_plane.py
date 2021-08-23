@@ -624,7 +624,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
 
 
 #def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 597]],
-def find_LEDs(sewtable, coords=[[1085, 500], [1077, 1472], [2060, 1476], [2065, 497]],
+def find_LEDs(sewtable, coords=[[1095, 500], [1087, 1472], [2070, 1476], [2075, 497]],
               search_width_x=50, search_width_y=30, center_offset=[0,0]):
     df_out = pd.DataFrame()
     N_LEDs = len(coords)
@@ -744,7 +744,8 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
     im2fits(median, savefits_name, overwrite=overwrite_fits)
 
     sew = sewpy.SEW(params=sewpy_params,
-                    config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": 128, "BACK_FILTERSIZE": 3,
+                    #config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": 128, "BACK_FILTERSIZE": 3,
+                    config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": 32, "BACK_FILTERSIZE": 3,
                             "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH, "DEBLEND_MINCONT": DEBLEND_MINCONT, })
 
     sew_out = sew(savefits_name)
