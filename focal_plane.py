@@ -58,6 +58,20 @@ PIX2MM = 0.241
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
 
+# Ref positions taken on 2021 Aug 22
+# Ref Central Module (CM) positions: 
+CM_REF = np.array([[1460, 856],
+                   [1684.1, 856],
+                   [1460, 1080.1],
+                   [1684.1, 1080.1]], dtype='float32')
+
+# Ref LED positions: 
+LED_REF = np.array([[1092.8107,1470.39],
+           [1094.8242, 485.8442],
+           [2074.988, 1468.9617],
+           [2077.7751, 488.2695]], dtype='float32')
+
+
 PATTERN_LABEL_X_MIN = 1500
 PATTERN_LABEL_X_MAX = 1900
 PATTERN_LABEL_Y_MIN = 1500
@@ -110,6 +124,25 @@ def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
     y_corners = cmod_yoffset + center[1]
     return x_corners, y_corners
 
+
+def get_perspective_transform_LEDs(LED_coords):
+    if not has_cv2: 
+        print("Can't do this, no CV2")
+        return
+    # perspective transformation matrix
+    pmat = cv2.getPerspectiveTransform(LED_REF, LED_coords)
+    return pmat
+
+def get_CM_coords(LED_coords):
+    if not has_cv2: 
+        print("Can't do this, no CV2")
+        return
+    pmat = get_perspective_transform_LEDs(LED_coords)
+    cm = np.zeros_like(CM_REF)
+    for i, c_ in enumerate(CM_REF):
+        cprime_ = cv2.perspectiveTransform(np.expand_dims(c_, axis=(0, 1)), pmat)[0,0]
+        cm[i] = cprime_
+    return cm
 
 def get_centroid_global(sew_out_table):
     xs_ = np.array(sew_out_table['X_IMAGE'], dtype=float)
@@ -888,6 +921,15 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                   np.mean(df_LEDs['Y_IMAGE']) + center_offset[1]]
         plt.plot([center[0]], [center[1]], color='gold', marker='+')
 
+        # plot the CM after perspective transform
+        LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
+        cm = get_CM_coords(LED_coords)
+        for i, row in cm:
+            cm_center = np.mean(cm, axis=0)
+            ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
+            ax.scatter(cm[:,0], cm[:,1], s=20, facecolors='none', edgecolors='g', alpha=0.4)
+            
+
     if cropxs is not None:
         plt.xlim(cropxs)
     if cropys is not None:
@@ -986,6 +1028,14 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
         center = [np.mean(df_LEDs['X_IMAGE']) + center_offset[0],
                   np.mean(df_LEDs['Y_IMAGE']) + center_offset[1]]
         plt.plot([center[0]], [center[1]], color='gold', marker='+')
+
+        # plot the CM after perspective transform
+        LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
+        cm = get_CM_coords(LED_coords)
+        for i, row in cm:
+            cm_center = np.mean(cm, axis=0)
+            ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
+            ax.scatter(cm[:,0], cm[:,1], s=20, facecolors='none', edgecolors='g', alpha=0.4)
 
     if cropxs is not None:
         plt.xlim(cropxs)
