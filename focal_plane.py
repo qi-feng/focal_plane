@@ -278,7 +278,8 @@ def im2fits(im, outfile, overwrite=True):
 
 
 def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, outfile=None, show=False, vmax=None,
-                 pattern_label_x_min=0, pattern_label_x_max=0, pattern_label_y_min=0, pattern_label_y_max=0):
+                 pattern_label_x_min=0, pattern_label_x_max=0, pattern_label_y_min=0, pattern_label_y_max=0, 
+                 df_LEDs=None, center_offset=[0,0]):
     '''
     Plots image with imshow. On top, plots only sources in sew_out_trans DF within the pattern search region.
     '''
@@ -322,6 +323,29 @@ def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, o
                         height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_color('c')
+
+    if df_LEDs is not None:
+        if len(df_LEDs) == 4: 
+            for i, row in df_LEDs.iterrows():
+                kr = row['KRON_RADIUS']
+                e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
+                            height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+                e.set_clip_box(ax.bbox)
+                e.set_alpha(0.8)
+                e.set_color('gold')
+                ax.add_artist(e)
+            center = [np.mean(df_LEDs['X_IMAGE']) + center_offset[0],
+                      np.mean(df_LEDs['Y_IMAGE']) + center_offset[1]]
+            plt.plot([center[0]], [center[1]], color='gold', marker='+')
+
+            # plot the CM after perspective transform
+            LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
+            cm = get_CM_coords(LED_coords)
+            for i, row in cm:
+                cm_center = np.mean(cm, axis=0)
+                ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
+                ax.scatter(cm[:,0], cm[:,1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
+            
 
     zoom = False
     if xlim is not None:
@@ -747,6 +771,7 @@ def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_
 def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCONT=0.02, BACK_SIZE=128, clean=True,
                 sewpy_params=SEWPY_PARAMS, cropxs=(1350, 1800), cropys=(1250, 800), savecatalog_name=None,
                 savefits_name=None, overwrite_fits=True, saveplot_name=None, show=False, search_xs=[0, 0],
+                df_LEDs=None, 
                 search_ys=[0, 0]):
     '''
     This actually processes the file with sewpy and extracts sources. The 'rawfile' is a matrix (not the path to the .RAW image).
@@ -813,7 +838,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
 
     plot_sew_cat(median, sew_out, outfile=saveplot_name, xlim=cropxs, ylim=cropys, vmax=max_pixel_crop,
                  pattern_label_x_min=search_xs[0], pattern_label_x_max=search_xs[1], pattern_label_y_min=ymin,
-                 pattern_label_y_max=ymax)
+                 pattern_label_y_max=ymax, df_LEDs=df_LEDs)
     if savecatalog_name is not None:
         from astropy.io import ascii
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
@@ -927,7 +952,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         for i, row in cm:
             cm_center = np.mean(cm, axis=0)
             ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
-            ax.scatter(cm[:,0], cm[:,1], s=20, facecolors='none', edgecolors='g', alpha=0.4)
+            ax.scatter(cm[:,0], cm[:,1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
             
 
     if cropxs is not None:
@@ -1035,7 +1060,7 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
         for i, row in cm:
             cm_center = np.mean(cm, axis=0)
             ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
-            ax.scatter(cm[:,0], cm[:,1], s=20, facecolors='none', edgecolors='g', alpha=0.4)
+            ax.scatter(cm[:,0], cm[:,1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
 
     if cropxs is not None:
         plt.xlim(cropxs)
@@ -1766,7 +1791,7 @@ def main():
                                                   savefits_name=savefits_name1, overwrite_fits=True,
                                                   saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
                                                   search_xs=search_xs, search_ys=search_ys,
-                                                  show=(args.show and not args.ring))
+                                                  show=(args.show and not args.ring), df_LEDs=df_LEDs)
             print("Processing single image. Done.")
 
             #Preparing a file for VVV
