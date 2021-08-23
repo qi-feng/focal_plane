@@ -711,7 +711,7 @@ def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_
     return clast, rlast, r2std_last, sew_slice, df_slice
 
 
-def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCONT=0.02, clean=True,
+def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCONT=0.02, BACK_SIZE=128, clean=True,
                 sewpy_params=SEWPY_PARAMS, cropxs=(1350, 1800), cropys=(1250, 800), savecatalog_name=None,
                 savefits_name=None, overwrite_fits=True, saveplot_name=None, show=False, search_xs=[0, 0],
                 search_ys=[0, 0]):
@@ -745,7 +745,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
 
     sew = sewpy.SEW(params=sewpy_params,
                     #config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": 128, "BACK_FILTERSIZE": 3,
-                    config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": 32, "BACK_FILTERSIZE": 3,
+                    config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": BACK_SIZE, "BACK_FILTERSIZE": 3,
                             "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH, "DEBLEND_MINCONT": DEBLEND_MINCONT, })
 
     sew_out = sew(savefits_name)
@@ -1465,6 +1465,10 @@ def main():
                                                                             "Config param for sextractor, our default is 0.01 "
                                                                             "The smaller this number is, the harder we try to "
                                                                             "deblend, i.e. to separate overlaying objects. ")
+    parser.add_argument('--BACK_SIZE', type=int, default=128, help="+++ Important parameter +++: "
+                                                                       "Config param for sextractor, our default is 128."
+                                                                       "Change to smaller values if you need to estimate very localized background."
+                                                                       "32 can be used for cases with bright reflection from the moon. ")
     parser.add_argument('--kernel_w', type=int, default=3,
                         help="If you have cv2, this is the median blurring kernel width"
                              "our default is 3 (for a 3x3 kernel).")
@@ -1690,6 +1694,7 @@ def main():
             search_ys = [yc - args.psf_search_width, yc + args.psf_search_width]
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                                   DETECT_MINAREA=args.DETECT_MINAREA,
+                                                  BACK_SIZE=args.BACK_SIZE, 
                                                   THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                                   sewpy_params=sew_params, cropxs=cropxs, cropys=cropys,
                                                   clean=args.clean,
@@ -1704,6 +1709,7 @@ def main():
                 df_LEDs.to_csv(LED_filename, index=False)
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                                   DETECT_MINAREA=args.DETECT_MINAREA,
+                                                  BACK_SIZE=args.BACK_SIZE,
                                                   THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                                   sewpy_params=sew_params, cropxs=cropxs, cropys=cropys,
                                                   clean=args.clean,
@@ -1723,7 +1729,7 @@ def main():
             search_xs = args.search_xs
             search_ys = args.search_ys
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
-                                                  THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                                  THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,BACK_SIZE=args.BACK_SIZE,
                                                   sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
                                                   savefits_name=savefits_name1, overwrite_fits=True,
                                                   saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
@@ -1857,6 +1863,7 @@ def main():
                     vvv_ring_file3 = vvv_ring_file[:-4]+"_S2.csv"
                     sew_out_table3, im_med3 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                                           DETECT_MINAREA=args.DETECT_MINAREA_S2,
+                                                          BACK_SIZE=args.BACK_SIZE,
                                                           THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                                           sewpy_params=sew_params, cropxs=cropxs, cropys=cropys,
                                                           clean=args.clean,
@@ -1926,13 +1933,13 @@ def main():
 
     else:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
-                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,BACK_SIZE=args.BACK_SIZE,
                                               sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
                                               savefits_name=savefits_name1, overwrite_fits=True, saveplot_name=None,
                                               savecatalog_name=savecatalog_name1, search_xs=args.search_xs,
                                               search_ys=args.search_ys)
         sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
-                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,BACK_SIZE=args.BACK_SIZE,
                                               sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
                                               savefits_name=savefits_name2, overwrite_fits=True, saveplot_name=None,
                                               savecatalog_name=savecatalog_name2, search_xs=args.search_xs,
