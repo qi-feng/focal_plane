@@ -140,7 +140,11 @@ def get_CM_coords(LED_coords):
     pmat = get_perspective_transform_LEDs(LED_coords)
     cm = np.zeros_like(CM_REF)
     for i, c_ in enumerate(CM_REF):
-        cprime_ = cv2.perspectiveTransform(np.expand_dims(c_, axis=(0, 1)), pmat)[0,0]
+        #only works for python3
+        #cprime_ = cv2.perspectiveTransform(np.expand_dims(c_, axis=(0, 1)), pmat)[0,0]
+        c_ = np.expand_dims(c_, axis=0)
+        c_ = np.expand_dims(c_, axis=0)
+        cprime_ = cv2.perspectiveTransform(c_, pmat)[0,0]
         cm[i] = cprime_
     return cm
 
