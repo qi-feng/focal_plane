@@ -4,7 +4,6 @@ import argparse
 import os
 import re
 import subprocess
-import math 
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -726,7 +725,6 @@ def find_LEDs(sewtable, coords=[[1095, 500], [1087, 1472], [2070, 1476], [2075, 
     #df_out['Y100'] = df_out['Y_IMAGE']//100*100
     df_out['X100'] = df_out['X_IMAGE'].apply(lambda x: int(round(x / 100.0)) * 100)
     df_out['Y100'] = df_out['Y_IMAGE'].apply(lambda x: int(round(x / 100.0)) * 100)
-    print(df_out)
     #df_out = df_out.sort_values(['X_IMAGE', 'Y_IMAGE'], ascending=[True, False])
     df_out = df_out.sort_values(['X100', 'Y100'], ascending=[True, False])
     df_out = df_out.drop(columns=['X100', 'Y100'])
