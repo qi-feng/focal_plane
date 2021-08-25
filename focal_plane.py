@@ -686,7 +686,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
 
 #def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 597]],
 def find_LEDs(sewtable, coords=[[1095, 500], [1087, 1472], [2070, 1476], [2075, 497]],
-              search_width_x=50, search_width_y=30, center_offset=[0,0]):
+              search_width_x=20, search_width_y=20, center_offset=[0,0]):
     df_out = pd.DataFrame()
     N_LEDs = len(coords)
     for i, c_ in enumerate(coords):
