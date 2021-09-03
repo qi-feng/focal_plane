@@ -110,9 +110,10 @@ RXm2_CENTROID_LAYOUT =  np.array(
 
 SEWPY_PARAMS = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', "FLUX_MAX",
                 'BACKGROUND', "KRON_RADIUS", "FLUX_RADIUS", "FLAGS", "A_IMAGE",
-                 "B_IMAGE", "THETA_IMAGE", "ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
+                 "B_IMAGE", "THETA_IMAGE", "CXX_IMAGE", "CYY_IMAGE", "CXY_IMAGE", "ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
 
-VVV_COLS = ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE", 'FLUX_AREA',
+VVV_COLS = ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE",
+            "CXX_IMAGE", "CYY_IMAGE", "CXY_IMAGE", 'FLUX_AREA',
              'KRON_RADIUS', "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', "FLUX_MAX",
             'BACKGROUND',"ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
 
@@ -630,6 +631,9 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
         r2mean, r2std, new_center, new_radius, sew_slice = calc_ring_pattern(sewtable, pattern_center=last_center,
                                                                              radius=last_radius, rad_frac=rad_frac,
                                                                              fix_center=fix_center)
+        if len(sew_slice) == 0:
+            print("no centroid found for this ring")
+            break
         if r2std < r2std_last:
             last_center = new_center
             last_radius = new_radius
@@ -1875,12 +1879,13 @@ def main():
                                                                                   rad_tol_frac=args.ring_tol,
                                                                                   phase_offset_rad=args.phase_offset_rad,
                                                                                   fix_center=True, var_tol=4000)
-                plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
-                             kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1, df_LEDs=df_LEDs,
-                             saveplot_name=ring_file1, show=False)
+                if len(sew_slice) > 0:
+                    plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
+                                 kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1, df_LEDs=df_LEDs,
+                                 saveplot_name=ring_file1, show=False)
                 centerP1 = clast
                 N_P1 = len(sew_slice)
-                if os.path.exists(vvv_ring_file1):
+                if os.path.exists(vvv_ring_file1) and N_P1:
                     print("Let's do a quick ring check on Panel IDs for P1S1 ring, using file {}".format(vvv_ring_file1))
                     if args.skip_p2 and args.skip_s2:
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
