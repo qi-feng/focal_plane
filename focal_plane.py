@@ -58,6 +58,20 @@ PIX2MM = 0.241
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
 
+# Ref positions taken on 2021 Aug 22
+# Ref Central Module (CM) positions: 
+CM_REF = np.array([[1460, 856],
+                   [1684.1, 856],
+                   [1460, 1080.1],
+                   [1684.1, 1080.1]], dtype='float32')
+
+# Ref LED positions: 
+LED_REF = np.array([[1092.8107,1470.39],
+           [1094.8242, 485.8442],
+           [2074.988, 1468.9617],
+           [2077.7751, 488.2695]], dtype='float32')
+
+
 PATTERN_LABEL_X_MIN = 1500
 PATTERN_LABEL_X_MAX = 1900
 PATTERN_LABEL_Y_MIN = 1500
@@ -71,6 +85,17 @@ DEFAULT_CENTROID_LAYOUT =  np.array(
     [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
      1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
      1211, 1212, 1213, 1214,  1311, 1312, 1313, 1314,  1411, 1412, 1413, 1414,  1111, 1112, 1113, 1114])
+
+P1RY_OVERSHOOT_CENTROID_LAYOUT =  np.array(
+    [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
+     1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
+     1411, 1412, 1413, 1414, 1111, 1112, 1113, 1114, 1211, 1212, 1213, 1214, 1311, 1312, 1313, 1314])
+
+P2RY_OVERSHOOT_CENTROID_LAYOUT =  np.array(
+    [1421, 1422, 1423, 1424, 1425, 1426, 1427, 1428, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
+     1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328,
+     1211, 1212, 1213, 1214,  1311, 1312, 1313, 1314,  1411, 1412, 1413, 1414,  1111, 1112, 1113, 1114])
+
 
 RXm1_CENTROID_LAYOUT =  np.array(
     [1221, 1222, 1223, 1224, 1225, 1226, 1227, 1228, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1421, 1422, 1423,
@@ -99,6 +124,29 @@ def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
     y_corners = cmod_yoffset + center[1]
     return x_corners, y_corners
 
+
+def get_perspective_transform_LEDs(LED_coords):
+    if not has_cv2: 
+        print("Can't do this, no CV2")
+        return
+    # perspective transformation matrix
+    pmat = cv2.getPerspectiveTransform(LED_REF, LED_coords)
+    return pmat
+
+def get_CM_coords(LED_coords):
+    if not has_cv2: 
+        print("Can't do this, no CV2")
+        return
+    pmat = get_perspective_transform_LEDs(LED_coords)
+    cm = np.zeros_like(CM_REF)
+    for i, c_ in enumerate(CM_REF):
+        #only works for python3
+        #cprime_ = cv2.perspectiveTransform(np.expand_dims(c_, axis=(0, 1)), pmat)[0,0]
+        c_ = np.expand_dims(c_, axis=0)
+        c_ = np.expand_dims(c_, axis=0)
+        cprime_ = cv2.perspectiveTransform(c_, pmat)[0,0]
+        cm[i] = cprime_
+    return cm
 
 def get_centroid_global(sew_out_table):
     xs_ = np.array(sew_out_table['X_IMAGE'], dtype=float)
@@ -234,7 +282,8 @@ def im2fits(im, outfile, overwrite=True):
 
 
 def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, outfile=None, show=False, vmax=None,
-                 pattern_label_x_min=0, pattern_label_x_max=0, pattern_label_y_min=0, pattern_label_y_max=0):
+                 pattern_label_x_min=0, pattern_label_x_max=0, pattern_label_y_min=0, pattern_label_y_max=0, 
+                 df_LEDs=None, center_offset=[0,0]):
     '''
     Plots image with imshow. On top, plots only sources in sew_out_trans DF within the pattern search region.
     '''
@@ -278,6 +327,29 @@ def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, o
                         height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_color('c')
+
+    if df_LEDs is not None:
+        if len(df_LEDs) == 4: 
+            for i, row in df_LEDs.iterrows():
+                kr = row['KRON_RADIUS']
+                e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
+                            height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+                e.set_clip_box(ax.bbox)
+                e.set_alpha(0.8)
+                e.set_color('gold')
+                ax.add_artist(e)
+            center = [np.mean(df_LEDs['X_IMAGE']) + center_offset[0],
+                      np.mean(df_LEDs['Y_IMAGE']) + center_offset[1]]
+            plt.plot([center[0]], [center[1]], color='gold', marker='+')
+
+            # plot the CM after perspective transform
+            LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
+            cm = get_CM_coords(LED_coords)
+            for i, row in cm:
+                cm_center = np.mean(cm, axis=0)
+                ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
+                ax.scatter(cm[:,0], cm[:,1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
+            
 
     zoom = False
     if xlim is not None:
@@ -612,8 +684,9 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
     return last_center, last_radius, r2std_last, sew_slice, df_slice
 
 
-def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 597]],
-              search_width_x=50, search_width_y=30, center_offset=[0,0]):
+#def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 597]],
+def find_LEDs(sewtable, coords=[[1095, 500], [1087, 1472], [2070, 1476], [2075, 497]],
+              search_width_x=20, search_width_y=20, center_offset=[0,0]):
     df_out = pd.DataFrame()
     N_LEDs = len(coords)
     for i, c_ in enumerate(coords):
@@ -631,7 +704,7 @@ def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 
         #    df_out = df_
         #else:
         df_out = df_out.append(df_)
-    print(df_out)
+    #print(df_out)
     if len(df_out) > N_LEDs:
         print("==== {} LEDs found, more than expected {} ====".format(len(df_out), N_LEDs))
         print("Will only keep the brightest {}".format(len(df_out)))
@@ -647,6 +720,15 @@ def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 
     else:
         print("==== *** Only {} LEDs found out of {}!!! *** ====".format(len(df_out), N_LEDs))
         center = [0 , 0]
+
+    #df_out['X100'] = df_out['X_IMAGE']//100*100
+    #df_out['Y100'] = df_out['Y_IMAGE']//100*100
+    df_out['X100'] = df_out['X_IMAGE'].apply(lambda x: int(round(x / 100.0)) * 100)
+    df_out['Y100'] = df_out['Y_IMAGE'].apply(lambda x: int(round(x / 100.0)) * 100)
+    #df_out = df_out.sort_values(['X_IMAGE', 'Y_IMAGE'], ascending=[True, False])
+    df_out = df_out.sort_values(['X100', 'Y100'], ascending=[True, False])
+    df_out = df_out.drop(columns=['X100', 'Y100'])
+    df_out['ID'] = range(1, len(df_out)+1)
     return df_out, center
 
 def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM,
@@ -692,9 +774,10 @@ def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_
     return clast, rlast, r2std_last, sew_slice, df_slice
 
 
-def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCONT=0.02, clean=True,
+def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCONT=0.02, BACK_SIZE=128, clean=True,
                 sewpy_params=SEWPY_PARAMS, cropxs=(1350, 1800), cropys=(1250, 800), savecatalog_name=None,
                 savefits_name=None, overwrite_fits=True, saveplot_name=None, show=False, search_xs=[0, 0],
+                df_LEDs=None, 
                 search_ys=[0, 0]):
     '''
     This actually processes the file with sewpy and extracts sources. The 'rawfile' is a matrix (not the path to the .RAW image).
@@ -725,7 +808,8 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
     im2fits(median, savefits_name, overwrite=overwrite_fits)
 
     sew = sewpy.SEW(params=sewpy_params,
-                    config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": 128, "BACK_FILTERSIZE": 3,
+                    #config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": 128, "BACK_FILTERSIZE": 3,
+                    config={"DETECT_MINAREA": DETECT_MINAREA, "BACK_SIZE": BACK_SIZE, "BACK_FILTERSIZE": 3,
                             "DETECT_THRESH": THRESH, "ANALYSIS_THRESH": THRESH, "DEBLEND_MINCONT": DEBLEND_MINCONT, })
 
     sew_out = sew(savefits_name)
@@ -760,7 +844,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
 
     plot_sew_cat(median, sew_out, outfile=saveplot_name, xlim=cropxs, ylim=cropys, vmax=max_pixel_crop,
                  pattern_label_x_min=search_xs[0], pattern_label_x_max=search_xs[1], pattern_label_y_min=ymin,
-                 pattern_label_y_max=ymax)
+                 pattern_label_y_max=ymax, df_LEDs=df_LEDs)
     if savecatalog_name is not None:
         from astropy.io import ascii
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
@@ -868,6 +952,15 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                   np.mean(df_LEDs['Y_IMAGE']) + center_offset[1]]
         plt.plot([center[0]], [center[1]], color='gold', marker='+')
 
+        # plot the CM after perspective transform
+        LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
+        cm = get_CM_coords(LED_coords)
+        for i, row in cm:
+            cm_center = np.mean(cm, axis=0)
+            ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
+            ax.scatter(cm[:,0], cm[:,1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
+            
+
     if cropxs is not None:
         plt.xlim(cropxs)
     if cropys is not None:
@@ -966,6 +1059,14 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
         center = [np.mean(df_LEDs['X_IMAGE']) + center_offset[0],
                   np.mean(df_LEDs['Y_IMAGE']) + center_offset[1]]
         plt.plot([center[0]], [center[1]], color='gold', marker='+')
+
+        # plot the CM after perspective transform
+        LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
+        cm = get_CM_coords(LED_coords)
+        for i, row in cm:
+            cm_center = np.mean(cm, axis=0)
+            ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
+            ax.scatter(cm[:,0], cm[:,1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
 
     if cropxs is not None:
         plt.xlim(cropxs)
@@ -1445,6 +1546,10 @@ def main():
                                                                             "Config param for sextractor, our default is 0.01 "
                                                                             "The smaller this number is, the harder we try to "
                                                                             "deblend, i.e. to separate overlaying objects. ")
+    parser.add_argument('--BACK_SIZE', type=int, default=128, help="+++ Important parameter +++: "
+                                                                       "Config param for sextractor, our default is 128."
+                                                                       "Change to smaller values if you need to estimate very localized background."
+                                                                       "32 can be used for cases with bright reflection from the moon. ")
     parser.add_argument('--kernel_w', type=int, default=3,
                         help="If you have cv2, this is the median blurring kernel width"
                              "our default is 3 (for a 3x3 kernel).")
@@ -1496,18 +1601,18 @@ def main():
     parser.add_argument('--gifname', default=None,  # default="compare.gif",
                         help="File name to save gif animation. ")
 
-    parser.add_argument('--cropx1', default=1050,  # default=1170,
+    parser.add_argument('--cropx1', default=580, type=int,  # default=1170,
                         # default=(1350, 1800),
                         help="zooming into xlim that you want to plot, use None for no zoom, default is (1650, 2100).")
-    parser.add_argument('--cropx2', default=2592,  # default=1970,
+    parser.add_argument('--cropx2', default=2592, type=int,  # default=1970,
                         # default=(1350, 1800),
                         help="zooming into xlim that you want to plot, use None for no zoom, default is (1650, 2100).")
 
     parser.add_argument('--cropy1',  # default=1410,
-                        default=1850,
+                        default=1944, type=int, 
                         help="zooming into ylim that you want to plot, use None for no zoom, default is (1250, 800).")
     parser.add_argument('--cropy2',  # default=610,
-                        default=250,
+                        default=150, type=int, 
                         help="zooming into ylim that you want to plot, use None for no zoom, default is (1250, 800).")
 
     parser.add_argument('-o', '--motion_outfile_prefix', dest="motion_outfile_prefix", default="motion_output",
@@ -1520,6 +1625,11 @@ def main():
     parser.add_argument('-r', '--ring', action='store_true', help="Try to find a ring.")
     parser.add_argument('--p1rx', default=0, type=float,
                         help="This is just for S1 alignment, P1 rx applied to check for ghost images due to S1 misalignment. Only a few values are valid. ")
+    parser.add_argument('--p1ry', default=0, type=float,
+                        help="This is just for P1 alignment, P1 ry applied to check for tube dragging by overshooting center. Only a few values are valid. ")
+    parser.add_argument('--p2ry', default=0, type=float,
+                        help="This is just for P2 alignment, P2 ry applied to check for tube dragging by overshooting center. Only a few values are valid. ")
+
     parser.add_argument('--clustering', action='store_true')
 
     parser.add_argument('-C', '--center', nargs=2, type=float, default=[1891.25, 1063.75],
@@ -1552,9 +1662,9 @@ def main():
     parser.add_argument("--psf", action='store_true')
     parser.add_argument("--psf_search_width", type=float, default=50 )
     #parser.add_argument("--LED_search_width", type=float, default=800 )
-    parser.add_argument('--LED_search_xs', nargs=2, type=float, default=[1230, 2560],
+    parser.add_argument('--LED_search_xs', nargs=2, type=float, default=[630, 2560],
                         help="Xmin and Xmax to search for LED centroid in a box. ")
-    parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[200, 1660],
+    parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[200, 1860],
                         help="Ymin and Ymax to search for LED centroid in a box. ")
 
 
@@ -1665,6 +1775,7 @@ def main():
             search_ys = [yc - args.psf_search_width, yc + args.psf_search_width]
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                                   DETECT_MINAREA=args.DETECT_MINAREA,
+                                                  BACK_SIZE=args.BACK_SIZE, 
                                                   THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                                   sewpy_params=sew_params, cropxs=cropxs, cropys=cropys,
                                                   clean=args.clean,
@@ -1676,22 +1787,30 @@ def main():
             df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
             if len(df_LEDs) == 4:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
                 LED_filename = save_filename_prefix1 + "_LEDs.csv"
-                df_LEDs.to_csv(LED_filename)
+                df_LEDs.to_csv(LED_filename, index=False)
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                                   DETECT_MINAREA=args.DETECT_MINAREA,
+                                                  BACK_SIZE=args.BACK_SIZE,
                                                   THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                                   sewpy_params=sew_params, cropxs=cropxs, cropys=cropys,
                                                   clean=args.clean,
                                                   savefits_name=savefits_name1, overwrite_fits=True,
                                                   saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
                                                   search_xs=search_xs, search_ys=search_ys,
-                                                  show=(args.show and not args.ring))
+                                                  show=(args.show and not args.ring), df_LEDs=df_LEDs)
             print("Processing single image. Done.")
+
+            #Preparing a file for VVV
+            df_centroid = pd.read_csv(savecatalog_name1, sep=r"\s+")
+            df_centroid = df_centroid.append(pd.Series("", index=df_centroid.columns), ignore_index=True)
+            df = pd.concat([df_centroid, df_LEDs])
+            df.to_csv(save_filename_prefix1 + "_centerPSF_and_LEDs.csv", index=False)
+
         else:
             search_xs = args.search_xs
             search_ys = args.search_ys
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
-                                                  THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                                  THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,BACK_SIZE=args.BACK_SIZE,
                                                   sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
                                                   savefits_name=savefits_name1, overwrite_fits=True,
                                                   saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
@@ -1700,11 +1819,11 @@ def main():
             df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
             if len(df_LEDs) == 4: # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
                 LED_filename = save_filename_prefix1 + "_LEDs.csv"
-                df_LEDs.to_csv(LED_filename)
+                df_LEDs.to_csv(LED_filename, index=False)
         chooseinner=False
         if args.ring:
             # new for S1 alignment
-            if args.p1rx == 0:
+            if (args.p1rx == 0) and (args.p1ry == 0) and (args.p2ry == 0):
                 all_panels = DEFAULT_CENTROID_LAYOUT
             elif args.p1rx == -1:
                 print("Using Rx -1 centroid layout for S1 alignment. ")
@@ -1713,6 +1832,10 @@ def main():
                 print("Using Rx {} centroid layout for S1 alignment. ".format(args.p1rx))
                 all_panels = RXm2_CENTROID_LAYOUT
                 chooseinner=True
+            elif (args.p1ry == -1) and (args.p1rx == 0) and (args.p2ry == 0):
+                all_panels = P1RY_OVERSHOOT_CENTROID_LAYOUT
+            elif (args.p2ry == -1) and (args.p1rx == 0) and (args.p1ry == 0):
+                all_panels = P2RY_OVERSHOOT_CENTROID_LAYOUT
             else:
                 print("invalid option for p1rx")
             if args.clustering:
@@ -1734,9 +1857,14 @@ def main():
                     ring_file1 = ring_file[:-4]+"_"+args.vvv_tag+".pdf"
                     ring_cat_file1 = ring_cat_file[:-4]+"_"+args.vvv_tag+".txt"
                 else:
-                    ring_file1 = ring_file[:-4]+"_P1.pdf"
-                    ring_cat_file1 = ring_cat_file[:-4]+"_P1.txt"
-                    vvv_ring_file1 = vvv_ring_file[:-4]+"_P1.csv"
+                    if (args.p1ry != -1) :
+                        ring_file1 = ring_file[:-4]+"_P1.pdf"
+                        ring_cat_file1 = ring_cat_file[:-4]+"_P1.txt"
+                        vvv_ring_file1 = vvv_ring_file[:-4]+"_P1.csv"
+                    else:
+                        ring_file1 = ring_file[:-4]+"_P1_doubleFocusOvershoot.pdf"
+                        ring_cat_file1 = ring_cat_file[:-4]+"_P1_doubleFocusOvershoot.txt"
+                        vvv_ring_file1 = vvv_ring_file[:-4]+"_P1_doubleFocusOvershoot.csv"
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1,
                                                                                   all_panels = all_panels,
                                                                                   chooseinner=chooseinner,
@@ -1769,9 +1897,14 @@ def main():
                 if not args.skip_p2:
                     #automatically try P2S1 ring
                     P2S1ring_rad = 1.59 * args.ring_rad
-                    ring_cat_file2 = ring_cat_file[:-4]+"_P2.txt"
-                    ring_file2 = ring_file[:-4]+"_P2.pdf"
-                    vvv_ring_file2 = vvv_ring_file[:-4]+"_P2.csv"
+                    if (args.p2ry != -1):
+                        ring_cat_file2 = ring_cat_file[:-4]+"_P2.txt"
+                        ring_file2 = ring_file[:-4]+"_P2.pdf"
+                        vvv_ring_file2 = vvv_ring_file[:-4]+"_P2.csv"
+                    else:
+                        ring_cat_file2 = ring_cat_file[:-4] + "_P2_doubleFocusOvershoot.txt"
+                        ring_file2 = ring_file[:-4] + "_P2_doubleFocusOvershoot.pdf"
+                        vvv_ring_file2 = vvv_ring_file[:-4] + "_P2_doubleFocusOvershoot.csv"
                     c2, r2, r2std2, sew_slice2, df_slice2 = find_ring_pattern(sew_out_table1,
                                                                                       all_panels=all_panels,
                                                                                       chooseinner=False,
@@ -1811,6 +1944,7 @@ def main():
                     vvv_ring_file3 = vvv_ring_file[:-4]+"_S2.csv"
                     sew_out_table3, im_med3 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
                                                           DETECT_MINAREA=args.DETECT_MINAREA_S2,
+                                                          BACK_SIZE=args.BACK_SIZE,
                                                           THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
                                                           sewpy_params=sew_params, cropxs=cropxs, cropys=cropys,
                                                           clean=args.clean,
@@ -1880,13 +2014,13 @@ def main():
 
     else:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
-                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,BACK_SIZE=args.BACK_SIZE,
                                               sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
                                               savefits_name=savefits_name1, overwrite_fits=True, saveplot_name=None,
                                               savecatalog_name=savecatalog_name1, search_xs=args.search_xs,
                                               search_ys=args.search_ys)
         sew_out_table2, im_med2 = process_raw(args.rawfile2, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
-                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,
+                                              THRESH=args.THRESH, DEBLEND_MINCONT=args.DEBLEND_MINCONT,BACK_SIZE=args.BACK_SIZE,
                                               sewpy_params=sew_params, cropxs=cropxs, cropys=cropys, clean=args.clean,
                                               savefits_name=savefits_name2, overwrite_fits=True, saveplot_name=None,
                                               savecatalog_name=savecatalog_name2, search_xs=args.search_xs,

@@ -14,7 +14,7 @@ except:
 
 def images2gif(im_list, output_gif):
     str_im_list = ' '.join(im_list)
-    str1 = 'convert -delay 50 -loop 0 -quality 50 -density 144 ' + str_im_list +' '+output_gif
+    str1 = 'convert -delay 50 -loop 1 -quality 50 -density 144 ' + str_im_list +' '+output_gif
     print(str1)
     subprocess.call(str1, shell=True)
 
