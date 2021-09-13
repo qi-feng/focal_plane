@@ -110,10 +110,12 @@ RXm2_CENTROID_LAYOUT =  np.array(
 
 SEWPY_PARAMS = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', "FLUX_MAX",
                 'BACKGROUND', "KRON_RADIUS", "FLUX_RADIUS", "FLAGS", "A_IMAGE",
-                 "B_IMAGE", "THETA_IMAGE", "CXX_IMAGE", "CYY_IMAGE", "CXY_IMAGE", "ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
+                "B_IMAGE", "THETA_IMAGE", "CXX_IMAGE", "CYY_IMAGE", "CXY_IMAGE",
+                "XMIN_IMAGE", "YMIN_IMAGE", "XMAX_IMAGE", "YMAX_IMAGE",
+                "ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
 
 VVV_COLS = ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE",
-            "CXX_IMAGE", "CYY_IMAGE", "CXY_IMAGE", 'FLUX_AREA',
+            "CXX_IMAGE", "CYY_IMAGE", "CXY_IMAGE", "XMIN_IMAGE", "YMIN_IMAGE", "XMAX_IMAGE", "YMAX_IMAGE", 'FLUX_AREA',
              'KRON_RADIUS', "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', "FLUX_MAX",
             'BACKGROUND',"ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
 
@@ -280,6 +282,152 @@ def im2fits(im, outfile, overwrite=True):
     from astropy.io import fits
     fitf = fits.PrimaryHDU(data=im)
     fitf.writeto(outfile, overwrite=overwrite)  # return im
+
+
+def crop_image(im_best, df_best, i, sub_bkg=True, verbose=False):
+    xmin=int(df_best.XMIN_IMAGE[i])
+    xmax=int(df_best.XMAX_IMAGE[i])
+    ymax=int(df_best.YMIN_IMAGE[i])
+    ymin=int(df_best.YMAX_IMAGE[i])
+    if verbose:
+        print("Cropping for panel {}: XMIN={}, XMAX={}, YMIN={}, YMAX={}".format(df_best.Panel_ID_guess[i], xmin, xmax, ymin, ymax))
+    im_crop = im_best[ymax:ymin, xmin:xmax]
+    if sub_bkg:
+        im_crop = im_crop-df_best['BACKGROUND'][i]
+    return im_crop
+
+
+def crop_rotate_image(im_best, df_best, i, sub_bkg=True, verbose=False, reshape=True):
+    from scipy import ndimage#, misc
+    img = crop_image(im_best, df_best, i, sub_bkg=sub_bkg)
+    #img = img-['BACKGROUND'][0]
+    img_rotated = ndimage.rotate(img, df_best['THETA_IMAGE'][i], reshape=reshape)
+    if verbose:
+        print("Rotating for panel {}: THETA={}".format(df_best.Panel_ID_guess[i], df_best['THETA_IMAGE'][i]))
+
+    return img_rotated
+
+
+def image_statistics_2D(Z):
+    h, w = np.shape(Z)
+
+    x = range(w)
+    y = range(h)
+
+    X, Y = np.meshgrid(x, y)
+
+    # Centroid (mean)
+    cx = np.sum(Z * X) / np.sum(Z)
+    cy = np.sum(Z * Y) / np.sum(Z)
+
+    ###Standard deviation
+    x2 = (range(w) - cx) ** 2
+    y2 = (range(h) - cy) ** 2
+
+    X2, Y2 = np.meshgrid(x2, y2)
+
+    # Find the variance
+    vx = np.sum(Z * X2) / np.sum(Z)
+    vy = np.sum(Z * Y2) / np.sum(Z)
+    ###Covariance
+    covxy = np.sum(Z * np.sqrt(X2 * Y2)) / np.sum(Z)
+
+    # SD is the sqrt of the variance
+    sx, sy = np.sqrt(vx), np.sqrt(vy)
+    sxy = np.sqrt(covxy)
+
+    ###Skewness
+    x3 = (range(w) - cx) ** 3
+    y3 = (range(h) - cy) ** 3
+
+    X3, Y3 = np.meshgrid(x3, y3)
+
+    # Find the thid central moment
+    m3x = np.sum(Z * X3) / np.sum(Z)
+    m3y = np.sum(Z * Y3) / np.sum(Z)
+
+    # Skewness is the third central moment divided by SD cubed
+    skx = m3x / sx ** 3
+    sky = m3y / sy ** 3
+
+    ###Kurtosis
+    x4 = (range(w) - cx) ** 4
+    y4 = (range(h) - cy) ** 4
+
+    X4, Y4 = np.meshgrid(x4, y4)
+
+    # Find the fourth central moment
+    m4x = np.sum(Z * X4) / np.sum(Z)
+    m4y = np.sum(Z * Y4) / np.sum(Z)
+
+    # Kurtosis is the fourth central moment divided by SD to the fourth power
+    kx = m4x / sx ** 4
+    ky = m4y / sy ** 4
+
+    return cx, cy, sx, sy, sxy, skx, sky, kx, ky
+
+
+def report_moments(img):
+    #Calculate the image statistics using the projection method
+    #stats_pr = image_statistics(img)
+
+    #Confirm that they are the same by using a 2D calculation
+    stats_2d = image_statistics_2D(img)
+
+    names = ('Centroid x','Centroid y','StdDev x','StdDev y','sqrt cov xy', 'Skewness x','Skewness y','Kurtosis x','Kurtosis y')
+
+    #print('Statistis\t1D\t2D')
+    #for name,i1,i2 in zip(names, stats_2d,stats_pr):
+    #    print('%s \t%.2f \t%.2f'%(name, i1,i2))
+    #for name,i1 in zip(names, stats_pr):
+    for name,i1 in zip(names, stats_2d):
+        print('%s \t%.2f '%(name, i1))
+
+
+def comp_moments(img, img2):
+    #Calculate the image statistics using the projection method
+    #stats_pr = image_statistics(img)
+    #stats_pr2 = image_statistics(img2)
+
+    #Confirm that they are the same by using a 2D calculation
+    stats_2d = image_statistics_2D(img)
+    stats_2d2 = image_statistics_2D(img2)
+
+    names = ('Centroid x','Centroid y','StdDev x','StdDev y', 'sqrt cov xy', 'Skewness x','Skewness y','Kurtosis x','Kurtosis y')
+
+    print('============== \tcropped\trotated ')
+    #for name,i1,i2 in zip(names, stats_pr,stats_pr2):
+    for name,i1,i2 in zip(names, stats_2d,stats_2d2):
+        print('%s \t%.2f \t%.2f'%(name, i1,i2))
+
+
+def get_skewness(im1, df1, pind=9, show=False, verbose=True, reshape=True):
+    # img_cropped = crop_image(im1, df1, pind, verbose=True)
+    img_rotated = crop_rotate_image(im1, df1, pind, verbose=True, reshape=reshape)
+    # img_rotated = crop_rotate_image(im1, df1, pind, verbose=True)
+
+    if show:
+        img_cropped = crop_image(im1, df1, pind, verbose=True)
+        fig = plt.figure(figsize=(7, 3))
+        ax1, ax2 = fig.subplots(1, 2)
+        ax1.imshow(img_cropped, cmap='gray')
+        ax1.set_axis_off()
+        ax2.imshow(img_rotated, cmap='gray')
+        ax2.set_axis_off()
+        fig.set_tight_layout(True)
+        plt.show()
+
+    # comp_moments(img_cropped, img_rotated)
+    stats_2d = image_statistics_2D(img_rotated)
+    skx, sky = stats_2d[5], stats_2d[6]
+    if verbose:
+        names = (
+        'Centroid x', 'Centroid y', 'StdDev x', 'StdDev y', 'sqrt cov xy', 'Skewness x', 'Skewness y', 'Kurtosis x',
+        'Kurtosis y')
+        for name, i1 in zip(names, stats_2d):
+            print('%s \t%.2f ' % (name, i1))
+        print("Skewness along major and minor axes are {:.2f}, {:.2f}".format(skx, sky))
+    return skx, sky
 
 
 def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, outfile=None, show=False, vmax=None,
@@ -989,10 +1137,18 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         #    ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE", 'FLUX_AREA',
         #     'KRON_RADIUS']]
         df_vvv = df_vvv[VVV_COLS]
-
-
-        df_vvv.sort_values('#').to_csv(save_for_vvv, index=False)
+        df_vvv = df_vvv.sort_values('#').reset_index(drop=True)
+        skxs = []
+        skys = []
+        for i in range(len(df_vvv)):
+            skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
+            skxs.append(skx)
+            skys.append(sky)
+        df_vvv['Skewness_Major_Axis'] = skxs
+        df_vvv['Skewness_Minor_Axis'] = skys
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
+
+        df_vvv.to_csv(save_for_vvv, index=False)
 
     return
 
