@@ -354,52 +354,33 @@ def image_statistics_2D(Z):
     dy = (y - cy)
     DX, DY = np.meshgrid(dx, dy)
 
-    ###Standard deviation
-    X2 = DX * DX
-    Y2 = DY * DY
-    XY = DX * DY
+    ### First Momentum
+    m11 = np.sum(Z * DX) / m00
+    m12 = np.sum(Z * DY) / m00
 
-    # Find the variance
-    vx = np.sum(Z * X2) / m00
-    vy = np.sum(Z * Y2) / m00
-    ###Covariance
-    covxy = np.sum(Z * X*Y) / m00
+    ### Second Momentum
+    X2 = np.sum(Z * (DX * DX)) / m00
+    Y2 = np.sum(Z * (DY * DY)) / m00
+    XY = np.sum(Z * (DX * DY)) / m00
 
-    # SD is the sqrt of the variance
-    sx, sy = np.sqrt(vx), np.sqrt(vy)
-    sxy = np.sqrt(covxy)
+    m20 = X2+Y2
+    m21 = X2-Y2
+    m22 = 2*XY
 
-    ###Skewness
+    ### Third Momentum
     X3 = DX * DX * DX
     Y3 = DY * DY * DY
     X2Y = DX * DX * DY
     Y2X = DY * DY * DX
 
     # Find the third central moments
-    m30 = np.sum(Z * X3) / m00
-    m03 = np.sum(Z * Y3) / m00
-    m21 = np.sum(Z * X2Y) / m00
-    m12 = np.sum(Z * Y2X) / m00
+    m31 = np.sum(Z * (X3+Y2X)) / m00
+    m32 = np.sum(Z * (X2Y+Y3)) / m00
+    m33 = np.sum(Z * (Y3-3*X2Y)) / m00
+    m34 = np.sum(Z * (X3-3*Y2X)) / m00
 
-    # Skewness is the third central moment divided by SD cubed
-    skx = m30 / sx ** 3
-    sky = m03 / sy ** 3
 
-    ###Kurtosis
-    x4 = dx ** 4
-    y4 = dy ** 4
-
-    X4, Y4 = np.meshgrid(x4, y4)
-
-    # Find the fourth central moment
-    m4x = np.sum(Z * X4) / m00
-    m4y = np.sum(Z * Y4) / m00
-
-    # Kurtosis is the fourth central moment divided by SD to the fourth power
-    kx = m4x / sx ** 4
-    ky = m4y / sy ** 4
-
-    return cx, cy, vx, vy, covxy, m00, m30, m03, m21, m12
+    return cx, cy, m00, m11, m12, m20, m21, m22, m31, m32, m33, m34
 
 
 def report_moments(img):
@@ -459,7 +440,7 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
     stats_2d = image_statistics_2D(img_cropped_ellipse)
     stats_dict = {}
     names = (
-        'Centroid x', 'Centroid y', 'StdDev x', 'StdDev y', 'sqrt cov xy', 'm00','m30', 'm03', 'm21', 'm12')
+        'cx', 'cy', 'm00', 'm11', 'm12', 'm20', 'm21', 'm22', 'm31', 'm32', 'm33', 'm34')
     for name, i1 in zip(names, stats_2d):
         stats_dict[name] = i1
     if verbose:
@@ -1176,33 +1157,46 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         #     'KRON_RADIUS']]
         df_vvv = df_vvv[VVV_COLS]
         df_vvv = df_vvv.sort_values('#').reset_index(drop=True)
+        cxs = []
+        cys = []
         m00s = []
         m11s = []
-        m20s = []
-        m02s = []
-        m30s = []
-        m03s = []
         m12s = []
+        m20s = []
         m21s = []
+        m22s = []
+        m31s = []
+        m32s = []
+        m33s = []
+        m34s = []
         for i in range(len(df_vvv)):
             # skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
             stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=True, verbose=True, reshape=True)
+            cxs.append(stats_dict['cx'])
+            cys.append(stats_dict['cy'])
             m00s.append(stats_dict['m00'])
-            m11s.append(stats_dict['sqrt cov xy'])
-            m20s.append(stats_dict['StdDev x'])
-            m02s.append(stats_dict['StdDev y'])
-            m30s.append(stats_dict['m30'])
-            m03s.append(stats_dict['m03'])
+            m11s.append(stats_dict['m11'])
             m12s.append(stats_dict['m12'])
+            m20s.append(stats_dict['m20'])
             m21s.append(stats_dict['m21'])
+            m22s.append(stats_dict['m22'])
+            m31s.append(stats_dict['m31'])
+            m32s.append(stats_dict['m32'])
+            m33s.append(stats_dict['m33'])
+            m34s.append(stats_dict['m34'])
+        df_vvv['cx'] = cxs
+        df_vvv['cy'] = cys
         df_vvv['m00'] = m00s
         df_vvv['m11'] = m11s
-        df_vvv['m20'] = m20s
-        df_vvv['m02'] = m02s
-        df_vvv['m30'] = m30s
-        df_vvv['m03'] = m03s
         df_vvv['m12'] = m12s
+        df_vvv['m20'] = m20s
         df_vvv['m21'] = m21s
+        df_vvv['m22'] = m22s
+        df_vvv['m31'] = m31s
+        df_vvv['m32'] = m32s
+        df_vvv['m33'] = m33s
+        df_vvv['m34'] = m34s
+
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
 
         df_vvv.to_csv(save_for_vvv, index=False)
