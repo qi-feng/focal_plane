@@ -284,21 +284,23 @@ def im2fits(im, outfile, overwrite=True):
     fitf.writeto(outfile, overwrite=overwrite)  # return im
 
 def crop_image_ellipse(im_best, df_best, i, r_ellipse, sub_bkg=True, verbose=False):
-    xmin=int(df_best.XMIN_IMAGE[i])
-    xmax=int(df_best.XMAX_IMAGE[i])
-    ymax=int(df_best.YMIN_IMAGE[i])
-    ymin=int(df_best.YMAX_IMAGE[i])
+    xmin=int(df_best.XMIN_IMAGE[i]*0.99)
+    xmax=int(df_best.XMAX_IMAGE[i]*1.01)
+    ymax=int(df_best.YMIN_IMAGE[i]*0.99)
+    ymin=int(df_best.YMAX_IMAGE[i]*1.01)
 
-    cxx = df_best.CXX[i]
-    cyy = df_best.CYY[i]
-    cxy = df_best.CXY[i]
+    cxx = df_best.CXX_IMAGE[i]
+    cyy = df_best.CYY_IMAGE[i]
+    cxy = df_best.CXY_IMAGE[i]
     xmean = df_best.X_IMAGE[i]
     ymean = df_best.Y_IMAGE[i]
     R = r_ellipse
 
-    x = np.arange(xmin, xmax)
-    y = np.arange(ymin, ymax)
-    ellipse_mask = cxx * (x - xmean) ** 2 + cyy * (y - ymean) ** 2 + cxy * (x - xmean) * (y - ymean) > R ** 2
+    h,w = np.shape(im_best)
+    x = range(w)
+    y = range(h)
+    X,Y = np.meshgrid(x,y)
+    ellipse_mask = cxx * (X - xmean) ** 2 + cyy * (Y - ymean) ** 2 + cxy * (X - xmean) * (Y - ymean) > R ** 2
 
     if verbose:
         print("Cropping for panel {}: XMIN={}, XMAX={}, YMIN={}, YMAX={}".format(df_best.Panel_ID_guess[i], xmin, xmax, ymin, ymax))
@@ -442,19 +444,19 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
 
     if show:
         fig = plt.figure(figsize=(7, 3))
-        ax1, ax2, ax3 = fig.subplots(1, 3)
+        ax1, ax3 = fig.subplots(1, 2)
         img_cropped = crop_image(im1, df1, pind, verbose=True)
         ax1.imshow(img_cropped, cmap='gray')
         ax1.set_axis_off()
-        ax2.imshow(img_rotated, cmap='gray')
-        ax2.set_axis_off()
+        #ax2.imshow(img_rotated, cmap='gray')
+        #ax2.set_axis_off()
         ax3.imshow(img_cropped_ellipse, cmap='gray')
         ax3.set_axis_off()
         fig.set_tight_layout(True)
         plt.show()
 
     # comp_moments(img_cropped, img_rotated)
-    stats_2d = image_statistics_2D(img_cropped_ellipse, r_ellipse)
+    stats_2d = image_statistics_2D(img_cropped_ellipse)
     stats_dict = {}
     names = (
         'Centroid x', 'Centroid y', 'StdDev x', 'StdDev y', 'sqrt cov xy', 'm00','m30', 'm03', 'm21', 'm12')
@@ -1184,7 +1186,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         m21s = []
         for i in range(len(df_vvv)):
             # skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
-            stats_dict = get_skewness(median, df_vvv, r_ellipse=3, pind=i, show=False, verbose=True, reshape=True)
+            stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=True, verbose=True, reshape=True)
             m00s.append(stats_dict['m00'])
             m11s.append(stats_dict['sqrt cov xy'])
             m20s.append(stats_dict['StdDev x'])
