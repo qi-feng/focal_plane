@@ -1198,6 +1198,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         df_vvv['m34'] = m34s
 
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
+        print("Sum tails vector: (M31, M32) = ".format(np.sum(df_vvv['m31']), np.sum(df_vvv['m32'])))
 
         df_vvv.to_csv(save_for_vvv, index=False)
 
