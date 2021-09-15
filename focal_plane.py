@@ -283,6 +283,33 @@ def im2fits(im, outfile, overwrite=True):
     fitf = fits.PrimaryHDU(data=im)
     fitf.writeto(outfile, overwrite=overwrite)  # return im
 
+def crop_image_ellipse(im_best, df_best, i, r_ellipse, sub_bkg=True, verbose=False):
+    xmin=int(df_best.XMIN_IMAGE[i])
+    xmax=int(df_best.XMAX_IMAGE[i])
+    ymax=int(df_best.YMIN_IMAGE[i])
+    ymin=int(df_best.YMAX_IMAGE[i])
+
+    cxx = df_best.CXX[i]
+    cyy = df_best.CYY[i]
+    cxy = df_best.CXY[i]
+    xmean = df_best.X_IMAGE[i]
+    ymean = df_best.Y_IMAGE[i]
+    R = r_ellipse
+
+    x = np.arange(xmin, xmax)
+    y = np.arange(ymin, ymax)
+    ellipse_mask = cxx * (x - xmean) ** 2 + cyy * (y - ymean) ** 2 + cxy * (x - xmean) * (y - ymean) > R ** 2
+
+    if verbose:
+        print("Cropping for panel {}: XMIN={}, XMAX={}, YMIN={}, YMAX={}".format(df_best.Panel_ID_guess[i], xmin, xmax, ymin, ymax))
+    if sub_bkg:
+        im_best = im_best-df_best['BACKGROUND'][i]
+
+    im_best[ellipse_mask] = 0
+    im_crop = im_best[ymax:ymin, xmin:xmax]
+
+    return im_crop
+
 
 def crop_image(im_best, df_best, i, sub_bkg=True, verbose=False):
     xmin=int(df_best.XMIN_IMAGE[i])
@@ -317,54 +344,60 @@ def image_statistics_2D(Z):
     X, Y = np.meshgrid(x, y)
 
     # Centroid (mean)
-    cx = np.sum(Z * X) / np.sum(Z)
-    cy = np.sum(Z * Y) / np.sum(Z)
+    m00 = np.sum(Z)
+    cx = np.sum(Z * X) / m00
+    cy = np.sum(Z * Y) / m00
+
+    dx = (x - cx)
+    dy = (y - cy)
+    DX, DY = np.meshgrid(dx, dy)
 
     ###Standard deviation
-    x2 = (range(w) - cx) ** 2
-    y2 = (range(h) - cy) ** 2
-
-    X2, Y2 = np.meshgrid(x2, y2)
+    X2 = DX * DX
+    Y2 = DY * DY
+    XY = DX * DY
 
     # Find the variance
-    vx = np.sum(Z * X2) / np.sum(Z)
-    vy = np.sum(Z * Y2) / np.sum(Z)
+    vx = np.sum(Z * X2) / m00
+    vy = np.sum(Z * Y2) / m00
     ###Covariance
-    covxy = np.sum(Z * np.sqrt(X2 * Y2)) / np.sum(Z)
+    covxy = np.sum(Z * X*Y) / m00
 
     # SD is the sqrt of the variance
     sx, sy = np.sqrt(vx), np.sqrt(vy)
     sxy = np.sqrt(covxy)
 
     ###Skewness
-    x3 = (range(w) - cx) ** 3
-    y3 = (range(h) - cy) ** 3
+    X3 = DX * DX * DX
+    Y3 = DY * DY * DY
+    X2Y = DX * DX * DY
+    Y2X = DY * DY * DX
 
-    X3, Y3 = np.meshgrid(x3, y3)
-
-    # Find the thid central moment
-    m3x = np.sum(Z * X3) / np.sum(Z)
-    m3y = np.sum(Z * Y3) / np.sum(Z)
+    # Find the third central moments
+    m30 = np.sum(Z * X3) / m00
+    m03 = np.sum(Z * Y3) / m00
+    m21 = np.sum(Z * X2Y) / m00
+    m12 = np.sum(Z * Y2X) / m00
 
     # Skewness is the third central moment divided by SD cubed
-    skx = m3x / sx ** 3
-    sky = m3y / sy ** 3
+    skx = m30 / sx ** 3
+    sky = m03 / sy ** 3
 
     ###Kurtosis
-    x4 = (range(w) - cx) ** 4
-    y4 = (range(h) - cy) ** 4
+    x4 = dx ** 4
+    y4 = dy ** 4
 
     X4, Y4 = np.meshgrid(x4, y4)
 
     # Find the fourth central moment
-    m4x = np.sum(Z * X4) / np.sum(Z)
-    m4y = np.sum(Z * Y4) / np.sum(Z)
+    m4x = np.sum(Z * X4) / m00
+    m4y = np.sum(Z * Y4) / m00
 
     # Kurtosis is the fourth central moment divided by SD to the fourth power
     kx = m4x / sx ** 4
     ky = m4y / sy ** 4
 
-    return cx, cy, sx, sy, sxy, skx, sky, kx, ky
+    return cx, cy, vx, vy, covxy, m00, m30, m03, m21, m12
 
 
 def report_moments(img):
@@ -374,7 +407,7 @@ def report_moments(img):
     #Confirm that they are the same by using a 2D calculation
     stats_2d = image_statistics_2D(img)
 
-    names = ('Centroid x','Centroid y','StdDev x','StdDev y','sqrt cov xy', 'Skewness x','Skewness y','Kurtosis x','Kurtosis y')
+    names = ('Centroid x','Centroid y','StdDev x','StdDev y','sqrt cov xy', 'm00','m30', 'm03', 'm21', 'm12')
 
     #print('Statistis\t1D\t2D')
     #for name,i1,i2 in zip(names, stats_2d,stats_pr):
@@ -393,7 +426,7 @@ def comp_moments(img, img2):
     stats_2d = image_statistics_2D(img)
     stats_2d2 = image_statistics_2D(img2)
 
-    names = ('Centroid x','Centroid y','StdDev x','StdDev y', 'sqrt cov xy', 'Skewness x','Skewness y','Kurtosis x','Kurtosis y')
+    names = ('Centroid x','Centroid y','StdDev x','StdDev y', 'sqrt cov xy', 'm00','m30', 'm03', 'm21', 'm12')
 
     print('============== \tcropped\trotated ')
     #for name,i1,i2 in zip(names, stats_pr,stats_pr2):
@@ -401,33 +434,36 @@ def comp_moments(img, img2):
         print('%s \t%.2f \t%.2f'%(name, i1,i2))
 
 
-def get_skewness(im1, df1, pind=9, show=False, verbose=True, reshape=True):
+def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=True):
     # img_cropped = crop_image(im1, df1, pind, verbose=True)
     img_rotated = crop_rotate_image(im1, df1, pind, verbose=True, reshape=reshape)
     # img_rotated = crop_rotate_image(im1, df1, pind, verbose=True)
+    img_cropped_ellipse = crop_image_ellipse(im1, df1, pind, r_ellipse, verbose=True)
 
     if show:
-        img_cropped = crop_image(im1, df1, pind, verbose=True)
         fig = plt.figure(figsize=(7, 3))
-        ax1, ax2 = fig.subplots(1, 2)
+        ax1, ax2, ax3 = fig.subplots(1, 3)
+        img_cropped = crop_image(im1, df1, pind, verbose=True)
         ax1.imshow(img_cropped, cmap='gray')
         ax1.set_axis_off()
         ax2.imshow(img_rotated, cmap='gray')
         ax2.set_axis_off()
+        ax3.imshow(img_cropped_ellipse, cmap='gray')
+        ax3.set_axis_off()
         fig.set_tight_layout(True)
         plt.show()
 
     # comp_moments(img_cropped, img_rotated)
-    stats_2d = image_statistics_2D(img_rotated)
-    skx, sky = stats_2d[5], stats_2d[6]
+    stats_2d = image_statistics_2D(img_cropped_ellipse, r_ellipse)
+    stats_dict = {}
+    names = (
+        'Centroid x', 'Centroid y', 'StdDev x', 'StdDev y', 'sqrt cov xy', 'm00','m30', 'm03', 'm21', 'm12')
+    for name, i1 in zip(names, stats_2d):
+        stats_dict[name] = i1
     if verbose:
-        names = (
-        'Centroid x', 'Centroid y', 'StdDev x', 'StdDev y', 'sqrt cov xy', 'Skewness x', 'Skewness y', 'Kurtosis x',
-        'Kurtosis y')
         for name, i1 in zip(names, stats_2d):
             print('%s \t%.2f ' % (name, i1))
-        print("Skewness along major and minor axes are {:.2f}, {:.2f}".format(skx, sky))
-    return skx, sky
+    return stats_dict
 
 
 def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, outfile=None, show=False, vmax=None,
@@ -1138,14 +1174,33 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         #     'KRON_RADIUS']]
         df_vvv = df_vvv[VVV_COLS]
         df_vvv = df_vvv.sort_values('#').reset_index(drop=True)
-        skxs = []
-        skys = []
+        m00s = []
+        m11s = []
+        m20s = []
+        m02s = []
+        m30s = []
+        m03s = []
+        m12s = []
+        m21s = []
         for i in range(len(df_vvv)):
-            skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
-            skxs.append(skx)
-            skys.append(sky)
-        df_vvv['Skewness_Major_Axis'] = skxs
-        df_vvv['Skewness_Minor_Axis'] = skys
+            # skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
+            stats_dict = get_skewness(median, df_vvv, r_ellipse=3, pind=i, show=False, verbose=True, reshape=True)
+            m00s.append(stats_dict['m00'])
+            m11s.append(stats_dict['sqrt cov xy'])
+            m20s.append(stats_dict['StdDev x'])
+            m02s.append(stats_dict['StdDev y'])
+            m30s.append(stats_dict['m30'])
+            m03s.append(stats_dict['m03'])
+            m12s.append(stats_dict['m12'])
+            m21s.append(stats_dict['m21'])
+        df_vvv['m00'] = m00s
+        df_vvv['m11'] = m11s
+        df_vvv['m20'] = m20s
+        df_vvv['m02'] = m02s
+        df_vvv['m30'] = m30s
+        df_vvv['m03'] = m03s
+        df_vvv['m12'] = m12s
+        df_vvv['m21'] = m21s
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
 
         df_vvv.to_csv(save_for_vvv, index=False)
