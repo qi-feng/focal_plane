@@ -359,13 +359,13 @@ def image_statistics_2D(Z):
     m12 = np.sum(Z * DY) / m00
 
     ### Second Momentum
-    X2 = np.sum(Z * (DX * DX)) / m00
-    Y2 = np.sum(Z * (DY * DY)) / m00
-    XY = np.sum(Z * (DX * DY)) / m00
+    X2 = DX * DX
+    Y2 = DY * DY
+    XY = DX * DY
 
-    m20 = X2+Y2
-    m21 = X2-Y2
-    m22 = 2*XY
+    m20 = np.sum(Z * (X2 + Y2)) / m00
+    m21 = np.sum(Z * (X2 - Y2)) / m00
+    m22 = np.sum(Z * (2*XY)) / m00
 
     ### Third Momentum
     X3 = DX * DX * DX
@@ -374,10 +374,10 @@ def image_statistics_2D(Z):
     Y2X = DY * DY * DX
 
     # Find the third central moments
-    m31 = np.sum(Z * (X3+Y2X)) / m00
-    m32 = np.sum(Z * (X2Y+Y3)) / m00
-    m33 = np.sum(Z * (Y3-3*X2Y)) / m00
-    m34 = np.sum(Z * (X3-3*Y2X)) / m00
+    m31 = np.sum(Z * (X3 + Y2X)) / m00
+    m32 = np.sum(Z * (X2Y + Y3)) / m00
+    m33 = np.sum(Z * (Y3 - 3*X2Y)) / m00
+    m34 = np.sum(Z * (X3 - 3*Y2X)) / m00
 
 
     return cx, cy, m00, m11, m12, m20, m21, m22, m31, m32, m33, m34
