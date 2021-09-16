@@ -446,6 +446,8 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
         print("epsA: \t%0.3f" % epsA)
         print("B: \t%.2f (%.2f)" % (B, B0))
         print("epsB: \t%0.3f" % epsB)
+        print("elongation \t%.2f (%.2f)" %((A/B), (A0/B0)))
+        print("ellipticity \t%.2f (%.2f)" % (1-(B / A), 1-(B0 / A0)))
         print("theta: \t%.2f (%.2f)" % (theta, theta0))
 
     if show:
