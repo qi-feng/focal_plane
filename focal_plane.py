@@ -440,9 +440,9 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
     if verbose:
         for name, i1 in zip(names, stats_2d):
             print('%s \t%.2f ' % (name, i1))
-        print("A: %.2f (%.2f)" % A, A0)
-        print("B: %.2f (%.2f)" % B, B0)
-        print("theta: %.2f (%.2f)" % theta, theta0)
+        print("A: %.2f (%.2f)" % (A, A0))
+        print("B: %.2f (%.2f)" % (B, B0))
+        print("theta: %.2f (%.2f)" % (theta, theta0))
 
     if show:
         fig = plt.figure(figsize=(7, 3))
