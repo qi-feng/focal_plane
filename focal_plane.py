@@ -430,9 +430,19 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
         'cx', 'cy', 'm00', 'm11', 'm12', 'm20', 'm21', 'm22', 'm31', 'm32', 'm33', 'm34')
     for name, i1 in zip(names, stats_2d):
         stats_dict[name] = i1
+    A0 = df1.A_x_KR_in_pix[pind]
+    A = np.sqrt(0.5 * (stats_2d['m20'] + np.sqrt(stats_2d['m21'] ** 2 + stats_2d['m22'] ** 2)))
+    B0 = df1.B_x_KR_in_pix[pind]
+    B = np.sqrt(0.5 * (stats_2d['m20'] - np.sqrt(stats_2d['m21'] ** 2 + stats_2d['m22'] ** 2)))
+    theta0 = df1.THETA_IMAGE[pind]
+    theta = 0.5 * np.arctan(-1 * (stats_2d['m22'] / stats_2d['m21']))
+
     if verbose:
         for name, i1 in zip(names, stats_2d):
             print('%s \t%.2f ' % (name, i1))
+        print("A: %.2f (%.2f)" % A, A0)
+        print("B: %.2f (%.2f)" % B, B0)
+        print("theta: %.2f (%.2f)" % theta, theta0)
 
     if show:
         fig = plt.figure(figsize=(7, 3))
