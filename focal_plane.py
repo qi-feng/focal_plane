@@ -431,11 +431,11 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
     for name, i1 in zip(names, stats_2d):
         stats_dict[name] = i1
     A0 = df1.A_x_KR_in_pix[pind]
-    A = np.sqrt(0.5 * (stats_2d['m20'] + np.sqrt(stats_2d['m21'] ** 2 + stats_2d['m22'] ** 2)))
+    A = np.sqrt(0.5 * (stats_dict['m20'] + np.sqrt(stats_dict['m21'] ** 2 + stats_dict['m22'] ** 2)))
     B0 = df1.B_x_KR_in_pix[pind]
-    B = np.sqrt(0.5 * (stats_2d['m20'] - np.sqrt(stats_2d['m21'] ** 2 + stats_2d['m22'] ** 2)))
+    B = np.sqrt(0.5 * (stats_dict['m20'] - np.sqrt(stats_dict['m21'] ** 2 + stats_dict['m22'] ** 2)))
     theta0 = df1.THETA_IMAGE[pind]
-    theta = 0.5 * np.arctan(-1 * (stats_2d['m22'] / stats_2d['m21']))
+    theta = 0.5 * np.arctan(-1 * (stats_dict['m22'] / stats_dict['m21']))
 
     if verbose:
         for name, i1 in zip(names, stats_2d):
