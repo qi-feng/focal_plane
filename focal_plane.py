@@ -423,6 +423,17 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
     # img_rotated = crop_rotate_image(im1, df1, pind, verbose=True)
     img_cropped_ellipse = crop_image_ellipse(im1, df1, pind, r_ellipse, verbose=True)
 
+    # comp_moments(img_cropped, img_rotated)
+    stats_2d = image_statistics_2D(img_cropped_ellipse)
+    stats_dict = {}
+    names = (
+        'cx', 'cy', 'm00', 'm11', 'm12', 'm20', 'm21', 'm22', 'm31', 'm32', 'm33', 'm34')
+    for name, i1 in zip(names, stats_2d):
+        stats_dict[name] = i1
+    if verbose:
+        for name, i1 in zip(names, stats_2d):
+            print('%s \t%.2f ' % (name, i1))
+
     if show:
         fig = plt.figure(figsize=(7, 3))
         ax1, ax3 = fig.subplots(1, 2)
@@ -436,16 +447,6 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
         fig.set_tight_layout(True)
         plt.show()
 
-    # comp_moments(img_cropped, img_rotated)
-    stats_2d = image_statistics_2D(img_cropped_ellipse)
-    stats_dict = {}
-    names = (
-        'cx', 'cy', 'm00', 'm11', 'm12', 'm20', 'm21', 'm22', 'm31', 'm32', 'm33', 'm34')
-    for name, i1 in zip(names, stats_2d):
-        stats_dict[name] = i1
-    if verbose:
-        for name, i1 in zip(names, stats_2d):
-            print('%s \t%.2f ' % (name, i1))
     return stats_dict
 
 
