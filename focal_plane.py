@@ -2122,7 +2122,7 @@ def main():
                 if len(sew_slice) > 0:
                     plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs,
                                  cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file1, df_LEDs=df_LEDs,
-                                 save_for_vvv=vvv_ring_file1, saveplot_name=ring_file1, show=False, verbose=args.verbose)
+                                 save_for_vvv=vvv_ring_file1, saveplot_name=ring_file1, show=args.show, verbose=args.verbose)
                 centerP1 = clast
                 N_P1 = len(sew_slice)
                 if os.path.exists(vvv_ring_file1) and N_P1:
@@ -2162,7 +2162,7 @@ def main():
                                                                                       fix_center=True, var_tol=4000)
                     plot_raw_cat(args.rawfile1, sew_slice2, df=df_slice2, center_pattern=c2, cropxs=cropxs,
                                  cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file2, df_LEDs=df_LEDs,
-                                 save_for_vvv=vvv_ring_file2, saveplot_name=ring_file2, show=False, verbose=args.verbose)
+                                 save_for_vvv=vvv_ring_file2, saveplot_name=ring_file2, show=args.show, verbose=args.verbose)
                     #if df_slice2 is not None:
                     N_P2 = len(sew_slice2)
                     #print(N_P2, sew_slice2)
@@ -2210,7 +2210,7 @@ def main():
                                                                                       fix_center=True, var_tol=4000)
                     plot_raw_cat(args.rawfile1, sew_slice3, df=df_slice3, center_pattern=c3, cropxs=cropxs,
                                  cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file3, df_LEDs=df_LEDs,
-                                 save_for_vvv=vvv_ring_file3, saveplot_name=ring_file3, show=False, verbose=args.verbose)
+                                 save_for_vvv=vvv_ring_file3, saveplot_name=ring_file3, show=args.show, verbose=args.verbose)
                     #if df_slice3 is not None:
                     N_S2 = len(sew_slice3)
                     #else:
