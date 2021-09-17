@@ -501,9 +501,8 @@ def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, o
             break
         # print(row)
 
-        kr = row['KRON_RADIUS']
-        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
-                    height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
+                    height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('r')
@@ -522,17 +521,16 @@ def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, o
                         color='c', alpha=0.8,
                         arrowprops=dict(facecolor='c', edgecolor='c', shrink=0.05, headwidth=1, headlength=4, width=0.5,
                                         alpha=0.7), )
-            e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
-                        height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+            e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
+                        height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_color('c')
 
     if df_LEDs is not None:
         if len(df_LEDs) == 4: 
             for i, row in df_LEDs.iterrows():
-                kr = row['KRON_RADIUS']
-                e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
-                            height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+                e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
+                            height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
                 e.set_clip_box(ax.bbox)
                 e.set_alpha(0.8)
                 e.set_color('gold')
@@ -1097,9 +1095,8 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
     for row in sewtable:
         i += 1
-        kr = row['KRON_RADIUS']
-        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
-                    height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
+                    height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
         e.set_color('c')
@@ -1143,9 +1140,8 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
     if df_LEDs is not None:
         for i, row in df_LEDs.iterrows():
-            kr = row['KRON_RADIUS']
-            e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
-                        height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+            e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
+                        height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('gold')
@@ -1181,8 +1177,6 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
     if df is not None:
         # no 'crappy' files for vvv (N.B 'crappy' is undefined and subject to change)
         df_vvv = sewtable.to_pandas()
-        df_vvv['A_x_KR_in_pix'] = df_vvv["KRON_RADIUS"] * df_vvv['A_IMAGE'] / 2.
-        df_vvv['B_x_KR_in_pix'] = df_vvv["KRON_RADIUS"] * df_vvv['B_IMAGE'] / 2.
         #df_vvv = df_vvv[
         #    ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE", 'FLUX_AREA',
         #     'KRON_RADIUS']]
@@ -1282,8 +1276,8 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
     center_pattern = [np.mean(df['X_IMAGE']), np.mean(df['Y_IMAGE'])]
 
     for i, row in df.iterrows():
-        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_x_KR_in_pix'] * 2,
-                    height=row['B_x_KR_in_pix'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=labelalpha)
+        e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
+                    height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=labelalpha)
         e.set_clip_box(ax.bbox)
         e.set_alpha(labelalpha)
         e.set_color(labelcolor)
@@ -1307,9 +1301,8 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
 
     if df_LEDs is not None:
         for i, row in df_LEDs.iterrows():
-            kr = row['KRON_RADIUS']
-            e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
-                        height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+            e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
+                        height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
             e.set_color('gold')
@@ -1372,7 +1365,6 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2, min_dist=20, outf
         x2_ = row['X_IMAGE']
         y2_ = row['Y_IMAGE']
         f2_ = row['FLUX_ISO']
-        kr = row['KRON_RADIUS']
         xy2_ = np.array([x2_, y2_])
         i2 += 1
         i1 = -1
@@ -1387,8 +1379,8 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2, min_dist=20, outf
                 # xy_common.append((xy1_+xy2_)/2.)
                 commond_ind1.append(i1)
                 commond_ind2.append(i2)
-                e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * kr,
-                            height=row['B_IMAGE'] * kr, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+                e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
+                            height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
                 ax.add_artist(e)
                 e.set_clip_box(ax.bbox)
                 e.set_alpha(0.8)
@@ -1435,7 +1427,6 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2, min_dist=20, outf
         x1_ = row1['X_IMAGE']
         y1_ = row1['Y_IMAGE']
         f1_ = row1['FLUX_ISO']
-        kr1 = row1['KRON_RADIUS']
         xy1_ = np.array([x1_, y1_])
         if verbose:
             print("==== New in catalog 2 ====")
@@ -1449,8 +1440,8 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2, min_dist=20, outf
 
         # xy_diff.append((xy1_+xy2_)/2.)
 
-        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * kr1,
-                    height=row1['B_IMAGE'] * kr1, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * 2,
+                    height=row1['B_IMAGE'] * 2, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
@@ -1505,13 +1496,12 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2, min_dist=20, outf
         x1_ = row1['X_IMAGE']
         y1_ = row1['Y_IMAGE']
         f1_ = row1['FLUX_ISO']
-        kr1 = row1['KRON_RADIUS']
         xy1_ = np.array([x1_, y1_])
 
         dist_ = np.linalg.norm(xy1_ - xy2_)
         if i1 in commond_ind1:
-            e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * kr1,
-                        height=row1['B_IMAGE'] * kr1, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+            e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * 2,
+                        height=row1['B_IMAGE'] * 2, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
@@ -1542,7 +1532,6 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2, min_dist=20, outf
         x1_ = row1['X_IMAGE']
         y1_ = row1['Y_IMAGE']
         f1_ = row1['FLUX_ISO']
-        kr1 = row1['KRON_RADIUS']
         xy1_ = np.array([x1_, y1_])
         # xy_diff.append((xy1_+xy2_)/2.)
         if verbose:
@@ -1553,8 +1542,8 @@ def naive_comparison(sew_out_table1, sew_out_table2, im1, im2, min_dist=20, outf
                 diffcat1_io.write(str(row1[c_]))
                 diffcat1_io.write(" ")
             diffcat1_io.write("\n")
-        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * kr1,
-                    height=row1['B_IMAGE'] * kr1, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * 2,
+                    height=row1['B_IMAGE'] * 2, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
@@ -1643,9 +1632,8 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2, ind1=None, ind2=None, motion_ou
                 io_.write(str(row1[c_]))
                 io_.write(" ")
             io_.write("\n")
-        kr = row1['KRON_RADIUS']
-        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * kr,
-                    height=row1['B_IMAGE'] * kr, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * 2,
+                    height=row1['B_IMAGE'] * 2, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
@@ -1659,9 +1647,8 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2, ind1=None, ind2=None, motion_ou
                                     alpha=0.7), )
     else:
         for i, row1 in cat1.iterrows():
-            kr = row1['KRON_RADIUS']
-            e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * kr,
-                        height=row1['B_IMAGE'] * kr, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+            e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * 2,
+                        height=row1['B_IMAGE'] * 2, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
@@ -1711,9 +1698,8 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2, ind1=None, ind2=None, motion_ou
                 io_.write(str(row1[c_]))
                 io_.write(" ")
             io_.write("\n")
-        kr = row1['KRON_RADIUS']
-        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * kr,
-                    height=row1['B_IMAGE'] * kr, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+        e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * 2,
+                    height=row1['B_IMAGE'] * 2, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
         ax.add_artist(e)
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.8)
@@ -1727,9 +1713,8 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2, ind1=None, ind2=None, motion_ou
                                     alpha=0.7), )
     else:
         for i, row1 in cat2.iterrows():
-            kr = row1['KRON_RADIUS']
-            e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * kr,
-                        height=row1['B_IMAGE'] * kr, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
+            e = Ellipse(xy=np.array([row1['X_IMAGE'], row1['Y_IMAGE']]), width=row1['A_IMAGE'] * 2,
+                        height=row1['B_IMAGE'] * 2, angle=row1['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
             ax.add_artist(e)
             e.set_clip_box(ax.bbox)
             e.set_alpha(0.8)
