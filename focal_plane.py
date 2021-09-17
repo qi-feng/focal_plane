@@ -117,7 +117,7 @@ SEWPY_PARAMS = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'F
 VVV_COLS = ['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE', "A_x_KR_in_pix", "B_x_KR_in_pix", "THETA_IMAGE",
             "CXX_IMAGE", "CYY_IMAGE", "CXY_IMAGE", "XMIN_IMAGE", "YMIN_IMAGE", "XMAX_IMAGE", "YMAX_IMAGE", 'FLUX_AREA',
              'KRON_RADIUS', "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', "FLUX_MAX",
-            'BACKGROUND',"ELONGATION", "ELLIPTICITY", "ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
+            'BACKGROUND',"ISOAREA_IMAGE", "ISOAREAF_IMAGE"]
 
 
 def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
@@ -444,10 +444,10 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
         'cx', 'cy', 'm00', 'm11', 'm12', 'm20', 'm21', 'm22', 'm31', 'm32', 'm33', 'm34', 'm40', 'm41', 'm42', 'm43', 'm44')
     for name, i1 in zip(names, stats_2d):
         stats_dict[name] = i1
-    A0 = df1.A_IMAGE
+    A0 = df1.A_IMAGE[pind]
     A = np.sqrt(0.5 * (stats_dict['m20'] + np.sqrt(stats_dict['m21'] ** 2 + stats_dict['m22'] ** 2)))
     epsA = (A0-A)/A0
-    B0 = df1.B_IMAGE
+    B0 = df1.B_IMAGE[pind]
     B = np.sqrt(0.5 * (stats_dict['m20'] - np.sqrt(stats_dict['m21'] ** 2 + stats_dict['m22'] ** 2)))
     epsB = (B0 - B) / B0
     theta0 = df1.THETA_IMAGE[pind]
