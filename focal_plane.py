@@ -1054,13 +1054,14 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
 
 
 def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1063.75]), cropxs=(1050, 2592),
-                 cropys=(1850, 250), kernel_w=3, save_catlog_name="temp_ring_search_cat.txt",
-                 df_LEDs = None, center_offset=[0,0],
-                 save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False):
+                 cropys=(1850, 250), kernel_w=3, save_catlog_name="temp_ring_search_cat.txt", df_LEDs=None,
+                 center_offset=[0, 0], save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False,
+                 verbose=False):
     '''
     Plots raw file (path to .RAW image) with imshow. If there is a 'df' object - this object is assumed to be the VVV
     list of panels in the ring - find minimum distance between that source with source in the sewtable and assign that
     panel number to the sewtable object. Plot the resulting image.
+
     '''
     from astropy.table import Column
     im_raw = read_image(rawfile)
@@ -1201,7 +1202,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         m44s = []
         for i in range(len(df_vvv)):
             # skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
-            stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=True, verbose=True, reshape=True)
+            stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=show, verbose=verbose, reshape=True)
             cxs.append(stats_dict['cx'])
             cys.append(stats_dict['cy'])
             m00s.append(stats_dict['m00'])
@@ -2119,9 +2120,9 @@ def main():
                                                                                   phase_offset_rad=args.phase_offset_rad,
                                                                                   fix_center=True, var_tol=4000)
                 if len(sew_slice) > 0:
-                    plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs, cropys=cropys,
-                                 kernel_w=3, save_catlog_name=ring_cat_file1, save_for_vvv=vvv_ring_file1, df_LEDs=df_LEDs,
-                                 saveplot_name=ring_file1, show=False)
+                    plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs,
+                                 cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file1, df_LEDs=df_LEDs,
+                                 save_for_vvv=vvv_ring_file1, saveplot_name=ring_file1, show=False, verbose=args.verbose)
                 centerP1 = clast
                 N_P1 = len(sew_slice)
                 if os.path.exists(vvv_ring_file1) and N_P1:
@@ -2159,9 +2160,9 @@ def main():
                                                                                       rad_tol_frac=args.ring_tol,
                                                                                       phase_offset_rad=args.phase_offset_rad,
                                                                                       fix_center=True, var_tol=4000)
-                    plot_raw_cat(args.rawfile1, sew_slice2, df=df_slice2, center_pattern=c2, cropxs=cropxs, cropys=cropys,
-                                 kernel_w=3, save_catlog_name=ring_cat_file2, save_for_vvv=vvv_ring_file2,df_LEDs=df_LEDs,
-                                 saveplot_name=ring_file2, show=False)
+                    plot_raw_cat(args.rawfile1, sew_slice2, df=df_slice2, center_pattern=c2, cropxs=cropxs,
+                                 cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file2, df_LEDs=df_LEDs,
+                                 save_for_vvv=vvv_ring_file2, saveplot_name=ring_file2, show=False, verbose=args.verbose)
                     #if df_slice2 is not None:
                     N_P2 = len(sew_slice2)
                     #print(N_P2, sew_slice2)
@@ -2207,9 +2208,9 @@ def main():
                                                                                       rad_tol_frac=args.ring_tol,
                                                                                       phase_offset_rad=args.phase_offset_rad,
                                                                                       fix_center=True, var_tol=4000)
-                    plot_raw_cat(args.rawfile1, sew_slice3, df=df_slice3, center_pattern=c3, cropxs=cropxs, cropys=cropys,
-                                 kernel_w=3, save_catlog_name=ring_cat_file3, save_for_vvv=vvv_ring_file3,df_LEDs=df_LEDs,
-                                 saveplot_name=ring_file3, show=False)
+                    plot_raw_cat(args.rawfile1, sew_slice3, df=df_slice3, center_pattern=c3, cropxs=cropxs,
+                                 cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file3, df_LEDs=df_LEDs,
+                                 save_for_vvv=vvv_ring_file3, saveplot_name=ring_file3, show=False, verbose=args.verbose)
                     #if df_slice3 is not None:
                     N_S2 = len(sew_slice3)
                     #else:
