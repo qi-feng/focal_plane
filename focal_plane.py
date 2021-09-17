@@ -453,6 +453,9 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
     theta0 = df1.THETA_IMAGE[pind]
     theta = 0.5 * np.rad2deg(np.arctan2(stats_dict['m22'], stats_dict['m21']))
 
+    stats_dict['cx'] = stats_dict['cx'] + df1.XMIN[pind]*0.99
+    stats_dict['cy'] = stats_dict['cy'] + df1.YMIN[pind]*0.99
+
     if verbose:
         for name, i1 in zip(names, stats_2d):
             print('%s \t%.2f ' % (name, i1))
