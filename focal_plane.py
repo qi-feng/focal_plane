@@ -457,7 +457,7 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
     stats_dict['cy'] = stats_dict['cy'] + df1.YMIN_IMAGE[pind]*0.99
 
     if verbose:
-        for name, i1 in zip(names, stats_2d):
+        for name, i1 in sorted(stats_dict.items()):
             print('%s \t%.2f ' % (name, i1))
         print("A: \t%.2f (%.2f)" % (A, A0))
         print("epsA: \t%0.3f" % epsA)
