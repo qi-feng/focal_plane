@@ -354,11 +354,11 @@ def image_statistics_2D(Z):
     dy = (y - cy)
     DX, DY = np.meshgrid(dx, dy)
 
-    ### First Momentum
+    # First Momentum
     m11 = np.sum(Z * DX) / m00
     m12 = np.sum(Z * DY) / m00
 
-    ### Second Momentum
+    # Second Momentum
     X2 = DX * DX
     Y2 = DY * DY
     XY = DX * DY
@@ -367,7 +367,7 @@ def image_statistics_2D(Z):
     m21 = np.sum(Z * (X2 - Y2)) / m00
     m22 = np.sum(Z * (2*XY)) / m00
 
-    ### Third Momentum
+    # Third Momentum
     X3 = DX * DX * DX
     Y3 = DY * DY * DY
     X2Y = DX * DX * DY
@@ -379,8 +379,22 @@ def image_statistics_2D(Z):
     m33 = np.sum(Z * (Y3 - 3*X2Y)) / m00
     m34 = np.sum(Z * (X3 - 3*Y2X)) / m00
 
+    # Fourth Momentum
+    X4 = DX * DX * DX
+    Y4 = DY * DY * DY
+    XY3 = DX * DX * DY
+    X3Y = DY * DY * DX
+    X2Y2 = DX * DX * DY * DY
 
-    return cx, cy, m00, m11, m12, m20, m21, m22, m31, m32, m33, m34
+    # Find the fourth central moments
+    m40 = np.sum(Z * (X2 + Y2)**2 ) / m00
+    m41 = np.sum(Z * (X4 - Y4)) / m00
+    m42 = np.sum(Z * (2*XY3 + 2*X3Y)) / m00
+    m43 = np.sum(Z * (X4 - 6*X2Y2 + Y4)) / m00
+    m44 = np.sum(Z * (4*X3Y - 4*XY3)) / m00
+
+
+    return cx, cy, m00, m11, m12, m20, m21, m22, m31, m32, m33, m34, m40, m41, m42, m43, m44
 
 
 def report_moments(img):
@@ -427,13 +441,13 @@ def get_skewness(im1, df1, r_ellipse, pind=9, show=False, verbose=True, reshape=
     stats_2d = image_statistics_2D(img_cropped_ellipse)
     stats_dict = {}
     names = (
-        'cx', 'cy', 'm00', 'm11', 'm12', 'm20', 'm21', 'm22', 'm31', 'm32', 'm33', 'm34')
+        'cx', 'cy', 'm00', 'm11', 'm12', 'm20', 'm21', 'm22', 'm31', 'm32', 'm33', 'm34', 'm40', 'm41', 'm42', 'm43', 'm44')
     for name, i1 in zip(names, stats_2d):
         stats_dict[name] = i1
-    A0 = df1.A_x_KR_in_pix[pind] / df1.KRON_RADIUS[pind] * 2
+    A0 = df1.A_IMAGE
     A = np.sqrt(0.5 * (stats_dict['m20'] + np.sqrt(stats_dict['m21'] ** 2 + stats_dict['m22'] ** 2)))
     epsA = (A0-A)/A0
-    B0 = df1.B_x_KR_in_pix[pind] / df1.KRON_RADIUS[pind] * 2
+    B0 = df1.B_IMAGE
     B = np.sqrt(0.5 * (stats_dict['m20'] - np.sqrt(stats_dict['m21'] ** 2 + stats_dict['m22'] ** 2)))
     epsB = (B0 - B) / B0
     theta0 = df1.THETA_IMAGE[pind]
@@ -1186,6 +1200,11 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         m32s = []
         m33s = []
         m34s = []
+        m40s = []
+        m41s = []
+        m42s = []
+        m43s = []
+        m44s = []
         for i in range(len(df_vvv)):
             # skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
             stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=True, verbose=True, reshape=True)
@@ -1201,6 +1220,11 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
             m32s.append(stats_dict['m32'])
             m33s.append(stats_dict['m33'])
             m34s.append(stats_dict['m34'])
+            m40s.append(stats_dict['m40'])
+            m41s.append(stats_dict['m41'])
+            m42s.append(stats_dict['m42'])
+            m43s.append(stats_dict['m43'])
+            m44s.append(stats_dict['m44'])
         df_vvv['cx'] = cxs
         df_vvv['cy'] = cys
         df_vvv['m00'] = m00s
@@ -1213,6 +1237,11 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         df_vvv['m32'] = m32s
         df_vvv['m33'] = m33s
         df_vvv['m34'] = m34s
+        df_vvv['m40'] = m40s
+        df_vvv['m41'] = m41s
+        df_vvv['m42'] = m42s
+        df_vvv['m43'] = m43s
+        df_vvv['m44'] = m44s
 
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
         print("Sum tails vector: (M31, M32) = {}, {} ".format(np.sum(df_vvv['m31']), np.sum(df_vvv['m32'])))
