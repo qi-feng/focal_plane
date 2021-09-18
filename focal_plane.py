@@ -1214,7 +1214,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         m44s = []
         for i in range(len(df_vvv)):
             # skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
-            stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=show, verbose=verbose, reshape=True)
+            stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=verbose, verbose=verbose, reshape=True)
             cxs.append(stats_dict['cx'])
             cys.append(stats_dict['cy'])
             m00s.append(stats_dict['m00'])
