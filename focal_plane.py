@@ -380,10 +380,10 @@ def image_statistics_2D(Z):
     m34 = np.sum(Z * (X3 - 3*Y2X)) / m00
 
     # Fourth Momentum
-    X4 = DX * DX * DX
-    Y4 = DY * DY * DY
-    XY3 = DX * DX * DY
-    X3Y = DY * DY * DX
+    X4 = DX * DX * DX * DX
+    Y4 = DY * DY * DY * DY
+    XY3 = DX * DY * DY * DY
+    X3Y = DX * DX * DX * DY
     X2Y2 = DX * DX * DY * DY
 
     # Find the fourth central moments
