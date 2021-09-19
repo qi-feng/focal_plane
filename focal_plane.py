@@ -1214,7 +1214,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         m44s = []
         for i in range(len(df_vvv)):
             # skx, sky = get_skewness(median, df_vvv, pind=i, show=False, verbose=True, reshape=True)
-            stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=verbose, verbose=verbose, reshape=True)
+            stats_dict = get_skewness(median, df_vvv, r_ellipse=2, pind=i, show=(show and verbose), verbose=verbose, reshape=True)
             cxs.append(stats_dict['cx'])
             cys.append(stats_dict['cy'])
             m00s.append(stats_dict['m00'])
@@ -1251,7 +1251,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         df_vvv['m44'] = m44s
 
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
-        print("Sum tails vector: (M31, M32) = {}, {} ".format(np.sum(df_vvv['m31']), np.sum(df_vvv['m32'])))
+        print("Sum tails vector: (M31, M32) = {:.2f}, {:.2f} ".format(np.sum(df_vvv['m31']), np.sum(df_vvv['m32'])))
 
         df_vvv.to_csv(save_for_vvv, index=False)
 
