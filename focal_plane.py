@@ -1063,7 +1063,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
         from astropy.io import ascii
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
     if show:
-        plt.show()
+        plt.show(block=False)
     return sew_out['table'], median
 
 
@@ -1182,7 +1182,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
     if saveplot_name is not None:
         fig.savefig(saveplot_name)
     if show:
-        plt.show()
+        plt.show(block=False)
 
     from astropy.io import ascii
     ascii.write(sewtable.group_by('#'), save_catlog_name, overwrite=True)
