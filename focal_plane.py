@@ -67,10 +67,10 @@ CM_REF = np.array([[1460, 856],
 
 # Ref LED positions: 
 # 2021 June
-#LED_REF = np.array([[1092.8107,1470.39],
-#           [1094.8242, 485.8442],
-#           [2074.988, 1468.9617],
-#           [2077.7751, 488.2695]], dtype='float32')
+LED_REF_before2021Sep19 = np.array([[1092.8107,1470.39],
+           [1094.8242, 485.8442],
+           [2074.988, 1468.9617],
+           [2077.7751, 488.2695]], dtype='float32')
 #2021-09-19
 LED_REF = np.array([[1085.0588,	1469.3252],
                     [1094.7145,	485.3215],
@@ -148,20 +148,21 @@ def get_central_mod_corners(center=np.array([1891.25, 1063.75]),
     return x_corners, y_corners
 
 
-def get_perspective_transform_LEDs(LED_coords):
+def get_perspective_transform_LEDs(LED_coords, led_ref=LED_REF):
     if not has_cv2:
         print("Can't do this, no CV2")
         return
     # perspective transformation matrix
-    pmat = cv2.getPerspectiveTransform(LED_REF, LED_coords)
+    #pmat = cv2.getPerspectiveTransform(LED_REF, LED_coords)
+    pmat = cv2.getPerspectiveTransform(led_ref, LED_coords)
     return pmat
 
 
-def get_CM_coords(LED_coords):
+def get_CM_coords(LED_coords, led_ref=LED_REF):
     if not has_cv2:
         print("Can't do this, no CV2")
         return
-    pmat = get_perspective_transform_LEDs(LED_coords)
+    pmat = get_perspective_transform_LEDs(LED_coords, led_ref=led_ref)
     cm = np.zeros_like(CM_REF)
     for i, c_ in enumerate(CM_REF):
         # only works for python3
@@ -1965,6 +1966,9 @@ def main():
     elif args.savefits_name1 is None or args.savecatalog_name1 is None or args.diffcatalog_name1 is None or args.diffplot_name1 is None:
         dt_match = get_datetime_rawname(args.rawfile1)
         print("Using default output file names with date {}".format(dt_match))
+        if dt_match < '2021_09_19_20_00_00':
+            print("Before 2021 Sep 19; using old LED_REF coordinates")
+            LED_REF = LED_REF_before2021Sep19
         save_filename_prefix1 = os.path.join(args.datadir, "res_focal_plane_" + dt_match)
         savefits_name1 = save_filename_prefix1 + '_im1.fits'
         savecatalog_name1 = save_filename_prefix1 + '_cat1.txt'
