@@ -425,7 +425,12 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     ax = plt.gca()
     (height, x, y, width_x, width_y, theta, baseline) = params
     # print(height, x, y, width_x, width_y, np.rad2deg(theta))
-    print(height, x, y, width_x, width_y, theta, baseline)
+    semi_maj = max(width_x, width_y)
+    semi_min = min(width_x, width_y)
+    elongation = semi_maj/semi_min
+    ellipticity = 1 - (semi_min/semi_maj)
+    eccentricity = np.sqrt(1 - ((semi_min**2)/(semi_maj**2))) 
+    print(height, x, y, width_x, width_y, theta, baseline) 
 
     center_crop = data[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
     #print("Frac contained in central image pixel from data")
@@ -649,13 +654,18 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
                     y : %.1f
                     $\sigma_x$ : %.1f pix = %.1f mm = %.2f '
                     $\sigma_y$ : %.1f pix = %.1f mm = %.2f '
+                    elongation: %.2f
+                    ellipticity: %.2f
+                    eccentricity: %.2f
                     ========
                     The optical PSF (2 x max{$\sigma_x$, $\sigma_y$}) is: 
                     %.2f '
                     ========
                     """ % (
         y, x, width_y, width_y * PIX2MM, width_y * PIX2MM * MM2ARCMIN,
-        width_x, width_x * PIX2MM, width_x * PIX2MM * MM2ARCMIN, 2.*max(width_x, width_y) * PIX2MM * MM2ARCMIN,))
+        width_x, width_x * PIX2MM, width_x * PIX2MM * MM2ARCMIN, 
+        elongation, ellipticity, eccentricity,
+        2.*max(width_x, width_y) * PIX2MM * MM2ARCMIN,))
 
     return fit
 
