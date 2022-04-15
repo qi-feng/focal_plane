@@ -88,7 +88,7 @@ LED_REF_2021Sep19 = np.array([[1085.0588,	1469.3252],
 #2022-04-14 @-5 deg EL
 LED_REF_minus5 = np.array([[1085.7123,	1460.7432],
                     [1089.4943,	474.6895],
-                    [2065.3442 ,  1460.2528],
+                    [2065.3442,  1460.2528],
                     [2071.0342,	482.1727]], dtype='float32')
 
 LED_REF = LED_REF_minus5
@@ -925,7 +925,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
 
 # def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 597]],
 #def find_LEDs(sewtable, coords=[[1095, 500], [1087, 1472], [2070, 1476], [2075, 497]], search_width_x=20,
-def find_LEDs(sewtable, coords=[[1090, 475], [1087, 1460], [2065, 1460], [2071, 482]], search_width_x=20,
+def find_LEDs(sewtable, coords=[[1090, 475], [1087, 1460], [2065, 1460], [2071, 482]], search_width_x=40,
               search_width_y=20, center_offset=[0, 0]):
     df_out = pd.DataFrame()
     N_LEDs = len(coords)
@@ -1189,11 +1189,13 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
         # plot the CM after perspective transform
         LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
-        cm = get_CM_coords(LED_coords)
-        for i, row in cm:
-            cm_center = np.mean(cm, axis=0)
-            ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
-            ax.scatter(cm[:, 0], cm[:, 1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
+        #print(LED_coords.shape, LED_REF.shape)
+        if LED_coords.shape[0] == 4:
+            cm = get_CM_coords(LED_coords)
+            for i, row in cm:
+                cm_center = np.mean(cm, axis=0)
+                ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
+                ax.scatter(cm[:, 0], cm[:, 1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
 
     if cropxs is not None:
         plt.xlim(cropxs)
@@ -1348,11 +1350,12 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
 
         # plot the CM after perspective transform
         LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
-        cm = get_CM_coords(LED_coords)
-        for i, row in cm:
-            cm_center = np.mean(cm, axis=0)
-            ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
-            ax.scatter(cm[:, 0], cm[:, 1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
+        if LED_coords.shape[0] == 4:
+            cm = get_CM_coords(LED_coords)
+            for i, row in cm:
+                cm_center = np.mean(cm, axis=0)
+                ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
+                ax.scatter(cm[:, 0], cm[:, 1], s=2, facecolors='none', edgecolors='g', alpha=0.4)
 
     if cropxs is not None:
         plt.xlim(cropxs)
