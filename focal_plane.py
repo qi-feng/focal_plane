@@ -66,10 +66,10 @@ CM_REF_60 = np.array([[1460, 856],
                    [1684.1, 1080.1]], dtype='float32')
 
 # Ref positions taken on 2022 Apr 14 at -5 deg Elevation
-CM_REF_minus5 = np.array([[1448,856],
-                          [1672.1,856],
-                          [1448,1080.1],
-                          [1672.1,1080.1]], dtype='float32')
+CM_REF_minus5 = np.array([[1446,858],
+                        [1670.1,858],
+                        [1446,1082.1],
+                        [1670.1,1082.1]], dtype='float32')
 
 CM_REF = CM_REF_minus5
 
