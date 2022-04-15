@@ -58,25 +58,40 @@ PIX2MM = 0.241
 # center at ~60 deg is 1891.25, 1063.75
 # center at ~75 deg is 1896.25, 1063.75
 
-# Ref positions taken on 2021 Aug 22
+# Ref positions taken on 2021 Aug 22 at 60 deg Elevation
 # Ref Central Module (CM) positions: 
-CM_REF = np.array([[1460, 856],
+CM_REF_60 = np.array([[1460, 856],
                    [1684.1, 856],
                    [1460, 1080.1],
                    [1684.1, 1080.1]], dtype='float32')
 
-# Ref LED positions: 
+# Ref positions taken on 2022 Apr 14 at -5 deg Elevation
+CM_REF_minus5 = np.array([[1448,856],
+                          [1672.1,856],
+                          [1448,1080.1],
+                          [1672.1,1080.1]], dtype='float32')
+
+CM_REF = CM_REF_minus5
+
+# Ref LED positions @60 deg EL:
 # 2021 June
 LED_REF_before2021Sep19 = np.array([[1092.8107,1470.39],
            [1094.8242, 485.8442],
            [2074.988, 1468.9617],
            [2077.7751, 488.2695]], dtype='float32')
 #2021-09-19
-LED_REF = np.array([[1085.0588,	1469.3252],
+LED_REF_2021Sep19 = np.array([[1085.0588,	1469.3252],
                     [1094.7145,	485.3215],
                     [2067.249 ,  1475.3965],
                     [2076.2295,	495.7331]], dtype='float32')
 
+#2022-04-14 @-5 deg EL
+LED_REF_minus5 = np.array([[1085.7123,	1460.7432],
+                    [1089.4943,	474.6895],
+                    [2065.3442 ,  1460.2528],
+                    [2071.0342,	482.1727]], dtype='float32')
+
+LED_REF = LED_REF_minus5
 
 PATTERN_LABEL_X_MIN = 1500
 PATTERN_LABEL_X_MAX = 1900
