@@ -54,6 +54,15 @@ python focal_plane.py  --show ~/Pictures/Aravis/The\ Imaging\ Source\ Europe\ Gm
 ```
 In this example, -p 1840 1060 is specified from hovering the mouse around the eyeballed center in a poped-up image from a previous attempt without this arguement, --THRESH 3 and -DEBLEND_MINCONT 0.0001 are used in combination to identify a very out-of-focus image from one S2 panel, which appears extended and dim and close to a neighboring image. 
 
+### Calibration:
+**A few important calibration values are hard coded: **
+```
+PIX2MM = 0.241
+CM_REF
+LED_REF
+```
+**The CM_REF and LED_REF values need to be updated when the CCD camera is touched; all values need to be updated if the objective lens is replaced; LED_REF needs to be updated if the LEDs (on the screen) are moved. **
+
 ==== 
 
 For early work, to isolate unique centroids in image1 and image2 if the distance between them is larger than min_dist, make "diff_cat" plot with unique sources in the 1st image labelled in green, and those in the 2nd image labelled in yellow. Common images are shown as red (or not shown in the "diff_cat" plots). 
