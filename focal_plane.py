@@ -1938,7 +1938,9 @@ def main():
                         help="Center coordinate for ring pattern X_pix Y_pix. ")
     parser.add_argument('--vvv_tag', default=None, help="A string to identify which ring. ")
 
-    parser.add_argument('--ring_rad', type=float, default=32 / PIX2MM, help="Radius in pixels for ring pattern. ")
+    parser.add_argument('--ring_rad', type=float, default=32 / PIX2MM, help="Radius in pixels for the inner ring pattern. ")
+    parser.add_argument('--P2S1ring_rad', type=float, default=32 * 1.59 / PIX2MM, help="Radius in pixels for the middle P2 S1 ring pattern. ")
+    parser.add_argument('--P2S2ring_rad', type=float, default=32 * 2.2 / PIX2MM, help="Radius in pixels for the outermost P2 S2 ring pattern. ")
     parser.add_argument('--ring_tol', type=float, default=0.1)
     parser.add_argument('--phase_offset_rad', type=float, default=0.)
     parser.add_argument('--ring_frac', type=float, default=0.2,
@@ -2201,7 +2203,8 @@ def main():
 
                 if not args.skip_p2:
                     # automatically try P2S1 ring
-                    P2S1ring_rad = 1.59 * args.ring_rad
+                    #P2S1ring_rad = 1.59 * args.ring_rad
+                    P2S1ring_rad = args.P2S1ring_rad
                     if (args.p2ry != -1):
                         ring_cat_file2 = ring_cat_file[:-4] + "_P2.txt"
                         ring_file2 = ring_file[:-4] + "_P2.pdf"
@@ -2245,7 +2248,8 @@ def main():
                     print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
                 if not args.skip_s2:
                     # automatically try P2S2 ring
-                    P2S2ring_rad = 2.2 * args.ring_rad
+                    #P2S2ring_rad = 2.2 * args.ring_rad
+                    P2S2ring_rad = args.P2S2ring_rad
                     ring_cat_file3 = ring_cat_file[:-4] + "_S2.txt"
                     ring_file3 = ring_file[:-4] + "_S2.pdf"
                     vvv_ring_file3 = vvv_ring_file[:-4] + "_S2.csv"
