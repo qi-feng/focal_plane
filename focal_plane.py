@@ -145,6 +145,27 @@ RXm2_CENTROID_LAYOUT = np.array(
      1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128,
      1112, 1311, 1114, 1313, 1212, 1411, 1214, 1413, 1312, 1111, 1314, 1113, 1412, 1211, 1414, 1213])
 
+NUM_VVV_DEFAULT = np.array(
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+             17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+
+NUM_VVV_P1RY_OVERSHOOT = np.array(
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+             17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+             9, 10, 11, 12,
+             13, 14, 15, 16,
+             1, 2, 3, 4,
+             5, 6, 7, 8
+])
+
+NUM_VVV_P2RY_OVERSHOOT = np.array(
+            [17, 18, 19, 20, 21, 22, 23, 24,
+             25, 26, 27, 28, 29, 30, 31, 32,
+             1, 2, 3, 4, 5, 6, 7, 8,
+             9, 10, 11, 12, 13, 14, 15, 16,
+             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+
 SEWPY_PARAMS = ["X_IMAGE", "Y_IMAGE", "FLUX_ISO", "FLUXERR_ISO", 'FLUX_AUTO', 'FLUXERR_AUTO', "FLUX_MAX", 'BACKGROUND',
                 "KRON_RADIUS", "FLUX_RADIUS", "FLAGS", "A_IMAGE", "B_IMAGE", "THETA_IMAGE", "CXX_IMAGE", "CYY_IMAGE",
                 "CXY_IMAGE", "XMIN_IMAGE", "YMIN_IMAGE", "XMAX_IMAGE", "YMAX_IMAGE", "ELONGATION", "ELLIPTICITY",
@@ -244,9 +265,7 @@ def get_panel_position_in_pattern(panel_id, center=np.array([1891.25, 1063.75]),
 def find_all_pattern_positions(all_panels=DEFAULT_CENTROID_LAYOUT, center=np.array([1891.25, 1063.75]),
                                radius_mm=np.array([20, 40]), phase_offset_rad=0,
                                # clockwise is positive, about 0.2 per outer panel
-                               pixel_scale=0.241, outfile="dummy_pattern_position.txt", num_vvv=np.array(
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-             30, 31, 32, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])):
+                               pixel_scale=0.241, outfile="dummy_pattern_position.txt", num_vvv=NUM_VVV_DEFAULT):
     # df_pattern = pd.DataFrame({'Panel': all_panels, '#': num_vvv})
     df_pattern = pd.DataFrame({'DefaultPanel': DEFAULT_CENTROID_LAYOUT, 'Panel': all_panels, '#': num_vvv})
     df_pattern['Xpix'] = 0
@@ -840,7 +859,7 @@ def find_ring_pattern_clustering(sewtable, pattern_center=PATTERN_CENTER_FROM_LA
 
 def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_frac=0.2,
                       rad_tol_frac=0.1, n_iter=50, chooseinner=False, chooseouter=False, tryouter=True, fix_center=True,
-                      phase_offset_rad=0, get_center=False, var_tol=400, all_panels=DEFAULT_CENTROID_LAYOUT):
+                      phase_offset_rad=0, get_center=False, var_tol=400, all_panels=DEFAULT_CENTROID_LAYOUT, num_vvv=NUM_VVV_DEFAULT):
     '''
     Use sewtable of sources to find the mean centroid of the sources. Start with some radius and get the sources within that
     radius, their mean/std of their distances to center, and their mean center. Iterate with new radius cuts and new
@@ -897,7 +916,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
             df_pattern = find_all_pattern_positions(all_panels=all_panels, center=last_center,
                                                     radius_mm=np.array([last_radius * 0.241, last_radius * 2 * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
-                                                    outfile=None, )
+                                                    outfile=None, num_vvv=num_vvv)
             print("Found {} candidate centroid forming an inner ring".format(len(sew_slice)))
             print("Center {}, radius {}".format(last_center, last_radius))
             df_slice = df_pattern[(abs(df_pattern.Rpix - last_radius) < (last_radius * rad_tol_frac))]
@@ -911,7 +930,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
             df_pattern = find_all_pattern_positions(all_panels=all_panels, center=last_center,
                                                     radius_mm=np.array([last_radius / 2 * 0.241, last_radius * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
-                                                    outfile=None, )
+                                                    outfile=None, num_vvv=num_vvv)
             print("Found {} candidate centroid forming an outer ring".format(len(sew_slice)))
             print("Center {}, radius {}".format(last_center, last_radius))
             df_slice = df_pattern[(abs(df_pattern.Rpix - last_radius) < (last_radius * rad_tol_frac))]
@@ -970,7 +989,7 @@ def find_LEDs(sewtable, coords=[[1090, 475], [1087, 1460], [2065, 1460], [2071, 
 
 
 def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM,
-                             rad_frac=0.2, rad_tol_frac=0.1, n_iter=50, ):
+                             rad_frac=0.2, rad_tol_frac=0.1, n_iter=50, num_vvv=NUM_VVV_DEFAULT):
     # implementing, may dropt it
     if rad_frac > 1 or rad_frac < 0 or radius < 0:
         print("Params to find ring pattern is not sensible")
@@ -998,7 +1017,7 @@ def find_single_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_
 
     if good_ring:
         df_pattern = find_all_pattern_positions(center=clast, radius_mm=np.array([rlast * 0.241, rlast * 2 * 0.241]),
-                                                pixel_scale=0.241, outfile=None, )
+                                                pixel_scale=0.241, outfile=None, num_vvv=num_vvv )
         print("Found {} candidate centroid forming an inner ring".format(len(sew_slice)))
         print("Center {}, radius {}".format(clast, rlast))
         df_slice = df_pattern[(abs(df_pattern.Rpix - rlast) < (rlast * rad_tol_frac))]
@@ -2105,17 +2124,22 @@ def main():
             # new for S1 alignment
             if (args.p1rx == 0) and (args.p1ry == 0) and (args.p2ry == 0):
                 all_panels = DEFAULT_CENTROID_LAYOUT
+                num_vvv = NUM_VVV_DEFAULT
             elif args.p1rx == -1:
                 print("Using Rx -1 centroid layout for S1 alignment. ")
                 all_panels = RXm1_CENTROID_LAYOUT
+                num_vvv = NUM_VVV_DEFAULT
             elif args.p1rx == -2 or args.p1rx == -3:
                 print("Using Rx {} centroid layout for S1 alignment. ".format(args.p1rx))
                 all_panels = RXm2_CENTROID_LAYOUT
+                num_vvv = NUM_VVV_DEFAULT
                 chooseinner = True
             elif (args.p1ry == -1) and (args.p1rx == 0) and (args.p2ry == 0):
                 all_panels = P1RY_OVERSHOOT_CENTROID_LAYOUT
+                num_vvv = NUM_VVV_P1RY_OVERSHOOT
             elif (args.p2ry == -1) and (args.p1rx == 0) and (args.p1ry == 0):
                 all_panels = P2RY_OVERSHOOT_CENTROID_LAYOUT
+                num_vvv = NUM_VVV_P2RY_OVERSHOOT
             else:
                 print("invalid option for p1rx")
             if args.clustering:
@@ -2146,6 +2170,7 @@ def main():
                         ring_cat_file1 = ring_cat_file[:-4] + "_P1_doubleFocusOvershoot.txt"
                         vvv_ring_file1 = vvv_ring_file[:-4] + "_P1_doubleFocusOvershoot.csv"
                 clast, rlast, r2std_last, sew_slice, df_slice = find_ring_pattern(sew_out_table1, all_panels=all_panels,
+                                                                                  num_vvv=num_vvv,
                                                                                   chooseinner=chooseinner,
                                                                                   # pattern_center=args.pattern_center,
                                                                                   pattern_center=[xc, yc],
@@ -2186,6 +2211,7 @@ def main():
                         ring_file2 = ring_file[:-4] + "_P2_doubleFocusOvershoot.pdf"
                         vvv_ring_file2 = vvv_ring_file[:-4] + "_P2_doubleFocusOvershoot.csv"
                     c2, r2, r2std2, sew_slice2, df_slice2 = find_ring_pattern(sew_out_table1, all_panels=all_panels,
+                                                                              num_vvv=num_vvv,
                                                                               chooseinner=False,
                                                                               # pattern_center=args.pattern_center,
                                                                               pattern_center=[xc, yc],
@@ -2233,6 +2259,7 @@ def main():
                                                           savecatalog_name=savecatalog_name1, search_xs=args.search_xs,
                                                           search_ys=args.search_ys, show=False)
                     c3, r3, r2std3, sew_slice3, df_slice3 = find_ring_pattern(sew_out_table3, all_panels=all_panels,
+                                                                              num_vvv=num_vvv,
                                                                               chooseinner=False,
                                                                               # pattern_center=args.pattern_center,
                                                                               pattern_center=[xc, yc],
