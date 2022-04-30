@@ -1304,7 +1304,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
 def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False, kernel_w=3,
                          cropxs=(1050, 2592), cropys=(1850, 250), labelcolor='steelblue', labelalpha=0.3, textalpha=0.9,
-                         plot_center=True, df_LEDs=None, center_offset=[0, 0], ):
+                         plot_center=True, df_LEDs=None, center_offset=[0, 0], vmax=None):
     im_raw = read_image(rawfile)
     if has_cv2:
         median = cv2.medianBlur(im_raw, kernel_w)
@@ -1320,7 +1320,10 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
 
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
-    ax_img = ax.imshow(median, vmax=max_pixel_crop, cmap='gray')
+    if vmax is None:
+        vmax = max_pixel_crop
+
+    ax_img = ax.imshow(median, vmax=vmax, cmap='gray')
     # else:
     # ax_img = ax.imshow(dst_trans, cmap='gray')
     # fig.colorbar(ax_img)
@@ -1967,6 +1970,8 @@ def main():
                         help="Xmin and Xmax to search for LED centroid in a box. ")
     parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[200, 1860],
                         help="Ymin and Ymax to search for LED centroid in a box. ")
+    parser.add_argument("--ring_vmax", type=float, default=None)
+
 
     args = parser.parse_args()
 
@@ -2193,11 +2198,11 @@ def main():
                         "Let's do a quick ring check on Panel IDs for P1S1 ring, using file {}".format(vvv_ring_file1))
                     if args.skip_p2 and args.skip_s2:
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
-                                             df_LEDs=df_LEDs, saveplot_name=vvv_ring_file1[:-4] + ".png", show=True)
+                                             df_LEDs=df_LEDs, saveplot_name=vvv_ring_file1[:-4] + ".png", show=True, vmax=args.ring_vmax)
                     else:
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file1, labelcolor=args.labelcolor,
                                              df_LEDs=df_LEDs, saveplot_name=vvv_ring_file1[:-4] + ".png",
-                                             show=False)  # saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
+                                             show=False, vmax=args.ring_vmax)  # saveplot_name = vvv_ring_file[:-4] + ".png", show = args.show)
                 # print("==== Center of the P1 ring is {:.2f}, {:.2f} ====".format(centerP1[0], centerP1[1]))
                 # print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
 
@@ -2240,11 +2245,11 @@ def main():
                         if args.skip_s2:
                             quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
                                                  df_LEDs=df_LEDs, saveplot_name=vvv_ring_file2[:-4] + ".png",
-                                                 show=args.show)
+                                                 show=args.show, vmax=args.ring_vmax)
                         else:
                             quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file2, labelcolor=args.labelcolor,
                                                  df_LEDs=df_LEDs, saveplot_name=vvv_ring_file2[:-4] + ".png",
-                                                 show=False)
+                                                 show=False, vmax=args.ring_vmax)
                     print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
                 if not args.skip_s2:
                     # automatically try P2S2 ring
@@ -2288,7 +2293,7 @@ def main():
                             vvv_ring_file3))
                         quick_check_raw_ring(args.rawfile1, save_for_vvv=vvv_ring_file3, labelcolor=args.labelcolor,
                                              df_LEDs=df_LEDs, saveplot_name=vvv_ring_file3[:-4] + ".png",
-                                             show=args.show)
+                                             show=args.show, vmax=args.ring_vmax)
                 # print useful info at the end
                 print("================")
                 print("==== Center of the LEDs is {:.2f}, {:.2f} ====".format(center_LEDs[0], center_LEDs[1]))
@@ -2322,7 +2327,7 @@ def main():
     elif args.quick_ring_check is not None:
         print("doing a quick check on Panel IDs, using file {}".format(args.quick_ring_check))
         quick_check_raw_ring(args.rawfile1, save_for_vvv=args.quick_ring_check, labelcolor=args.labelcolor,
-                             saveplot_name=args.quick_ring_check[:-4] + ".png", show=args.show)
+                             saveplot_name=args.quick_ring_check[:-4] + ".png", show=args.show, vmax=args.ring_vmax)
 
     else:
         sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w, DETECT_MINAREA=args.DETECT_MINAREA,
