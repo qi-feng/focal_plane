@@ -223,7 +223,7 @@ def get_centroid_global(sew_out_table):
 
 
 def get_panel_position_in_pattern(panel_id, center=np.array([1891.25, 1063.75]), radius_mm=np.array([20, 40]),
-                                  pixel_scale=0.241, phase_offset_rad=0, ):
+                                  pixel_scale=0.241, phase_offset_rad=0, inner8=False):
     # in case of rx motion, we add a reference phase offset
     panel_id = str(panel_id)
 
@@ -236,7 +236,10 @@ def get_panel_position_in_pattern(panel_id, center=np.array([1891.25, 1063.75]),
     else:
         is_inner_ring = False
     quadrant = float(list(panel_id)[1])
-    segment = float(list(panel_id)[3])
+    if inner8:
+        segment = float((int(list(panel_id)[3])-1)//2*2+1)
+    else:
+        segment = float(list(panel_id)[3])
     total_segment = 0.
     if is_primary and is_inner_ring:
         total_segment = 4.
@@ -265,7 +268,7 @@ def get_panel_position_in_pattern(panel_id, center=np.array([1891.25, 1063.75]),
 def find_all_pattern_positions(all_panels=DEFAULT_CENTROID_LAYOUT, center=np.array([1891.25, 1063.75]),
                                radius_mm=np.array([20, 40]), phase_offset_rad=0,
                                # clockwise is positive, about 0.2 per outer panel
-                               pixel_scale=0.241, outfile="dummy_pattern_position.txt", num_vvv=NUM_VVV_DEFAULT):
+                               pixel_scale=0.241, outfile="dummy_pattern_position.txt", num_vvv=NUM_VVV_DEFAULT, inner8=False):
     # df_pattern = pd.DataFrame({'Panel': all_panels, '#': num_vvv})
     df_pattern = pd.DataFrame({'DefaultPanel': DEFAULT_CENTROID_LAYOUT, 'Panel': all_panels, '#': num_vvv})
     df_pattern['Xpix'] = 0
@@ -276,7 +279,7 @@ def find_all_pattern_positions(all_panels=DEFAULT_CENTROID_LAYOUT, center=np.arr
         # x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['Panel'], center=center, radius_mm=radius_mm,
         x_, y_, r_pix_, phase_ = get_panel_position_in_pattern(row['DefaultPanel'], center=center, radius_mm=radius_mm,
                                                                phase_offset_rad=phase_offset_rad,
-                                                               pixel_scale=pixel_scale)
+                                                               pixel_scale=pixel_scale, inner8=inner8)
         df_pattern.loc[i, 'Xpix'] = x_
         df_pattern.loc[i, 'Ypix'] = y_
         df_pattern.loc[i, 'Rpix'] = r_pix_
@@ -859,7 +862,7 @@ def find_ring_pattern_clustering(sewtable, pattern_center=PATTERN_CENTER_FROM_LA
 
 def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS, radius=20 / PIX2MM, rad_frac=0.2,
                       rad_tol_frac=0.1, n_iter=50, chooseinner=False, chooseouter=False, tryouter=True, fix_center=True,
-                      phase_offset_rad=0, get_center=False, var_tol=400, all_panels=DEFAULT_CENTROID_LAYOUT, num_vvv=NUM_VVV_DEFAULT):
+                      phase_offset_rad=0, get_center=False, var_tol=400, all_panels=DEFAULT_CENTROID_LAYOUT, num_vvv=NUM_VVV_DEFAULT, inner8=False):
     '''
     Use sewtable of sources to find the mean centroid of the sources. Start with some radius and get the sources within that
     radius, their mean/std of their distances to center, and their mean center. Iterate with new radius cuts and new
@@ -916,7 +919,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
             df_pattern = find_all_pattern_positions(all_panels=all_panels, center=last_center,
                                                     radius_mm=np.array([last_radius * 0.241, last_radius * 2 * 0.241]),
                                                     pixel_scale=0.241, phase_offset_rad=phase_offset_rad,
-                                                    outfile=None, num_vvv=num_vvv)
+                                                    outfile=None, num_vvv=num_vvv, inner8=inner8)
             print("Found {} candidate centroid forming an inner ring".format(len(sew_slice)))
             print("Center {}, radius {}".format(last_center, last_radius))
             df_slice = df_pattern[(abs(df_pattern.Rpix - last_radius) < (last_radius * rad_tol_frac))]
@@ -1971,6 +1974,7 @@ def main():
     parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[200, 1860],
                         help="Ymin and Ymax to search for LED centroid in a box. ")
     parser.add_argument("--ring_vmax", type=float, default=None)
+    parser.add_argument("--inner8", action='store_true')
 
 
     args = parser.parse_args()
@@ -2185,7 +2189,7 @@ def main():
                                                                                   rad_frac=args.ring_frac, n_iter=20,
                                                                                   rad_tol_frac=args.ring_tol,
                                                                                   phase_offset_rad=args.phase_offset_rad,
-                                                                                  fix_center=True, var_tol=4000)
+                                                                                  fix_center=True, var_tol=4000, inner8=args.inner8)
                 if len(sew_slice) > 0:
                     plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs,
                                  cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file1, df_LEDs=df_LEDs,
