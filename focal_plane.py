@@ -42,7 +42,8 @@ if not sys.version_info.major == 3:
 
 # New GR cam lens with 16mm focal length used (2x zoom in)
 # pix2mm = 0.2449
-PIX2MM = 0.241
+#PIX2MM = 0.241
+PIX2MM = 0.482
 
 # these new corners mark the central module
 # x_corners = np.array([1762,1761,1980,1982])
@@ -2190,6 +2191,8 @@ def main():
                                                                                   rad_tol_frac=args.ring_tol,
                                                                                   phase_offset_rad=args.phase_offset_rad,
                                                                                   fix_center=True, var_tol=4000, inner8=args.inner8)
+                print(sew_slice)
+                print(df_slice)
                 if len(sew_slice) > 0:
                     plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs,
                                  cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file1, df_LEDs=df_LEDs,
