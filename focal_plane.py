@@ -234,10 +234,12 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
         lref2 = led_ref[4:8]
         pmat1 = get_perspective_transform_LEDs(l1, led_ref=lref1)
         pmat2 = get_perspective_transform_LEDs(l2, led_ref=lref2)
+        """
         print("LED coords")
         print(LED_coords)
         print("led_ref")
         print(led_ref)
+        """
         #print(pmat1)
         #print(pmat2)
         #print(CM_REF)
@@ -255,10 +257,12 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
             cprime2_ = cv2.perspectiveTransform(c_, pmat2)[0, 0]
             cm1[i] = cprime1_
             cm2[i] = cprime2_
+        """
         print(CM_REF)
         print("CM coords after perspective transform: ")
         print(cm1)
         print(cm2)
+        """
         cm = (cm1+cm2)/2.
     return cm
 
@@ -1053,11 +1057,11 @@ def find_LEDs(sewtable, coords=[
     df_out = df_out.sort_values(['X100', 'Y100'], ascending=[True, False])
     df_out = df_out.reset_index(drop=True)
     # just to take care of values that straddles X50
-    print(df_out['X100'])
-    print(df_out.loc[1::2, 'X100'].values, df_out.loc[0::2, 'X100'].values)
+    #print(df_out['X100'])
+    #print(df_out.loc[1::2, 'X100'].values, df_out.loc[0::2, 'X100'].values)
     df_out.loc[1::2, 'X100'] = df_out.loc[0::2, 'X100'].values
     df_out = df_out.sort_values(['X100', 'Y100'], ascending=[True, False])
-    print(df_out)
+    #print(df_out)
     df_out = df_out.drop(columns=['X100', 'Y100'])
     df_out['ID'] = range(1, len(df_out) + 1)
     return df_out, center
