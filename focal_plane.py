@@ -255,9 +255,10 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
             cprime2_ = cv2.perspectiveTransform(c_, pmat2)[0, 0]
             cm1[i] = cprime1_
             cm2[i] = cprime2_
-        #print("CM coords after perspective transform: ")
-        #print(cm1)
-        #print(cm2)
+        print(CM_REF)
+        print("CM coords after perspective transform: ")
+        print(cm1)
+        print(cm2)
         cm = (cm1+cm2)/2.
     return cm
 
