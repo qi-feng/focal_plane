@@ -660,8 +660,8 @@ def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, o
             LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
             print("getting CM coords")
             cm = get_CM_coords(LED_coords)
-            print(cm)
-            print("plotting CM coords")
+            #print(cm)
+            #print("plotting CM coords")
             for i, row in cm:
                 cm_center = np.mean(cm, axis=0)
                 ax.plot([cm_center[0]], [cm_center[1]], 'g+', alpha=0.4)
