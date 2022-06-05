@@ -228,7 +228,14 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
     elif len(LED_coords) == 8:
         print(pmat)
         print(CM_REF)
-        cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
+        #cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
+        for i, c_ in enumerate(CM_REF):
+            # only works for python3
+            # cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
+            c_ = np.expand_dims(c_, axis=0)
+            c_ = np.expand_dims(c_, axis=0)
+            cprime_ = cv2.warpPerspective(c_, pmat, (1,1))[0, 0]
+            cm[i] = cprime_
     return cm
 
 
