@@ -226,6 +226,8 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
             cprime_ = cv2.perspectiveTransform(c_, pmat)[0, 0]
             cm[i] = cprime_
     elif len(LED_coords) == 8:
+        print(pmat)
+        print(CM_REF)
         cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
     return cm
 
