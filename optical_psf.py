@@ -124,7 +124,7 @@ def fitgaussian_baseline(data):
 
 
 def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
-                            show_crop=0,
+                            show_crop=0, PIX2MM=PIX2MM,
                             legend=False, draw_pixel=True):  # , amp=1, xc=0,yc=0,A=1,B=1,theta=0, offset=0):
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
     # plt.matshow(data, cmap=plt.cm.gray)
@@ -231,11 +231,11 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
         #                 edgecolor='y',facecolor='none')
         # 4'
         # rect = Rectangle((4,62),27,27,#linewidth=1.5,
-        pix_length = 27
+        pix_length = 6.5/PIX2MM
         rect = Rectangle((y - pix_length / 2, x - pix_length / 2), pix_length, pix_length,  # linewidth=1.5,
                          edgecolor='y', facecolor='none')
         ax.add_patch(rect)
-        pix_length = 27 * 2
+        pix_length = 6.5/PIX2MM * 2
         rect = Rectangle((y - pix_length / 2, x - pix_length / 2), pix_length, pix_length,  # linewidth=1.5,
                          edgecolor='y', facecolor='none')
         ax.add_patch(rect)
@@ -387,7 +387,7 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
 
 
 def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
-                             show_crop=0,
+                             show_crop=0,PIX2MM=PIX2MM,
                              legend=False, draw_pixel=True):  # , amp=1, xc=0,yc=0,A=1,B=1,theta=0, offset=0):
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
     # plt.matshow(data, cmap=plt.cm.gray)
@@ -501,11 +501,11 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
         #                 edgecolor='y',facecolor='none')
         # 4'
         # rect = Rectangle((4,62),27,27,#linewidth=1.5,
-        pix_length = 27
+        pix_length = 6.5/PIX2MM
         rect = Rectangle((y - pix_length / 2, x - pix_length / 2), pix_length, pix_length,  # linewidth=1.5,
                          edgecolor='w', facecolor='none')
         ax.add_patch(rect)
-        pix_length = 27 * 2
+        pix_length = 6.5/PIX2MM * 2
         rect = Rectangle((y - pix_length / 2, x - pix_length / 2), pix_length, pix_length,  # linewidth=1.5,
                          edgecolor='w', facecolor='none')
         ax.add_patch(rect)
@@ -686,6 +686,8 @@ def main():
     parser.add_argument('rawfile', default="/home/ctauser/Pictures/Aravis/The Imaging Source Europe GmbH-37514083-2592-1944-Mono8-2019-12-16-23:58:26.raw", type=str)
     parser.add_argument('--catalog', default="data/res_focal_plane_2019_12_16_23_58_26_cat1.txt", type=str)
     parser.add_argument("--psf_search_halfwidth", type=float, default=50 )
+    parser.add_argument("--PIX2MM", type=float, default=0.482 )
+
 
     args = parser.parse_args()
 
@@ -699,6 +701,10 @@ def main():
 
     # cropping
     halfwidth = args.psf_search_halfwidth
+
+    PIX2MM = args.PIX2MM
+    print("The plate scale of {} mm/pixel is used".format(PIX2MM))
+
     """
     x_center = 1898
     y_center = 1104
@@ -725,7 +731,7 @@ def main():
 
     dt_match = get_datetime_rawname(args.rawfile)
 
-    data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}.pdf".format(dt_match),
+    data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}.pdf".format(dt_match),PIX2MM=PIX2MM,
                                        # draw_pixel=False,
                                        # legend=True,
                                        #df=df_best,
@@ -735,5 +741,4 @@ def main():
 
 
 if __name__ == '__main__':
-    print("The plate scale of {} mm/pixel is used".format(PIX2MM))
     main()
