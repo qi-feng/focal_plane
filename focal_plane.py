@@ -1971,7 +1971,7 @@ def main():
     parser.add_argument('--gifname', default=None,  # default="compare.gif",
                         help="File name to save gif animation. ")
 
-    parser.add_argument('--cropx1', default=580, type=int,  # default=1170,
+    parser.add_argument('--cropx1', default=548, type=int,  # default=1170, 580
                         # default=(1350, 1800),
                         help="zooming into xlim that you want to plot, use None for no zoom, default is (1650, 2100).")
     parser.add_argument('--cropx2', default=2592, type=int,  # default=1970,
@@ -1981,8 +1981,8 @@ def main():
     parser.add_argument('--cropy1',  # default=1410,
                         default=1944, type=int,
                         help="zooming into ylim that you want to plot, use None for no zoom, default is (1250, 800).")
-    parser.add_argument('--cropy2',  # default=610,
-                        default=150, type=int,
+    parser.add_argument('--cropy2',  # default=610, 150
+                        default=0, type=int,
                         help="zooming into ylim that you want to plot, use None for no zoom, default is (1250, 800).")
 
     parser.add_argument('-o', '--motion_outfile_prefix', dest="motion_outfile_prefix", default="motion_output",
@@ -2033,9 +2033,9 @@ def main():
     parser.add_argument("--psf", action='store_true')
     parser.add_argument("--psf_search_width", type=float, default=50)
     # parser.add_argument("--LED_search_width", type=float, default=800 )
-    parser.add_argument('--LED_search_xs', nargs=2, type=float, default=[630, 2560],
+    parser.add_argument('--LED_search_xs', nargs=2, type=float, default=[230, 2560],
                         help="Xmin and Xmax to search for LED centroid in a box. ")
-    parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[200, 1860],
+    parser.add_argument('--LED_search_ys', nargs=2, type=float, default=[10, 1860],
                         help="Ymin and Ymax to search for LED centroid in a box. ")
     parser.add_argument("--ring_vmax", type=float, default=None)
     parser.add_argument("--inner8", action='store_true')
