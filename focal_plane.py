@@ -1051,6 +1051,7 @@ def find_LEDs(sewtable, coords=[
     df_out['Y100'] = df_out['Y_IMAGE'].apply(lambda x: int(round(x / 100.0)) * 100)
     # df_out = df_out.sort_values(['X_IMAGE', 'Y_IMAGE'], ascending=[True, False])
     df_out = df_out.sort_values(['X100', 'Y100'], ascending=[True, False])
+    print(df_out)
     df_out = df_out.drop(columns=['X100', 'Y100'])
     df_out['ID'] = range(1, len(df_out) + 1)
     return df_out, center
