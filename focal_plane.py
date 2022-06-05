@@ -1241,7 +1241,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         # plot the CM after perspective transform
         LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
         #print(LED_coords.shape, LED_REF.shape)
-        if LED_coords.shape[0] == 4:
+        if LED_coords.shape[0] == 4 or LED_coords.shape[0] == 8:
             cm = get_CM_coords(LED_coords)
             for i, row in cm:
                 cm_center = np.mean(cm, axis=0)
