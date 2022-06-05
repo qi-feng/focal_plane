@@ -216,6 +216,10 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
         print("Can't do this, no CV2")
         return
     pmat = get_perspective_transform_LEDs(LED_coords, led_ref=led_ref)
+    print("LED coords")
+    print(LED_coords)
+    print("led_ref")
+    print(led_ref)
     cm = np.zeros_like(CM_REF)
     if len(LED_coords) == 4:
         for i, c_ in enumerate(CM_REF):
@@ -228,7 +232,8 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
     elif len(LED_coords) == 8:
         print(pmat)
         print(CM_REF)
-        #cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
+        cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
+        """
         for i, c_ in enumerate(CM_REF):
             # only works for python3
             # cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
@@ -236,6 +241,7 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
             c_ = np.expand_dims(c_, axis=0)
             cprime_ = cv2.warpPerspective(c_, pmat, (1,1))[0, 0]
             cm[i] = cprime_
+        """
     return cm
 
 
