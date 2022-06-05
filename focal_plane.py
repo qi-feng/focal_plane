@@ -220,8 +220,9 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
     print(LED_coords)
     print("led_ref")
     print(led_ref)
-    cm = np.zeros_like(CM_REF)
+
     if len(LED_coords) == 4:
+        cm = np.zeros_like(CM_REF)
         for i, c_ in enumerate(CM_REF):
             # only works for python3
             # cprime_ = cv2.perspectiveTransform(np.expand_dims(c_, axis=(0, 1)), pmat)[0,0]
