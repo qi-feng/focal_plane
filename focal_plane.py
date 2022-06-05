@@ -2384,7 +2384,7 @@ def main():
                 print("========")
                 print(" Found {} P1s ".format(N_P1))
                 print(" Center of the P1 ring is {:.2f}, {:.2f} ".format(centerP1[0], centerP1[1]))
-                print(" Radius of the P1 ring is {:.2f}, {:.2f} ".format(rP1[0], rP1[1]))
+                print(" Radius of the P1 ring is {:.2f} pix ".format(rP1))
                 dp1x = centerP1[0] - center_LEDs[0]
                 dp1y = centerP1[1] - center_LEDs[1]
                 print(" Offset between center of the P1 ring and center of the LEDs is {:.2f} pix, {:.2f} pix ".format(
@@ -2393,7 +2393,7 @@ def main():
                     print("========")
                     print(" Found {} P2s ".format(N_P2))
                     print(" Center of the P2 ring is {:.2f}, {:.2f} ".format(c2[0], c2[1]))
-                    print(" Radius of the P2 ring is {:.2f}, {:.2f} ".format(r2[0], r2[1]))
+                    print(" Radius of the P2 ring is {:.2f} pix ".format(r2))
                     dp2x = c2[0] - centerP1[0]
                     dp2y = c2[1] - centerP1[1]
                     print(" Offset between center of the P2 ring and P1 ring is {:.2f} pix, {:.2f} pix".format(dp2x,
@@ -2402,7 +2402,7 @@ def main():
                     print("========")
                     print(" Found {} S2s ".format(N_S2))
                     print(" Center of the S2 ring is {:.2f} pix, {:.2f} pix".format(c3[0], c3[1]))
-                    print(" Radius of the S2 ring is {:.2f}, {:.2f} ".format(r3[0], r3[1]))
+                    print(" Radius of the S2 ring is {:.2f} pix ".format(r3))
                     dp3x = c3[0] - centerP1[0]
                     dp3y = c3[1] - centerP1[1]
                     print(" Offset between center of the S2 ring and P1 ring is {:.2f} pix, {:.2f} pix".format(dp3x,
