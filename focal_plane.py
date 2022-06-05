@@ -1736,7 +1736,7 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2, ind1=None, ind2=None, motion_ou
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
 
     max_pixel_crop1 = np.max(im1[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
-    print("Brightest pixel in the zoomed area in image 1 reaches {}".format(max_pixel_crop1))
+    print("Brightest pixel in the cropped area in image 1 reaches {}".format(max_pixel_crop1))
     if max_pixel_crop1 == 255:
         sat_pix = np.sum(im1 == 255)
         percent_satur = 100.0 * sat_pix / (cropys[0] - cropys[1]) / (cropxs[1] - cropxs[0])
