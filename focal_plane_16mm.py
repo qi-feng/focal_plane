@@ -42,8 +42,8 @@ if not sys.version_info.major == 3:
 
 # New GR cam lens with 16mm focal length used (2x zoom in)
 # pix2mm = 0.2449
-#PIX2MM = 0.241
-PIX2MM = 0.482
+PIX2MM = 0.241
+#PIX2MM = 0.482
 
 # these new corners mark the central module
 # x_corners = np.array([1762,1761,1980,1982])
@@ -66,11 +66,11 @@ CM_REF_60 = np.array([[1460, 856],
                    [1460, 1080.1],
                    [1684.1, 1080.1]], dtype='float32')
 
-# Ref positions taken on 2022 June 3 at -5 deg Elevation
-CM_REF_minus5 = np.array([[1525, 957],
- [1637.033, 957],
- [1525, 1069.033],
- [1637.033, 1069.033]], dtype='float32')
+# Ref positions taken on 2022 Apr 14 at -5 deg Elevation
+CM_REF_minus5 = np.array([[1446,858],
+                        [1670.1,858],
+                        [1446,1082.1],
+                        [1670.1,1082.1]], dtype='float32')
 
 CM_REF = CM_REF_minus5
 
@@ -87,21 +87,10 @@ LED_REF_2021Sep19 = np.array([[1085.0588,	1469.3252],
                     [2076.2295,	495.7331]], dtype='float32')
 
 #2022-04-14 @-5 deg EL
-LED_REF_2022Apr14 = np.array([[1085.7123,	1460.7432],
+LED_REF_minus5 = np.array([[1085.7123,	1460.7432],
                     [1089.4943,	474.6895],
                     [2065.3442,  1460.2528],
                     [2071.0342,	482.1727]], dtype='float32')
-
-#2022-06-03 @-5 deg EL
-LED_REF_minus5 = np.array([
-       [ 755.9869, 1394.8185],
-       [ 755.    ,  638.0302],
-       [1193.5675, 1827.2313],
-       [1189.9103,  205.9062],
-       [1942.25  , 1818.9421],
-       [1936.6364,  210.4852],
-       [2365.9902, 1385.127 ],
-       [2362.5535, 640.5624]], dtype='float32')
 
 LED_REF = LED_REF_minus5
 
@@ -202,14 +191,9 @@ def get_perspective_transform_LEDs(LED_coords, led_ref=LED_REF):
         return
     # perspective transformation matrix
     #pmat = cv2.getPerspectiveTransform(LED_REF, LED_coords)
-    if len(LED_coords) == 4:
-        pmat = cv2.getPerspectiveTransform(led_ref, LED_coords)
-    elif len(LED_coords) == 8:
-        pmat, status = cv2.findHomography(led_ref, LED_coords)
-    else:
-        print("Only found {} LEDs, can't do perspective transform".format(len(LED_coords)))
-        return None
+    pmat = cv2.getPerspectiveTransform(led_ref, LED_coords)
     return pmat
+
 
 def get_CM_coords(LED_coords, led_ref=LED_REF):
     if not has_cv2:
@@ -217,16 +201,13 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
         return
     pmat = get_perspective_transform_LEDs(LED_coords, led_ref=led_ref)
     cm = np.zeros_like(CM_REF)
-    if len(LED_coords) == 4:
-        for i, c_ in enumerate(CM_REF):
-            # only works for python3
-            # cprime_ = cv2.perspectiveTransform(np.expand_dims(c_, axis=(0, 1)), pmat)[0,0]
-            c_ = np.expand_dims(c_, axis=0)
-            c_ = np.expand_dims(c_, axis=0)
-            cprime_ = cv2.perspectiveTransform(c_, pmat)[0, 0]
-            cm[i] = cprime_
-    elif len(LED_coords) == 8:
-        cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
+    for i, c_ in enumerate(CM_REF):
+        # only works for python3
+        # cprime_ = cv2.perspectiveTransform(np.expand_dims(c_, axis=(0, 1)), pmat)[0,0]
+        c_ = np.expand_dims(c_, axis=0)
+        c_ = np.expand_dims(c_, axis=0)
+        cprime_ = cv2.perspectiveTransform(c_, pmat)[0, 0]
+        cm[i] = cprime_
     return cm
 
 
@@ -613,7 +594,7 @@ def plot_sew_cat(dst_trans, sew_out_trans, brightestN=0, xlim=None, ylim=None, o
             e.set_color('c')
 
     if df_LEDs is not None:
-        if len(df_LEDs) == 4 or len(df_LEDs) == 8:
+        if len(df_LEDs) == 4:
             for i, row in df_LEDs.iterrows():
                 e = Ellipse(xy=np.array([row['X_IMAGE'], row['Y_IMAGE']]), width=row['A_IMAGE'] * 2,
                             height=row['B_IMAGE'] * 2, angle=row['THETA_IMAGE'], linewidth=1, fill=False, alpha=0.9)
@@ -967,16 +948,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
 
 # def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 597]],
 #def find_LEDs(sewtable, coords=[[1095, 500], [1087, 1472], [2070, 1476], [2075, 497]], search_width_x=20,
-#def find_LEDs(sewtable, coords=[[1090, 475], [1087, 1460], [2065, 1460], [2071, 482]], search_width_x=40,
-def find_LEDs(sewtable, coords=[
-       [ 755.9869, 1394.8185],
-       [ 755.    ,  638.0302],
-       [1193.5675, 1827.2313],
-       [1189.9103,  205.9062],
-    [1942.25, 1818.9421],
-    [1936.6364, 210.4852],
-    [2365.9902, 1385.127],
-    [2362.5535,  640.5624]], search_width_x=40,
+def find_LEDs(sewtable, coords=[[1090, 475], [1087, 1460], [2065, 1460], [2071, 482]], search_width_x=40,
               search_width_y=20, center_offset=[0, 0]):
     df_out = pd.DataFrame()
     N_LEDs = len(coords)
@@ -1132,7 +1104,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
 
     plot_sew_cat(median, sew_out, outfile=saveplot_name, xlim=cropxs, ylim=cropys, vmax=max_pixel_crop,
                  pattern_label_x_min=search_xs[0], pattern_label_x_max=search_xs[1], pattern_label_y_min=ymin,
-                 pattern_label_y_max=ymax, df_LEDs=df_LEDs, show=show)
+                 pattern_label_y_max=ymax, df_LEDs=df_LEDs)
     if savecatalog_name is not None:
         from astropy.io import ascii
         ascii.write(sew_out['table'], savecatalog_name, overwrite=True)
@@ -1404,7 +1376,7 @@ def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", savep
 
         # plot the CM after perspective transform
         LED_coords = df_LEDs[['X_IMAGE', 'Y_IMAGE']].to_numpy(dtype='float32')
-        if LED_coords.shape[0] == 4 or LED_coords.shape[0] == 8:
+        if LED_coords.shape[0] == 4:
             cm = get_CM_coords(LED_coords)
             for i, row in cm:
                 cm_center = np.mean(cm, axis=0)
@@ -2124,7 +2096,7 @@ def main():
                                                   show=(args.show and not args.ring))
             print("Processing single image for LEDs. Done.")
             df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
-            if len(df_LEDs) == 4 or len(df_LEDs) == 8:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
+            if len(df_LEDs) == 4:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
                 LED_filename = save_filename_prefix1 + "_LEDs.csv"
                 df_LEDs.to_csv(LED_filename, index=False)
             sew_out_table1, im_med1 = process_raw(args.rawfile1, kernel_w=args.kernel_w,
@@ -2156,7 +2128,7 @@ def main():
                                                   show=(args.show and not args.ring))
             print("Processing single image. Done.")
             df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
-            if len(df_LEDs) == 4 or len(df_LEDs) == 8:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
+            if len(df_LEDs) == 4:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
                 LED_filename = save_filename_prefix1 + "_LEDs.csv"
                 df_LEDs.to_csv(LED_filename, index=False)
         chooseinner = False
