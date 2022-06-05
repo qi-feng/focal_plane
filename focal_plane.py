@@ -216,13 +216,9 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
     if not has_cv2:
         print("Can't do this, no CV2")
         return
-    pmat = get_perspective_transform_LEDs(LED_coords, led_ref=led_ref)
-    print("LED coords")
-    print(LED_coords)
-    print("led_ref")
-    print(led_ref)
 
     if len(LED_coords) == 4:
+        pmat = get_perspective_transform_LEDs(LED_coords, led_ref=led_ref)
         cm = np.zeros_like(CM_REF)
         for i, c_ in enumerate(CM_REF):
             # only works for python3
@@ -232,18 +228,37 @@ def get_CM_coords(LED_coords, led_ref=LED_REF):
             cprime_ = cv2.perspectiveTransform(c_, pmat)[0, 0]
             cm[i] = cprime_
     elif len(LED_coords) == 8:
-        print(pmat)
+        l1 = LED_coords[:4]
+        l2 = LED_coords[4:8]
+        lref1 = led_ref[:4]
+        lref2 = led_ref[4:8]
+        pmat1 = get_perspective_transform_LEDs(l1, led_ref=lref1)
+        pmat2 = get_perspective_transform_LEDs(l2, led_ref=lref2)
+        print("LED coords")
+        print(LED_coords)
+        print("led_ref")
+        print(led_ref)
+        print(pmat1)
+        print(pmat2)
         print(CM_REF)
-        cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
-        """
+        #cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
+        cm1 = np.zeros_like(CM_REF)
+        cm2 = np.zeros_like(CM_REF)
+
         for i, c_ in enumerate(CM_REF):
             # only works for python3
             # cm = cv2.warpPerspective(CM_REF, pmat, (2,4))
+            # use the old way; twice for 8 points
             c_ = np.expand_dims(c_, axis=0)
             c_ = np.expand_dims(c_, axis=0)
-            cprime_ = cv2.warpPerspective(c_, pmat, (1,1))[0, 0]
-            cm[i] = cprime_
-        """
+            cprime1_ = cv2.perspectiveTransform(c_, pmat1)[0, 0]
+            cprime2_ = cv2.perspectiveTransform(c_, pmat2)[0, 0]
+            cm1[i] = cprime1_
+            cm2[i] = cprime2_
+        print("CM coords after perspective transform: ")
+        print(cm1)
+        print(cm2)
+        cm = (cm1+cm2)/2.
     return cm
 
 
