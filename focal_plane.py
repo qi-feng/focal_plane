@@ -206,6 +206,7 @@ def get_perspective_transform_LEDs(LED_coords, led_ref=LED_REF):
         pmat = cv2.getPerspectiveTransform(led_ref, LED_coords)
     elif len(LED_coords) == 8:
         pmat, status = cv2.findHomography(led_ref, LED_coords)
+        print("find homography for 8 LEDs, status {}".format(status))
     else:
         print("Only found {} LEDs, can't do perspective transform".format(len(LED_coords)))
         return None
