@@ -1370,7 +1370,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
 
 def quick_check_raw_ring(rawfile, save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False, kernel_w=3,
-                         cropxs=(1050, 2592), cropys=(1850, 250), labelcolor='steelblue', labelalpha=0.3, textalpha=0.9,
+                         cropxs=(548, 2592), cropys=(1944, 0), labelcolor='steelblue', labelalpha=0.3, textalpha=0.9,
                          plot_center=True, df_LEDs=None, center_offset=[0, 0], vmax=None):
     im_raw = read_image(rawfile)
     if has_cv2:
