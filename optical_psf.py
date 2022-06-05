@@ -164,7 +164,7 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
     # print(height, x, y, width_x, width_y, np.rad2deg(theta))
     print(height, x, y, width_x, width_y, theta, baseline)
 
-    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
+    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM), int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM)]
     print("Frac contained in central image pixel from data")
     print(center_crop.sum() / data.sum())
     center_crop = data[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
@@ -356,7 +356,7 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
     data = gaus_arr
 
     print(params)
-    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
+    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM), int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM)]
     print("Frac contained in central image pixel from model")
     print(center_crop.sum() / data.sum())
     center_crop = data[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
@@ -365,7 +365,7 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
     print(center_crop.sum() / data.sum())
 
     clean_gaussian = gaus_arr - baseline
-    center_crop = clean_gaussian[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
+    center_crop = clean_gaussian[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM), int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM)]
     print("Frac contained in central image pixel from only the gaussian component in model")
     print(center_crop.sum() / clean_gaussian.sum())
     center_crop = clean_gaussian[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
@@ -433,7 +433,7 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     eccentricity = np.sqrt(1 - ((semi_min**2)/(semi_maj**2))) 
     print(height, x, y, width_x, width_y, theta, baseline) 
 
-    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
+    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM), int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM)]
     #print("Frac contained in central image pixel from data")
     #print(center_crop.sum() / data.sum())
     center_crop = data[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
@@ -629,7 +629,7 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     data = gaus_arr
 
     #print(params)
-    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
+    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM), int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM)]
     print("Frac contained in central image pixel from model")
     print(center_crop.sum() / data.sum())
     center_crop = data[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
@@ -638,7 +638,7 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     print(center_crop.sum() / data.sum())
 
     clean_gaussian = gaus_arr - baseline
-    center_crop = clean_gaussian[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
+    center_crop = clean_gaussian[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM), int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM)]
     print("Frac contained in central image pixel from only the gaussian component in model")
     print(center_crop.sum() / clean_gaussian.sum())
     center_crop = clean_gaussian[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
