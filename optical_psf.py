@@ -164,10 +164,10 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
     # print(height, x, y, width_x, width_y, np.rad2deg(theta))
     print(height, x, y, width_x, width_y, theta, baseline)
 
-    center_crop = data[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
+    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
     print("Frac contained in central image pixel from data")
     print(center_crop.sum() / data.sum())
-    center_crop = data[int(y - 27):int(y + 27), int(x - 27):int(x + 27)]
+    center_crop = data[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
     # print(center_crop.sum(),data.sum(), center_crop.sum()/data.sum())
     print("Frac contained in central trigger pixel from data")
     print(center_crop.sum() / data.sum())
@@ -230,12 +230,12 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
         # rect = Rectangle((5,65),25,25,#linewidth=1.5,
         #                 edgecolor='y',facecolor='none')
         # 4'
-        # rect = Rectangle((4,62),27,27,#linewidth=1.5,
-        pix_length = 6.5/PIX2MM
+        # rect = Rectangle((4,62),6.53/PIX2MM,6.53/PIX2MM,#linewidth=1.5,
+        pix_length = 6.53/PIX2MM
         rect = Rectangle((y - pix_length / 2, x - pix_length / 2), pix_length, pix_length,  # linewidth=1.5,
                          edgecolor='y', facecolor='none')
         ax.add_patch(rect)
-        pix_length = 6.5/PIX2MM * 2
+        pix_length = 6.53/PIX2MM * 2
         rect = Rectangle((y - pix_length / 2, x - pix_length / 2), pix_length, pix_length,  # linewidth=1.5,
                          edgecolor='y', facecolor='none')
         ax.add_patch(rect)
@@ -356,19 +356,19 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
     data = gaus_arr
 
     print(params)
-    center_crop = data[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
+    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
     print("Frac contained in central image pixel from model")
     print(center_crop.sum() / data.sum())
-    center_crop = data[int(y - 27):int(y + 27), int(x - 27):int(x + 27)]
+    center_crop = data[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
     # print(center_crop.sum(),data.sum(), center_crop.sum()/data.sum())
     print("Frac contained in central trigger pixel from model")
     print(center_crop.sum() / data.sum())
 
     clean_gaussian = gaus_arr - baseline
-    center_crop = clean_gaussian[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
+    center_crop = clean_gaussian[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
     print("Frac contained in central image pixel from only the gaussian component in model")
     print(center_crop.sum() / clean_gaussian.sum())
-    center_crop = clean_gaussian[int(y - 27):int(y + 27), int(x - 27):int(x + 27)]
+    center_crop = clean_gaussian[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
     # print(center_crop.sum(),data.sum(), center_crop.sum()/data.sum())
     print("Frac contained in central trigger pixel from only the gaussian component in model")
     print(center_crop.sum() / clean_gaussian.sum())
@@ -433,10 +433,10 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     eccentricity = np.sqrt(1 - ((semi_min**2)/(semi_maj**2))) 
     print(height, x, y, width_x, width_y, theta, baseline) 
 
-    center_crop = data[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
+    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
     #print("Frac contained in central image pixel from data")
     #print(center_crop.sum() / data.sum())
-    center_crop = data[int(y - 27):int(y + 27), int(x - 27):int(x + 27)]
+    center_crop = data[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
     # print(center_crop.sum(),data.sum(), center_crop.sum()/data.sum())
     #print("Frac contained in central trigger pixel from data")
     #print(center_crop.sum() / data.sum())
@@ -500,12 +500,12 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
         # rect = Rectangle((5,65),25,25,#linewidth=1.5,
         #                 edgecolor='y',facecolor='none')
         # 4'
-        # rect = Rectangle((4,62),27,27,#linewidth=1.5,
-        pix_length = 6.5/PIX2MM
+        # rect = Rectangle((4,62),6.53/PIX2MM,6.53/PIX2MM,#linewidth=1.5,
+        pix_length = 6.53/PIX2MM
         rect = Rectangle((y - pix_length / 2, x - pix_length / 2), pix_length, pix_length,  # linewidth=1.5,
                          edgecolor='w', facecolor='none')
         ax.add_patch(rect)
-        pix_length = 6.5/PIX2MM * 2
+        pix_length = 6.53/PIX2MM * 2
         rect = Rectangle((y - pix_length / 2, x - pix_length / 2), pix_length, pix_length,  # linewidth=1.5,
                          edgecolor='w', facecolor='none')
         ax.add_patch(rect)
@@ -629,19 +629,19 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     data = gaus_arr
 
     #print(params)
-    center_crop = data[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
+    center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
     print("Frac contained in central image pixel from model")
     print(center_crop.sum() / data.sum())
-    center_crop = data[int(y - 27):int(y + 27), int(x - 27):int(x + 27)]
+    center_crop = data[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
     # print(center_crop.sum(),data.sum(), center_crop.sum()/data.sum())
     print("Frac contained in central trigger pixel from model")
     print(center_crop.sum() / data.sum())
 
     clean_gaussian = gaus_arr - baseline
-    center_crop = clean_gaussian[int(y - 27 / 2.):int(y - 27 / 2.) + 27, int(x - 27 / 2.):int(x - 27 / 2.) + 27]
+    center_crop = clean_gaussian[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + 6.53/PIX2MM, int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + 6.53/PIX2MM]
     print("Frac contained in central image pixel from only the gaussian component in model")
     print(center_crop.sum() / clean_gaussian.sum())
-    center_crop = clean_gaussian[int(y - 27):int(y + 27), int(x - 27):int(x + 27)]
+    center_crop = clean_gaussian[int(y - 6.53/PIX2MM):int(y + 6.53/PIX2MM), int(x - 6.53/PIX2MM):int(x + 6.53/PIX2MM)]
     # print(center_crop.sum(),data.sum(), center_crop.sum()/data.sum())
     print("Frac contained in central trigger pixel from only the gaussian component in model")
     print(center_crop.sum() / clean_gaussian.sum())
