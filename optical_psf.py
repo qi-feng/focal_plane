@@ -35,7 +35,8 @@ except:
 matplotlib.rc('font', **font)
 
 
-PIX2MM = 0.241
+#PIX2MM = 0.241
+PIX2MM = 0.482
 MM2ARCMIN = 1. / 1.625  # ???
 
 
@@ -734,4 +735,5 @@ def main():
 
 
 if __name__ == '__main__':
+    print("The plate scale of {} mm/pixel is used".format(PIX2MM))
     main()
