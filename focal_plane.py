@@ -1132,8 +1132,6 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
     im_std = np.std(median)
     print("Standard deviation of the image is {:.2f}".format(im_std))
 
-    max_pixel_crop = np.max(median[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
-    print("Brightest pixel in the zoomed area reaches {}".format(max_pixel_crop))
     if savefits_name is None:
         savefits_name = rawfile[:-4] + ".fits"
     elif savefits_name[-4:] != ("fits" or "fit"):
@@ -1166,6 +1164,10 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
             ymin = search_ys[0]
             ymax = search_ys[1]
         print("Only searching in X {} to {} and Y {} to {}".format(search_xs[0], search_xs[1], ymin, ymax))
+        # max_pixel_crop = np.max(median[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+        max_pixel_crop = np.max(median[ymin:ymax, search_xs[0]:search_xs[1]])
+        print("Brightest pixel in the search area reaches {}".format(max_pixel_crop))
+
         sew_out['table'] = sew_out['table'][
             (sew_out['table']['X_IMAGE'] <= search_xs[1]) & (sew_out['table']['X_IMAGE'] >= search_xs[0]) & (
                     sew_out['table']['Y_IMAGE'] <= ymax) & (sew_out['table']['Y_IMAGE'] >= ymin)]
@@ -1817,7 +1819,7 @@ def plot_diff_labelled(rawf1, rawf2, cat1, cat2, ind1=None, ind2=None, motion_ou
     # plt.show()
 
     max_pixel_crop2 = np.max(im2[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
-    print("Brightest pixel in the zoomed area in image 2 reaches {}".format(max_pixel_crop2))
+    print("Brightest pixel in the cropped area in image 2 reaches {}".format(max_pixel_crop2))
     if max_pixel_crop2 == 255:
         sat_pix = np.sum(im2 == 255)
         percent_satur = 100.0 * sat_pix / (cropys[0] - cropys[1]) / (cropxs[1] - cropxs[0])
@@ -2151,7 +2153,8 @@ def main():
     if (args.single or args.rawfile2 is None) and args.quick_ring_check is None:
         if args.psf:
             if args.pattern_center is None:
-                xc, yc = get_centroid_global(sew_out_table1)
+                print("Provide center coordinates using -p")
+                #xc, yc = get_centroid_global(sew_out_table1)
             else:
                 xc, yc = args.pattern_center[0], args.pattern_center[1]
             # LED_search_width = args.LED_search_width
