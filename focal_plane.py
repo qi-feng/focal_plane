@@ -1165,7 +1165,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
             ymax = search_ys[1]
         print("Only searching in X {} to {} and Y {} to {}".format(search_xs[0], search_xs[1], ymin, ymax))
         # max_pixel_crop = np.max(median[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
-        max_pixel_crop = np.max(median[ymin:ymax, search_xs[0]:search_xs[1]])
+        max_pixel_crop = np.max(median[int(ymin):int(ymax), int(search_xs[0]):int(search_xs[1])])
         print("Brightest pixel in the search area reaches {}".format(max_pixel_crop))
 
         sew_out['table'] = sew_out['table'][
