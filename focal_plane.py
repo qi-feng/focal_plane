@@ -1171,7 +1171,10 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
         sew_out['table'] = sew_out['table'][
             (sew_out['table']['X_IMAGE'] <= search_xs[1]) & (sew_out['table']['X_IMAGE'] >= search_xs[0]) & (
                     sew_out['table']['Y_IMAGE'] <= ymax) & (sew_out['table']['Y_IMAGE'] >= ymin)]
-
+    else:
+        max_pixel_crop = np.max(median[cropys[1]:cropys[0], cropxs[0]:cropxs[1]])
+        #max_pixel_crop = np.max(median[int(ymin):int(ymax), int(search_xs[0]):int(search_xs[1])])
+        print("Brightest pixel in the crop area reaches {}".format(max_pixel_crop))
     n_sources = len(sew_out['table'])
     ID_ = Column(range(n_sources), name='ID')
     sew_out['table'].add_column(ID_, index=0)
