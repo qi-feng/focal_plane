@@ -2195,8 +2195,8 @@ def main():
             df_centroid = df_centroid.append(pd.Series("", index=df_centroid.columns), ignore_index=True)
             df = pd.concat([df_centroid, df_LEDs])
             df.to_csv(save_filename_prefix1 + "_centerPSF_and_LEDs.csv", index=False)
-            print(len(df_centroid))
-            print(df_centroid)
+            #print(len(df_centroid))
+            #print(df_centroid)
             if len(df_centroid) == 2:
                 psf_command = "python optical_psf.py '{}' --catalog {}".format(args.rawfile1, savecatalog_name1)
                 print("Running psf command: \n {}".format(psf_command))
