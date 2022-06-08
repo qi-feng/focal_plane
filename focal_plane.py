@@ -2195,6 +2195,10 @@ def main():
             df_centroid = df_centroid.append(pd.Series("", index=df_centroid.columns), ignore_index=True)
             df = pd.concat([df_centroid, df_LEDs])
             df.to_csv(save_filename_prefix1 + "_centerPSF_and_LEDs.csv", index=False)
+            psf_command = "python optical_psf.py {} --catalog {}".format(args.rawfile1, savecatalog_name1)
+            print("Running psf command: \n {}".format(psf_command))
+            os.system(psf_command)
+
 
         else:
             search_xs = args.search_xs
