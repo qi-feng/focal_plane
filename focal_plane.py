@@ -2176,6 +2176,7 @@ def main():
                                                   saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
                                                   search_xs=search_LEDxs, search_ys=search_LEDys,
                                                   show=(args.show and not args.ring and not args.noshow1st))
+            print((args.show and not args.ring and not args.noshow1st))
             print("Processing single image for LEDs. Done.")
             df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
             if len(df_LEDs) == 4 or len(df_LEDs) == 8:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
