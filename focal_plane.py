@@ -2044,6 +2044,7 @@ def main():
                         help="Ymin and Ymax to list all centroid in a box. ")
     parser.add_argument('--quick_ring_check', default=None, help="Do ring check; dubs as file name for ring pattern. ")
     parser.add_argument("--show", action='store_true')
+    parser.add_argument("--noshow1st", action='store_true')
     parser.add_argument("--get_center", action='store_true')
     parser.add_argument("--skip_p2", action='store_true')
     parser.add_argument("--skip_s2", action='store_true')
@@ -2174,7 +2175,7 @@ def main():
                                                   clean=args.clean, savefits_name=savefits_name1, overwrite_fits=True,
                                                   saveplot_name=saveplot_name1, savecatalog_name=savecatalog_name1,
                                                   search_xs=search_LEDxs, search_ys=search_LEDys,
-                                                  show=(args.show and not args.ring))
+                                                  show=(args.show and not args.ring and not args.noshow1st))
             print("Processing single image for LEDs. Done.")
             df_LEDs, center_LEDs = find_LEDs(sew_out_table1)
             if len(df_LEDs) == 4 or len(df_LEDs) == 8:  # hard coded for now; when the 8 LEDs are used, many more changes are needed for find_LEDs
