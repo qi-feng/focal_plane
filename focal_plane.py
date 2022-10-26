@@ -43,7 +43,10 @@ if not sys.version_info.major == 3:
 # New GR cam lens with 16mm focal length used (2x zoom in)
 # pix2mm = 0.2449
 #PIX2MM = 0.241
-PIX2MM = 0.482
+#8mm lens about twice the plate scale
+#PIX2MM = 0.482
+#2022-10-11 New Alibaba 8mm lens very slightly different plate scale
+PIX2MM = 0.477
 
 # these new corners mark the central module
 # x_corners = np.array([1762,1761,1980,1982])
@@ -73,6 +76,8 @@ CM_REF_minus5 = np.array([[1525, 957],
  [1637.033, 1069.033]], dtype='float32')
 
 CM_REF = CM_REF_minus5
+#apply a translation measured between pics taken on 20220603 and 20221011
+CM_REF = CM_REF_minus5+[25.5,-8.7]
 
 # Ref LED positions @60 deg EL:
 # 2021 June
@@ -93,7 +98,7 @@ LED_REF_2022Apr14 = np.array([[1085.7123,	1460.7432],
                     [2071.0342,	482.1727]], dtype='float32')
 
 #2022-06-03 @-5 deg EL
-LED_REF_minus5 = np.array([
+LED_REF_minus5_2022Jun3 = np.array([
        [ 755.9869, 1394.8185],
        [ 755.    ,  638.0302],
        [1193.5675, 1827.2313],
@@ -102,6 +107,18 @@ LED_REF_minus5 = np.array([
        [1936.6364,  210.4852],
        [2365.9902, 1385.127 ],
        [2362.5535, 640.5624]], dtype='float32')
+
+#2022-10-11 @-5 deg EL; New Alibaba 8mm lens very slightly different plate scale
+LED_REF_minus5 = np.array([
+    [787.7784, 1401.6349],
+    [787.7224, 635.7045],
+    [1230.2179, 1839.71],
+    [1227.9833, 197.8342],
+    [1990.3311, 1833.280],
+    [1985.5582, 201.9172],
+    [2422.1157, 1393.521],
+    [2419.3499, 638.1667]], dtype='float32')
+
 
 LED_REF = LED_REF_minus5
 
@@ -1009,14 +1026,14 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
 #def find_LEDs(sewtable, coords=[[1095, 500], [1087, 1472], [2070, 1476], [2075, 497]], search_width_x=20,
 #def find_LEDs(sewtable, coords=[[1090, 475], [1087, 1460], [2065, 1460], [2071, 482]], search_width_x=40,
 def find_LEDs(sewtable, coords=[
-       [ 755.9869, 1394.8185],
-       [ 755.    ,  638.0302],
-       [1193.5675, 1827.2313],
-       [1189.9103,  205.9062],
-    [1942.25, 1818.9421],
-    [1936.6364, 210.4852],
-    [2365.9902, 1385.127],
-    [2362.5535,  640.5624]], search_width_x=40,
+       [ 775.9869, 1394.8185],
+       [ 775.    ,  638.0302],
+       [1213.5675, 1827.2313],
+       [1289.9103,  205.9062],
+    [2042.25, 1818.9421],
+    [2036.6364, 210.4852],
+    [2465.9902, 1385.127],
+    [2462.5535,  640.5624]], search_width_x=200,
               search_width_y=20, center_offset=[0, 0]):
     df_out = pd.DataFrame()
     N_LEDs = len(coords)
