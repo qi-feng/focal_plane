@@ -109,7 +109,7 @@ LED_REF_minus5_2022Jun3 = np.array([
        [2362.5535, 640.5624]], dtype='float32')
 
 #2022-10-11 @-5 deg EL; New Alibaba 8mm lens very slightly different plate scale
-LED_REF_minus5 = np.array([
+LED_REF_minus5_2022Oct11 = np.array([
     [787.7784, 1401.6349],
     [787.7224, 635.7045],
     [1230.2179, 1839.71],
@@ -119,6 +119,16 @@ LED_REF_minus5 = np.array([
     [2422.1157, 1393.521],
     [2419.3499, 638.1667]], dtype='float32')
 
+#2022-11-09 @-5 deg EL; New Alibaba 8mm lens very slightly different plate scale
+LED_REF_minus5 = np.array([
+    [787.7784, 1421.6349],
+    [787.7224, 655.7045],
+    [1230.2179, 1859.71],
+    [1227.9833, 217.8342],
+    [1990.3311, 1853.280],
+    [1985.5582, 221.9172],
+    [2422.1157, 1413.521],
+    [2419.3499, 658.1667]], dtype='float32')
 
 LED_REF = LED_REF_minus5
 
@@ -1025,15 +1035,7 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
 # def find_LEDs(sewtable, coords=[[1385, 590], [1377, 1572], [2360, 1576], [2365, 597]],
 #def find_LEDs(sewtable, coords=[[1095, 500], [1087, 1472], [2070, 1476], [2075, 497]], search_width_x=20,
 #def find_LEDs(sewtable, coords=[[1090, 475], [1087, 1460], [2065, 1460], [2071, 482]], search_width_x=40,
-def find_LEDs(sewtable, coords=[
-       [ 775.9869, 1394.8185],
-       [ 775.    ,  638.0302],
-       [1213.5675, 1827.2313],
-       [1289.9103,  205.9062],
-    [2042.25, 1818.9421],
-    [2036.6364, 210.4852],
-    [2465.9902, 1385.127],
-    [2462.5535,  640.5624]], search_width_x=200,
+def find_LEDs(sewtable, coords=LED_REF_minus5, search_width_x=200,
               search_width_y=20, center_offset=[0, 0]):
     df_out = pd.DataFrame()
     N_LEDs = len(coords)
