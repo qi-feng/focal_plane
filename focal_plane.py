@@ -75,9 +75,15 @@ CM_REF_minus5 = np.array([[1525, 957],
  [1525, 1069.033],
  [1637.033, 1069.033]], dtype='float32')
 
-CM_REF = CM_REF_minus5
+#CM_REF = CM_REF_minus5
 #apply a translation measured between pics taken on 20220603 and 20221011
-CM_REF = CM_REF_minus5+[25.5,-8.7]
+#CM_REF = CM_REF_minus5+[25.5,-8.7]
+
+#Inferred from Nov 09 and June 3 2022
+CM_REF = np.array([[1555.3447,  967.5003],
+       [1669.3301,  967.5701],
+       [1555.2328, 1081.3055],
+       [1669.214 , 1081.3932]], dtype='float32')
 
 # Ref LED positions @60 deg EL:
 # 2021 June
@@ -1944,7 +1950,7 @@ def main():
 
     parser.add_argument('--DETECT_MINAREA', type=int, default=30, help="+++ Important parameter +++: "
                                                                        "Config param for sextractor, our default is 30.")
-    parser.add_argument('--DETECT_MINAREA_S2', type=int, default=500, help="+++ Important parameter +++: "
+    parser.add_argument('--DETECT_MINAREA_S2', type=int, default=200, help="+++ Important parameter +++: "
                                                                            "Config param for sextractor for P2S2 (outer ring) images, our default is 500.")
     parser.add_argument('--THRESH', type=int, default=6, help="+++ Important parameter +++: "
                                                               "Config param for sextractor, our default is 6.")
