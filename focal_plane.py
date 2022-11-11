@@ -44,9 +44,9 @@ if not sys.version_info.major == 3:
 # pix2mm = 0.2449
 #PIX2MM = 0.241
 #8mm lens about twice the plate scale
-#PIX2MM = 0.482
+PIX2MM = 0.482
 #2022-10-11 New Alibaba 8mm lens very slightly different plate scale
-PIX2MM = 0.477
+#PIX2MM = 0.477
 
 # these new corners mark the central module
 # x_corners = np.array([1762,1761,1980,1982])

@@ -37,6 +37,8 @@ matplotlib.rc('font', **font)
 
 #PIX2MM = 0.241
 PIX2MM = 0.482
+#PIX2MM = 0.477
+
 MM2ARCMIN = 1. / 1.625  # ???
 
 
