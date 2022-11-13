@@ -668,12 +668,14 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
                     %.2f '
                     ========
                     """ % (
-        y, x, width_y, width_y * PIX2MM, width_y * PIX2MM * MM2ARCMIN,
-        width_x, width_x * PIX2MM, width_x * PIX2MM * MM2ARCMIN, 
+        y, x, abs(width_y), abs(width_y) * PIX2MM, abs(width_y) * PIX2MM * MM2ARCMIN,
+        abs(width_x), abs(width_x) * PIX2MM, abs(width_x) * PIX2MM * MM2ARCMIN,
         elongation, ellipticity, eccentricity,
-        2.*max(width_x, width_y) * PIX2MM * MM2ARCMIN,))
+        2.*max(abs(width_x), abs(width_y)) * PIX2MM * MM2ARCMIN,))
 
-    return fit
+    return fit, 2.*max(abs(width_x), abs(width_y)) * PIX2MM * MM2ARCMIN, \
+           abs(width_y), abs(width_y) * PIX2MM, abs(width_y) * PIX2MM * MM2ARCMIN, \
+           abs(width_x), abs(width_x) * PIX2MM, abs(width_x) * PIX2MM * MM2ARCMIN
 
 
 def get_datetime_rawname(raw_name):
@@ -713,6 +715,7 @@ def main():
     parser.add_argument('--catalog', default="data/res_focal_plane_2022_11_11_01_54_52_ring_search_vvv_P1.csv", type=str)
     parser.add_argument("--psf_search_halfwidth", type=float, default=18 )
     parser.add_argument("--PIX2MM", type=float, default=0.482 )
+    parser.add_argument("-o", "--outfile", dest="outfile", default=None, type=str)
 
     parser.add_argument("--box_bkg", action='store_true')
     parser.add_argument("--show_bkg", action='store_true')
@@ -731,6 +734,14 @@ def main():
 
     f_best = args.catalog
     df_best = pd.read_csv(f_best)
+    df_best = df_best[['Panel_ID_guess', '#', 'X_IMAGE', 'Y_IMAGE']]
+    df_best["PSFarcmin"] = 0
+    df_best["sigmaXpix"] = 0
+    df_best["sigmaYpix"] = 0
+    df_best["sigmaXmm"] = 0
+    df_best["sigmaYmm"] = 0
+    df_best["sigmaXarcmin"] = 0
+    df_best["sigmaYarcmin"] = 0
 
     # if a background region is given:
     if args.box_bkg:
@@ -775,9 +786,9 @@ def main():
         dt_match = get_datetime_rawname(args.rawfile)
 
         if args.box_bkg:
-            data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}_{}.pdf".format(dt_match,
-                                                                                                            row[
-                                                                                                                'Panel_ID_guess']),
+            data_fitted, PSF, sigma_x,sigma_xmm,sigma_xarcmin, \
+                sigma_y,sigma_ymm,sigma_yarcmin = fit_gaussian2d_baseline3(im_best_crop,
+                                                   outfile="data/opticalPSF_{}_{}.pdf".format(dt_match, row['Panel_ID_guess']),
                                                    PIX2MM=PIX2MM,
                                                    constant_baseline = m_,
                                                    # draw_pixel=False,
@@ -785,14 +796,23 @@ def main():
                                                    # df=df_best,
                                                    log=False)  # , amp=200, xc=0, yc=0, A=df_best.A_IMAGE[0], B=df_best.B_IMAGE[0],
         else:
-            data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}_{}.pdf".format(dt_match, row['Panel_ID_guess']),PIX2MM=PIX2MM,
+            data_fitted, PSF, sigma_x,sigma_xmm,sigma_xarcmin, \
+                sigma_y,sigma_ymm,sigma_yarcmin  = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}_{}.pdf".format(dt_match, row['Panel_ID_guess']),PIX2MM=PIX2MM,
                                            # draw_pixel=False,
                                            # legend=True,
                                            #df=df_best,
                                            log=False)  # , amp=200, xc=0, yc=0, A=df_best.A_IMAGE[0], B=df_best.B_IMAGE[0],
+        df_best.loc[i, "PSFarcmin"] = PSF
+        df_best.loc[i, "sigmaXpix"] = sigma_x
+        df_best.loc[i, "sigmaYpix"] = sigma_xmm
+        df_best.loc[i, "sigmaXmm"] = sigma_xarcmin
+        df_best.loc[i, "sigmaYmm"] = sigma_y
+        df_best.loc[i, "sigmaXarcmin"] = sigma_ymm
+        df_best.loc[i, "sigmaYarcmin"] = sigma_yarcmin
 
-
-
+    if args.outfile is not None:
+        #df_best.to_csv(args.outfile + "_single_panel_PSF.csv", index=False)
+        df_best.to_csv(args.outfile, index=False)
 
 if __name__ == '__main__':
     main()
