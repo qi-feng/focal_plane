@@ -99,6 +99,32 @@ def gaussian_baseline(height, center_x, center_y, width_x, width_y, rotation, ba
     return rotgauss
 
 
+
+def gaussian_0baseline(height, center_x, center_y, width_x, width_y, rotation):
+    """Returns a gaussian function with the given parameters"""
+    width_x = float(width_x)
+    width_y = float(width_y)
+
+    rotation = np.deg2rad(rotation)
+
+    # center_x = center_x * np.cos(rotation) - center_y * np.sin(rotation)
+    # center_y = center_x * np.sin(rotation) + center_y * np.cos(rotation)
+
+    def rotgauss(x, y):
+        # xp = x * np.cos(rotation) - y * np.sin(rotation)
+        # yp = x * np.sin(rotation) + y * np.cos(rotation)
+        xp = (x - center_x) * np.cos(rotation) - (y - center_y) * np.sin(rotation)  # + center_x
+        yp = (x - center_x) * np.sin(rotation) + (y - center_y) * np.cos(rotation)  # + center_y
+        g = height * np.exp(
+            -(((-xp) / width_x) ** 2 +
+              ((-yp) / width_y) ** 2) / 2.)
+        # -(((center_x-xp)/width_x)**2+
+        #  ((center_y-yp)/width_y)**2)/2.)
+        return g
+
+    return rotgauss
+
+
 def moments_baseline(data):
     """Returns (height, x, y, width_x, width_y)
     the gaussian parameters of a 2D distribution by calculating its
@@ -115,6 +141,21 @@ def moments_baseline(data):
     return height, x, y, width_x, width_y, 0, 0
 
 
+def moments_0baseline(data):
+    """Returns (height, x, y, width_x, width_y)
+    the gaussian parameters of a 2D distribution by calculating its
+    moments """
+    total = data.sum()
+    X, Y = np.indices(data.shape)
+    x = (X * data).sum() / total
+    y = (Y * data).sum() / total
+    col = data[:, int(y)]
+    width_x = np.sqrt(np.abs((np.arange(col.size) - y) ** 2 * col).sum() / col.sum())
+    row = data[int(x), :]
+    width_y = np.sqrt(np.abs((np.arange(row.size) - x) ** 2 * row).sum() / row.sum())
+    height = data.max()
+    return height, x, y, width_x, width_y, 0
+
 def fitgaussian_baseline(data):
     """Returns (height, x, y, width_x, width_y, theta)
     the gaussian parameters of a 2D distribution found by a fit"""
@@ -124,6 +165,15 @@ def fitgaussian_baseline(data):
     p, success = sp.optimize.leastsq(errorfunction, params)
     return p
 
+
+def fitgaussian_0baseline(data):
+    """Returns (height, x, y, width_x, width_y, theta)
+    the gaussian parameters of a 2D distribution found by a fit"""
+    params = moments_0baseline(data)
+    errorfunction = lambda p: np.ravel(gaussian_0baseline(*p)(*np.indices(data.shape)) -
+                                       data)
+    p, success = sp.optimize.leastsq(errorfunction, params)
+    return p
 
 def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
                             show_crop=0, PIX2MM=PIX2MM,
@@ -389,7 +439,7 @@ def fit_gaussian2d_baseline(data, outfile=None, df=None, log=False,
 
 
 def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
-                             show_crop=0,PIX2MM=PIX2MM,
+                             show_crop=0,PIX2MM=PIX2MM, constant_baseline=0,
                              legend=False, draw_pixel=True):  # , amp=1, xc=0,yc=0,A=1,B=1,theta=0, offset=0):
     fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
     # plt.matshow(data, cmap=plt.cm.gray)
@@ -420,20 +470,27 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
             plt.imshow(data, cmap=plt.cm.gray)
 
     plt.colorbar()
-    params = fitgaussian_baseline(data)
 
-    fit = gaussian_baseline(*params)
+    if constant_baseline > 0 :
+        data = data - constant_baseline
+        params = fitgaussian_0baseline(data)
+        fit = gaussian_0baseline(*params)
+        (height, x, y, width_x, width_y, theta) = params
+        baseline = constant_baseline
+    elif constant_baseline == 0:
+        params = fitgaussian_baseline(data)
+        fit = gaussian_baseline(*params)
+        (height, x, y, width_x, width_y, theta, baseline) = params
 
     # plt.contour(fit(*np.indices(data.shape)), cmap=plt.cm.copper, levels=[68, 90, 95])
     ax = plt.gca()
-    (height, x, y, width_x, width_y, theta, baseline) = params
     # print(height, x, y, width_x, width_y, np.rad2deg(theta))
     semi_maj = max(width_x, width_y)
     semi_min = min(width_x, width_y)
     elongation = semi_maj/semi_min
     ellipticity = 1 - (semi_min/semi_maj)
-    eccentricity = np.sqrt(1 - ((semi_min**2)/(semi_maj**2))) 
-    print(height, x, y, width_x, width_y, theta, baseline) 
+    eccentricity = np.sqrt(1 - ((semi_min**2)/(semi_maj**2)))
+    print(height, x, y, width_x, width_y, theta, baseline)
 
     center_crop = data[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM), int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM)]
     #print("Frac contained in central image pixel from data")
@@ -535,7 +592,11 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
 
 
     plt.figure()
-    gaus_arr = gaussian_baseline(*params)(*np.indices(data.shape))
+    if constant_baseline == 0:
+        gaus_arr = gaussian_baseline(*params)(*np.indices(data.shape))
+    elif constant_baseline > 0:
+        gaus_arr = gaussian_0baseline(*params)(*np.indices(data.shape))
+
     #print(gaus_arr.shape, data.shape)
 
     from matplotlib.colors import LogNorm
@@ -560,8 +621,16 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
              verticalalignment='bottom', transform=ax.transAxes, color='k')
 
     plt.tight_layout()
-    plt.savefig(outfile[:-4]+"_residual_gaussian_fit_with_baseline.pdf")
-    print("baseline data {}, model {}".format(np.mean(data[80:, 80:]), baseline))
+    if constant_baseline == 0:
+        plt.savefig(outfile[:-4]+"_residual_gaussian_fit_with_baseline.pdf")
+        print("baseline data {}, model {}".format(np.mean(data[80:, 80:]), baseline))
+        clean_gaussian = gaus_arr - baseline
+
+    elif constant_baseline > 0:
+        plt.savefig(outfile[:-4]+"_residual_gaussian_fit_with_fixed_baseline.pdf")
+        print("baseline data {}, input fixed value {}".format(np.mean(data[80:, 80:]), constant_baseline))
+        clean_gaussian = gaus_arr
+
     data = gaus_arr
 
     #print(params)
@@ -573,7 +642,7 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
     print("Frac contained in central trigger pixel from model")
     print(center_crop.sum() / data.sum())
 
-    clean_gaussian = gaus_arr - baseline
+
     center_crop = clean_gaussian[int(y - 6.53/PIX2MM / 2.):int(y - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM), int(x - 6.53/PIX2MM / 2.):int(x - 6.53/PIX2MM / 2.) + int(6.53/PIX2MM)]
     print("Frac contained in central image pixel from only the gaussian component in model")
     print(center_crop.sum() / clean_gaussian.sum())
@@ -615,6 +684,27 @@ def get_datetime_rawname(raw_name):
     dt_match = "_".join(dt_match.split(':'))
     return dt_match
 
+def get_baseline_from_region(im_best, xmin=1580, xmax=1680, ymin=980, ymax=1080, show=False):
+    im_crop = im_best[ymin:ymax, xmin:xmax]
+    me_ = np.mean(im_crop)
+    m_ = np.median(im_crop)
+    std_ = np.std(im_crop)
+    q95 = np.quantile(im_crop, 0.95)
+    print("In the background region, mean = {}, median = {}, std = {}, 95% = {}".format(me_, m_, std_, q95))
+    if show:
+        fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
+        plt.imshow(im_best, cmap=plt.cm.gray)
+        #rect = Rectangle((ymin, xmin), ymax-ymin, xmax-xmin,  # linewidth=1.5,
+        rect=Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,  # linewidth=1.5,
+                                        edgecolor='w', facecolor='none')
+        ax.add_patch(rect)
+        plt.show()
+        fig, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
+        plt.imshow(im_crop, cmap=plt.cm.gray)
+        plt.show()
+
+
+    return m_, std_, q95
 
 def main():
     parser = argparse.ArgumentParser(description='Compute optical PSF')
@@ -624,6 +714,13 @@ def main():
     parser.add_argument("--psf_search_halfwidth", type=float, default=18 )
     parser.add_argument("--PIX2MM", type=float, default=0.482 )
 
+    parser.add_argument("--box_bkg", action='store_true')
+    parser.add_argument("--show_bkg", action='store_true')
+
+    parser.add_argument('--bkg_x1', default=1600, type=int, )
+    parser.add_argument('--bkg_x2', default=1680, type=int, )
+    parser.add_argument('--bkg_y1', default=980, type=int, )
+    parser.add_argument('--bkg_y2', default=1050, type=int, )
 
     args = parser.parse_args()
 
@@ -634,6 +731,13 @@ def main():
 
     f_best = args.catalog
     df_best = pd.read_csv(f_best)
+
+    # if a background region is given:
+    if args.box_bkg:
+        print("Use box region to get background: ")
+        m_, std_, q95 = get_baseline_from_region(im_best, xmin=args.bkg_x1, xmax=args.bkg_x2,
+                                                 ymin=args.bkg_y1, ymax=args.bkg_y2, show=args.show_bkg)
+
 
     # cropping
     halfwidth = args.psf_search_halfwidth
@@ -670,7 +774,18 @@ def main():
 
         dt_match = get_datetime_rawname(args.rawfile)
 
-        data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}_{}.pdf".format(dt_match, row['Panel_ID_guess']),PIX2MM=PIX2MM,
+        if args.box_bkg:
+            data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}_{}.pdf".format(dt_match,
+                                                                                                            row[
+                                                                                                                'Panel_ID_guess']),
+                                                   PIX2MM=PIX2MM,
+                                                   constant_baseline = m_,
+                                                   # draw_pixel=False,
+                                                   # legend=True,
+                                                   # df=df_best,
+                                                   log=False)  # , amp=200, xc=0, yc=0, A=df_best.A_IMAGE[0], B=df_best.B_IMAGE[0],
+        else:
+            data_fitted = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}_{}.pdf".format(dt_match, row['Panel_ID_guess']),PIX2MM=PIX2MM,
                                            # draw_pixel=False,
                                            # legend=True,
                                            #df=df_best,
