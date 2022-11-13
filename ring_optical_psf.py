@@ -812,7 +812,9 @@ def main():
 
     if args.outfile is not None:
         #df_best.to_csv(args.outfile + "_single_panel_PSF.csv", index=False)
-        pd.options.display.float_format = "{:.2f}".format
+        #pd.options.display.float_format = "{:.2f}".format #doesnt work
+        cols = ["PSFarcmin", "sigmaXpix", "sigmaYpix", "sigmaXmm", "sigmaYmm", "sigmaXarcmin", "sigmaYarcmin"]
+        df_best[cols] = df_best[cols].applymap('$ {:,.2f}'.format)
         df_best.to_csv(args.outfile, index=False)
         print("Single panel PSF saved to file {}".format(args.outfile))
 
