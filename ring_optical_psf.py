@@ -804,10 +804,10 @@ def main():
                                            log=False)  # , amp=200, xc=0, yc=0, A=df_best.A_IMAGE[0], B=df_best.B_IMAGE[0],
         df_best.loc[i, "PSFarcmin"] = PSF
         df_best.loc[i, "sigmaXpix"] = sigma_x
-        df_best.loc[i, "sigmaYpix"] = sigma_xmm
-        df_best.loc[i, "sigmaXmm"] = sigma_xarcmin
-        df_best.loc[i, "sigmaYmm"] = sigma_y
-        df_best.loc[i, "sigmaXarcmin"] = sigma_ymm
+        df_best.loc[i, "sigmaYpix"] = sigma_y
+        df_best.loc[i, "sigmaXmm"] = sigma_xmm
+        df_best.loc[i, "sigmaYmm"] = sigma_ymm
+        df_best.loc[i, "sigmaXarcmin"] = sigma_xarcmin
         df_best.loc[i, "sigmaYarcmin"] = sigma_yarcmin
 
     if args.outfile is not None:
