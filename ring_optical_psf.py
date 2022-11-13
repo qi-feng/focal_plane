@@ -813,6 +813,7 @@ def main():
     if args.outfile is not None:
         #df_best.to_csv(args.outfile + "_single_panel_PSF.csv", index=False)
         df_best.to_csv(args.outfile, index=False)
+        print("Single panel PSF saved to file {}".format(args.outfile))
 
 if __name__ == '__main__':
     main()
