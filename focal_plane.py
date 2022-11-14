@@ -1037,10 +1037,10 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
                     end_lower = df.shape[0]
 
                     # Create a list of upper_half index
-                    upper_half = [*range(start_upper, end_upper, 1)]
+                    upper_half = [range(start_upper, end_upper, 1)]
 
                     # Create a list of lower_half index
-                    lower_half = [*range(start_lower, end_lower, 1)]
+                    lower_half = [range(start_lower, end_lower, 1)]
 
                     # Increment the value of lower half by 1
                     lower_half = [x.__add__(1) for x in lower_half]
