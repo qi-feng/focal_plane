@@ -1021,49 +1021,6 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
             if tryouter:
                 df_outer_slice = df_pattern[(abs(df_pattern.Rpix - 2 * last_radius) < (2 * last_radius * rad_tol_frac))]
                 df_slice.append(df_outer_slice)
-            if inner8:
-                # Function to insert row in the dataframe
-                def Insert_row(row_number, df, row_value):
-                    # Starting value of upper half
-                    start_upper = 0
-
-                    # End value of upper half
-                    end_upper = row_number
-
-                    # Start value of lower half
-                    start_lower = row_number
-
-                    # End value of lower half
-                    end_lower = df.shape[0]
-
-                    # Create a list of upper_half index
-                    upper_half = [range(start_upper, end_upper, 1)]
-
-                    # Create a list of lower_half index
-                    lower_half = [range(start_lower, end_lower, 1)]
-
-                    # Increment the value of lower half by 1
-                    lower_half = [x.__add__(1) for x in lower_half]
-
-                    # Combine the two lists
-                    index_ = upper_half + lower_half
-
-                    # Update the index of the dataframe
-                    df.index = index_
-
-                    # Insert a row at the end
-                    df.loc[row_number] = row_value
-
-                    # Sort the index labels
-                    df = df.sort_index()
-
-                    # return the dataframe
-                    return df
-                for i, row in df_pattern.iterrows():
-                    row2 = row
-                    row2['Panel_ID_guess'] = row['Panel_ID_guess']+1
-                    row2['#'] = row["#"]+1
-                    df_pattern = Insert_row(i+1, df_pattern, row2)
 
         elif abs(len(sew_slice) - 16) > abs(len(sew_slice) - 32) or chooseouter:
             # not tested
@@ -1265,7 +1222,7 @@ def process_raw(rawfile, kernel_w=3, DETECT_MINAREA=30, THRESH=5, DEBLEND_MINCON
 def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1063.75]), cropxs=(1050, 2592),
                  cropys=(1850, 250), kernel_w=3, save_catlog_name="temp_ring_search_cat.txt", df_LEDs=None,
                  center_offset=[0, 0], save_for_vvv="temp_ring_vvv_XY_pix.csv", saveplot_name=None, show=False,
-                 verbose=False):
+                 verbose=False, inner8=False):
     '''
     Plots raw file (path to .RAW image) with imshow. If there is a 'df' object - this object is assumed to be the VVV
     list of panels in the ring - find minimum distance between that source with source in the sewtable and assign that
@@ -1450,6 +1407,58 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
         print("Mean center X {} Y {}".format(np.mean(df_vvv['X_IMAGE']), np.mean(df_vvv['Y_IMAGE'])))
         print("Sum tails vector: (M31, M32) = {:.2f}, {:.2f} ".format(np.sum(df_vvv['m31']), np.sum(df_vvv['m32'])))
 
+        if inner8:
+            # Function to insert row in the dataframe
+            def Insert_row(row_number, df, row_value):
+                # Starting value of upper half
+                start_upper = 0
+
+                # End value of upper half
+                end_upper = row_number
+
+                # Start value of lower half
+                start_lower = row_number
+
+                # End value of lower half
+                end_lower = df.shape[0]
+
+                # Create a list of upper_half index
+                upper_half = [*range(start_upper, end_upper, 1)]
+
+                # Create a list of lower_half index
+                lower_half = [*range(start_lower, end_lower, 1)]
+
+                # Increment the value of lower half by 1
+                lower_half = [x.__add__(1) for x in lower_half]
+
+                # Combine the two lists
+                index_ = upper_half + lower_half
+
+                # Update the index of the dataframe
+                df.index = index_
+
+                # Insert a row at the end
+                df.loc[row_number] = row_value
+
+                # Sort the index labels
+                df = df.sort_index()
+
+                # return the dataframe
+                return df
+
+            print(df_vvv)
+            for i, row in df_vvv.iterrows():
+                # for i in range(df_pattern.shape[0]):
+                # row = df_pattern.loc[i]
+                row2 = row
+                row2['Panel_ID_guess'] = row['Panel_ID_guess'] + 1
+                #row2['Panel'] = row['Panel'] + 1
+                row2['#'] = row["#"] + 1
+                df_vvv = Insert_row(i + 1, df_vvv, row2)
+
+
+        df_vvv = df_vvv.sort_values('#').reset_index(drop=True)
+        
         df_vvv.to_csv(save_for_vvv, index=False)
 
     return
@@ -2356,7 +2365,7 @@ def main():
                     plot_raw_cat(args.rawfile1, sew_slice, df=df_slice, center_pattern=clast, cropxs=cropxs,
                                  cropys=cropys, kernel_w=3, save_catlog_name=ring_cat_file1, df_LEDs=df_LEDs,
                                  save_for_vvv=vvv_ring_file1, saveplot_name=ring_file1, show=args.show,
-                                 verbose=args.verbose)
+                                 verbose=args.verbose, inner8=args.inner8)
                 centerP1 = clast
                 rP1 = rlast
                 N_P1 = len(sew_slice)
