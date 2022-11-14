@@ -1423,10 +1423,12 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                 end_lower = df.shape[0]
 
                 # Create a list of upper_half index
-                upper_half = [*range(start_upper, end_upper, 1)]
+                #upper_half = [*range(start_upper, end_upper, 1)] #doesn't work for python2
+                upper_half = list(range(start_upper, end_upper, 1))
 
                 # Create a list of lower_half index
-                lower_half = [*range(start_lower, end_lower, 1)]
+                #lower_half = [*range(start_lower, end_lower, 1)]
+                lower_half = list(range(start_lower, end_lower, 1))
 
                 # Increment the value of lower half by 1
                 lower_half = [x.__add__(1) for x in lower_half]
@@ -1458,7 +1460,7 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
 
 
         df_vvv = df_vvv.sort_values('#').reset_index(drop=True)
-        
+
         df_vvv.to_csv(save_for_vvv, index=False)
 
     return
