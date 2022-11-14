@@ -1453,9 +1453,14 @@ def plot_raw_cat(rawfile, sewtable, df=None, center_pattern=np.array([1891.25, 1
                 # for i in range(df_pattern.shape[0]):
                 # row = df_pattern.loc[i]
                 row2 = row
-                row2['Panel_ID_guess'] = row['Panel_ID_guess'] + 1
-                #row2['Panel'] = row['Panel'] + 1
-                row2['#'] = row["#"] + 1
+                if row['Panel_ID_guess'] == 1211:
+                    row2['Panel_ID_guess'] = 1114
+                    # row2['Panel'] = row['Panel'] + 1
+                    row2['#'] = 16
+                else:
+                    row2['Panel_ID_guess'] = row['Panel_ID_guess'] - 1
+                    #row2['Panel'] = row['Panel'] + 1
+                    row2['#'] = row["#"] - 1
                 df_vvv = Insert_row(i + 1, df_vvv, row2)
 
 
