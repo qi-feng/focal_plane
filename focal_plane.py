@@ -1021,6 +1021,50 @@ def find_ring_pattern(sewtable, pattern_center=PATTERN_CENTER_FROM_LABEL_BOUNDS,
             if tryouter:
                 df_outer_slice = df_pattern[(abs(df_pattern.Rpix - 2 * last_radius) < (2 * last_radius * rad_tol_frac))]
                 df_slice.append(df_outer_slice)
+            if inner8:
+                # Function to insert row in the dataframe
+                def Insert_row(row_number, df, row_value):
+                    # Starting value of upper half
+                    start_upper = 0
+
+                    # End value of upper half
+                    end_upper = row_number
+
+                    # Start value of lower half
+                    start_lower = row_number
+
+                    # End value of lower half
+                    end_lower = df.shape[0]
+
+                    # Create a list of upper_half index
+                    upper_half = [*range(start_upper, end_upper, 1)]
+
+                    # Create a list of lower_half index
+                    lower_half = [*range(start_lower, end_lower, 1)]
+
+                    # Increment the value of lower half by 1
+                    lower_half = [x.__add__(1) for x in lower_half]
+
+                    # Combine the two lists
+                    index_ = upper_half + lower_half
+
+                    # Update the index of the dataframe
+                    df.index = index_
+
+                    # Insert a row at the end
+                    df.loc[row_number] = row_value
+
+                    # Sort the index labels
+                    df = df.sort_index()
+
+                    # return the dataframe
+                    return df
+                for i, row in df_pattern.iterrows():
+                    row2 = row
+                    row2['Panel_ID_guess'] = row['Panel_ID_guess']+1
+                    row2['#'] = row["#"]+1
+                    df_pattern = Insert_row(i+1, df_pattern, row2)
+
         elif abs(len(sew_slice) - 16) > abs(len(sew_slice) - 32) or chooseouter:
             # not tested
             df_pattern = find_all_pattern_positions(all_panels=all_panels, center=last_center,
