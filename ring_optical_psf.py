@@ -675,7 +675,7 @@ def fit_gaussian2d_baseline3(data, outfile=None, df=None, log=False,
 
     return fit, 2.*max(abs(width_x), abs(width_y)) * PIX2MM * MM2ARCMIN, \
            abs(width_y), abs(width_y) * PIX2MM, abs(width_y) * PIX2MM * MM2ARCMIN, \
-           abs(width_x), abs(width_x) * PIX2MM, abs(width_x) * PIX2MM * MM2ARCMIN
+           abs(width_x), abs(width_x) * PIX2MM, abs(width_x) * PIX2MM * MM2ARCMIN, theta
 
 
 def get_datetime_rawname(raw_name):
@@ -742,6 +742,7 @@ def main():
     df_best["sigmaYmm"] = 0
     df_best["sigmaXarcmin"] = 0
     df_best["sigmaYarcmin"] = 0
+    df_best["theta"] = 0
 
     # if a background region is given:
     if args.box_bkg:
@@ -787,7 +788,7 @@ def main():
 
         if args.box_bkg:
             data_fitted, PSF, sigma_x,sigma_xmm,sigma_xarcmin, \
-                sigma_y,sigma_ymm,sigma_yarcmin = fit_gaussian2d_baseline3(im_best_crop,
+                sigma_y,sigma_ymm,sigma_yarcmin, theta = fit_gaussian2d_baseline3(im_best_crop,
                                                    outfile="data/opticalPSF_{}_{}.pdf".format(dt_match, row['Panel_ID_guess']),
                                                    PIX2MM=PIX2MM,
                                                    constant_baseline = m_,
@@ -797,7 +798,7 @@ def main():
                                                    log=False)  # , amp=200, xc=0, yc=0, A=df_best.A_IMAGE[0], B=df_best.B_IMAGE[0],
         else:
             data_fitted, PSF, sigma_x,sigma_xmm,sigma_xarcmin, \
-                sigma_y,sigma_ymm,sigma_yarcmin  = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}_{}.pdf".format(dt_match, row['Panel_ID_guess']),PIX2MM=PIX2MM,
+                sigma_y,sigma_ymm,sigma_yarcmin, theta = fit_gaussian2d_baseline3(im_best_crop, outfile="data/opticalPSF_{}_{}.pdf".format(dt_match, row['Panel_ID_guess']),PIX2MM=PIX2MM,
                                            # draw_pixel=False,
                                            # legend=True,
                                            #df=df_best,
@@ -809,11 +810,12 @@ def main():
         df_best.loc[i, "sigmaYmm"] = sigma_ymm
         df_best.loc[i, "sigmaXarcmin"] = sigma_xarcmin
         df_best.loc[i, "sigmaYarcmin"] = sigma_yarcmin
+        df_best.loc[i, "theta"] = theta
 
     if args.outfile is not None:
         #df_best.to_csv(args.outfile + "_single_panel_PSF.csv", index=False)
         #pd.options.display.float_format = "{:.2f}".format #doesnt work
-        cols = ["PSFarcmin", "sigmaXpix", "sigmaYpix", "sigmaXmm", "sigmaYmm", "sigmaXarcmin", "sigmaYarcmin"]
+        cols = ["PSFarcmin", "sigmaXpix", "sigmaYpix", "sigmaXmm", "sigmaYmm", "sigmaXarcmin", "sigmaYarcmin", "theta"]
         df_best[cols] = df_best[cols].applymap('{:.2f}'.format)
         df_best.to_csv(args.outfile, index=False)
         print("Single panel PSF saved to file {}".format(args.outfile))
